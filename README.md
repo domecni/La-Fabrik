@@ -48,6 +48,7 @@ la-fabrik/
 └── src/
     ├── world/                              # Single persistent 3D world
     │   ├── Map.tsx                         # Base map, always mounted
+    │   ├── Lighting.tsx                   # Ambient, directional, point lights
     │   ├── Environment.tsx                 # HDRI, fog, sky
     │   ├── PostFX.tsx                      # Bloom, SSAO, chromatic aberration
     │   ├── zones/                          # Spatial zones — LOD per zone
@@ -96,109 +97,150 @@ la-fabrik/
     │
     ├── utils/
     │   ├── Debug.ts                        # lil-gui panel
-    │   ├── EventEmitter.ts                 # Decoupled event bus between managers
-    │   └── Dispose.ts                      # traverse() + dispose() helper
+    │   ├── EventEmitter.ts               # Simple pub/sub for manager-to-manager events
+    │   └── Dispose.ts                    # traverse() + dispose() helper
     │
     ├── App.tsx                             # Canvas + UI superimposed
     └── main.tsx
 ```
  
 ## 🏗 Architecture Patterns
- 
-These patterns are **mandatory across the entire codebase**. Every class, every 3D object, every manager follows the same conventions. Consistency over cleverness.
 
-### 1. Singleton Pattern
- 
-Every Manager and core utility uses the same singleton pattern. One instance, shared everywhere — no prop drilling, no context, no stray `new` calls
- 
+The project uses **two complementary patterns**:
+
+- **Singleton service classes** for orchestration and side effects
+- **Declarative React components** for all 3D scene objects
+
+This distinction is intentional. Scene elements such as the map, lights, environment, zones, and player are implemented as **React Three Fiber components** and mounted through `<Canvas>`.  
+Global systems such as gameplay flow, cinematics, audio, and debug tooling are implemented as **manager classes**.
+
+Consistency matters, but the codebase does **not** force the same lifecycle pattern on scene components and global services.
+
+---
+
+### 1. Singleton Pattern for Global Managers Only
+
+Only cross-cutting services use the singleton pattern.
+
+Examples:
+- `GameManager`
+- `CinematicManager`
+- `AudioManager`
+- `ZoneManager`
+- `Debug`
+- `EventEmitter`
+
+These services must exist once, be accessible from anywhere, and coordinate the experience globally.
+
 ```ts
 // stateManager/GameManager.ts
 export class GameManager {
   private static _instance: GameManager | null = null
- 
+
   cinematic!: CinematicManager
-  audio!:     AudioManager
-  zone!:      ZoneManager
-  npc!:       NPCManager
- 
+  audio!: AudioManager
+  zone!: ZoneManager
+
   static getInstance(): GameManager {
     if (!GameManager._instance) {
       GameManager._instance = new GameManager()
     }
     return GameManager._instance
   }
- 
+
   private constructor() {
     this.cinematic = CinematicManager.getInstance()
-    this.audio     = AudioManager.getInstance()
-    this.zone      = ZoneManager.getInstance()
-    this.npc       = NPCManager.getInstance()
+    this.audio = AudioManager.getInstance()
+    this.zone = ZoneManager.getInstance()
   }
- 
+
   destroy(): void {
     this.cinematic.destroy()
     this.audio.destroy()
     this.zone.destroy()
-    this.npc.destroy()
     GameManager._instance = null
   }
 }
- 
-// Usage — anywhere in the codebase
+```
+
+Usage:
+
+```ts
 const game = GameManager.getInstance()
 game.startMission('workshop')
 ```
- 
-Apply the **exact same pattern** to every Manager and utility class (`CinematicManager`, `AudioManager`, `Debug`, `Sizes`, `EventEmitter`)
- 
+
+**Important:** scene objects such as `Map`, `WorkshopZone`, `Lighting`, or `Environment` are **not** singletons and must remain standard React components.
+
 ---
- 
-### 2. Class Interface — `load` / `update` / `destroy`
- 
-Every 3D class implements the same three-method lifecycle. No exceptions.
- 
-```ts
-// Enforced interface for all world objects
-interface WorldObject {
-  load(): Promise<void>         // Load assets, build scene graph
-  update(delta: number): void   // Per-frame logic (called from useFrame)
-  destroy(): void               // Clean GPU memory — mandatory
-}
-```
- 
-```ts
+
+### 2. Scene Objects Are React Components, Not Manager Classes
+
+All 3D scene objects are implemented as **declarative React components**.
+
+This includes:
+- maps
+- lights
+- environments
+- player controllers
+- zones
+- interactive props
+- postprocessing layers
+
+This keeps the code aligned with the R3F runtime instead of rebuilding a parallel imperative engine.
+
+Example:
+
+```tsx
 // world/zones/WorkshopZone.tsx
-export class WorkshopZone implements WorldObject {
-  private group: THREE.Group = new THREE.Group()
-  private mixer: THREE.AnimationMixer | null = null
- 
-  async load(): Promise<void> {
-    const gltf = await loadGLTF('/models/workshop/ebike.glb')
-    this.group = gltf.scene
-    this.mixer = new THREE.AnimationMixer(this.group)
-    this.scene.add(this.group)
-  }
- 
-  update(delta: number): void {
-    this.mixer?.update(delta)
-  }
- 
-  destroy(): void {
-    this.mixer?.stopAllAction()
-    Dispose.object(this.group)    // ← always traverse before remove
-    this.scene.remove(this.group)
-  }
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three'
+import { useFrame } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
+
+export function WorkshopZone() {
+  const root = useRef<THREE.Group>(null)
+  const gltf = useGLTF('/models/workshop/ebike.glb')
+  const mixer = useRef<THREE.AnimationMixer | null>(null)
+
+  useEffect(() => {
+    mixer.current = new THREE.AnimationMixer(gltf.scene)
+
+    return () => {
+      mixer.current?.stopAllAction()
+      mixer.current = null
+    }
+  }, [gltf.scene])
+
+  useFrame((_, delta) => {
+    mixer.current?.update(delta)
+  })
+
+  return <primitive ref={root} object={gltf.scene.clone()} />
 }
 ```
- 
+
+Per-frame values such as movement, interpolation, camera smoothing, and physics must stay in:
+- `useRef`
+- `useFrame`
+- Rapier bodies
+- other frame-based systems
+
+They must **never** go through React state.
+
 ---
 
-### 3. State Management — Single Source of Truth
+### 3. Single Source of Truth for Durable Gameplay State
 
-The project uses a single authoritative `GameManager` for durable gameplay state. React components subscribe to this state through thin custom hooks. **High-frequency values such as movement, camera interpolation, or physics never go through React state and stay in refs or frame-based systems.**
+The project uses a single authoritative `GameManager` for durable gameplay state.
+
+React components subscribe to that state through thin hooks.  
+Other managers communicate through `GameManager`, which acts as the main gameplay orchestrator.
+
+High-frequency values such as movement, camera interpolation, or physics never go through React state and stay in refs or frame-based systems.
 
 ```ts
-// GameManager.ts — single source of truth
+// stateManager/GameManager.ts
 type Phase = 'loading' | 'intro' | 'exploring' | 'cinematic' | 'outro'
 type ZoneId = 'workshop' | 'powerGrid' | 'farm' | null
 
@@ -281,53 +323,87 @@ export function useGameState() {
 }
 ```
 
-All other managers (Cinemactic, Audio, Zone) remain as side effects that communicate through `GameManager`
+This keeps the architecture simple:
+- **GameManager** owns durable gameplay state
+- **other managers** handle side effects
+- **React components** render that state
+- **R3F frame systems** handle fast-changing values
 
 ---
 
-### 4. Memory Management — `traverse()` + `dispose()`
+### 4. Side Effects Stay in Specialized Managers
 
-**Every `destroy()` must call `Dispose.object()` before removing anything from the scene.** Skipping this leaks GPU memory (VRAM) silently — no error thrown, just a crash after a few zone transitions. **Rule: traverse first, remove second. Always.**
+Managers other than `GameManager` should not become secondary state stores.
+
+Their role is to manage side effects and specialized runtime logic, such as:
+- GSAP timelines
+- audio playback
+- zone entry detection
+- interaction triggers
+- camera lock/unlock
+- temporary event coordination
+
+They can read from `GameManager`, react to its state, or notify it of important transitions.
+
+Example flow:
+
+```text
+Component / Hook
+      ↓
+GameManager.getInstance()
+      ├── startMission('workshop')
+      ├── cinematic.play('intro_workshop')
+      ├── audio.playAmbience('workshop')
+      └── zone.setActive('workshop')
+```
+
+This keeps the dependency graph understandable while avoiding duplicated durable state.
+
+---
+
+### 5. Memory Management — Dispose Only What You Own
+
+GPU memory must be cleaned carefully.
+
+However, the project does **not** blindly deep-dispose every object on unmount.  
+Only resources explicitly created and owned by the current component or manager should be disposed.
+
+This includes things like:
+- custom materials
+- render targets
+- postprocessing passes
+- manually created geometries
+- manually created textures
+- temporary clones with owned resources
+
+Shared or cached assets must **not** be blindly disposed.
 
 ```ts
 // utils/Dispose.ts
 import * as THREE from 'three'
 
 export class Dispose {
-  /**
-   * Recursively disposes all geometries, materials, and textures
-   * from an Object3D and its entire subtree.
-   *
-   * Always call this before scene.remove() to prevent VRAM leaks.
-   */
-  static object(obj: THREE.Object3D): void {
-    obj.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return
-
-      // 1. Dispose geometry buffers
-      child.geometry.dispose()
-
-      // 2. Handle single and multi-material meshes
-      const materials = Array.isArray(child.material)
-        ? child.material
-        : [child.material]
-
-      for (const mat of materials) {
-        // 3. Dispose every texture referenced by the material
-        for (const value of Object.values(mat)) {
-          if (value instanceof THREE.Texture) {
-            value.dispose()
-          }
-        }
-        // 4. Dispose the material itself
-        mat.dispose()
+  static material(material: THREE.Material): void {
+    for (const value of Object.values(material)) {
+      if (value instanceof THREE.Texture) {
+        value.dispose()
       }
-    })
+    }
+    material.dispose()
   }
 
-  /**
-   * Dispose a WebGL render target and its textures.
-   */
+  static mesh(mesh: THREE.Mesh): void {
+    mesh.geometry?.dispose()
+
+    const materials = Array.isArray(mesh.material)
+      ? mesh.material
+      : [mesh.material]
+
+    for (const material of materials) {
+      if (material) this.material(material)
+    }
+  }
+
   static renderTarget(rt: THREE.WebGLRenderTarget): void {
     rt.texture.dispose()
     rt.dispose()
@@ -335,58 +411,74 @@ export class Dispose {
 }
 ```
 
-Usage pattern — identical in every `destroy()`:
+Example usage:
 
 ```ts
-destroy(): void {
-  Dispose.object(this.mesh)     // Frees VRAM: geometries, materials, textures
-  this.scene.remove(this.mesh)  // Then removes from scene graph
-}
+useEffect(() => {
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+  })
+
+  meshRef.current.material = material
+
+  return () => {
+    Dispose.material(material)
+  }
+}, [])
 ```
+
+**Rule:** disposal is ownership-based, not automatic and not blind.
 
 ---
 
-### 5. Debug Utility
- 
-Activate the debug panel by appending `?debug` to the URL (`http://localhost:5173?debug`). Never scatter `if (isDev)` blocks across files — all debug logic flows through `Debug.ts`.
- 
+### 6. Debug Utility
+
+The debug panel can be activated by appending `?debug` to the URL:
+
+`http://localhost:5173?debug`
+
+All debug logic is centralized in `Debug.ts`.  
+Do not scatter debug checks across the codebase.
+
 ```ts
 // utils/Debug.ts
 import GUI from 'lil-gui'
- 
+
 export class Debug {
   private static _instance: Debug | null = null
- 
+
   readonly active: boolean
   gui: GUI | null = null
- 
+
   static getInstance(): Debug {
     if (!Debug._instance) Debug._instance = new Debug()
     return Debug._instance
   }
- 
+
   private constructor() {
     this.active = new URLSearchParams(window.location.search).has('debug')
     if (this.active) {
       this.gui = new GUI({ title: 'La-Fabrik Debug' })
     }
   }
- 
+
   destroy(): void {
     this.gui?.destroy()
     Debug._instance = null
   }
 }
 ```
- 
+
+Usage:
+
 ```ts
-// Usage in any class
 const debug = Debug.getInstance()
+
 if (debug.active) {
-  debug.gui!.add(this.mesh.position, 'y', -5, 5).name('Height')
+  debug.gui!.add(params, 'bloomIntensity', 0, 3).name('Bloom')
 }
 ```
- 
  
 ## 🚀 Getting Started
  
