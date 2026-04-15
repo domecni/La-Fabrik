@@ -1,5 +1,7 @@
 # Architecture Patterns
 
+Coding conventions are maintained in `.agent/skills/best-practices.md`.
+
 The project uses **two complementary patterns**:
 
 - **Singleton service classes** for orchestration and side effects
@@ -332,17 +334,23 @@ useEffect(() => {
 
 ---
 
-## 6. Debug Utility
+## 6. Debug System
 
 The debug panel can be activated by appending `?debug` to the URL:
 
 `http://localhost:5173?debug`
 
-All debug logic is centralized in `Debug.ts`.
+All debug logic is centralized in `src/debug/`.
 Do not scatter debug checks across the codebase.
 
+- `src/debug/Debug.ts` owns the global lil-gui singleton
+- `src/debug/DebugPerf.tsx` mounts the perf overlay
+- `src/debug/scene/*` contains debug-only R3F helpers such as free camera controls and axes/grid helpers
+
+`world/` stays focused on product scene components, while `debug/` contains developer tooling.
+
 ```ts
-// utils/Debug.ts
+// src/debug/Debug.ts
 import GUI from "lil-gui";
 
 export class Debug {
@@ -377,5 +385,30 @@ const debug = Debug.getInstance();
 
 if (debug.active) {
   debug.gui!.add(params, "bloomIntensity", 0, 3).name("Bloom");
+}
+```
+
+Debug-only scene helpers should live outside `world/`:
+
+```tsx
+// src/debug/scene/DebugHelpers.tsx
+import { Debug } from "@/debug/Debug";
+
+export function DebugHelpers(): React.JSX.Element | null {
+  const debug = Debug.getInstance();
+
+  if (!debug.active) {
+    return null;
+  }
+
+  return (
+    <>
+      <gridHelper
+        args={[180, 36, "#1d4ed8", "#1e293b"]}
+        position={[0, 0.01, 0]}
+      />
+      <axesHelper args={[10]} />
+    </>
+  );
 }
 ```

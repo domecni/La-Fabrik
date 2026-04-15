@@ -49,8 +49,9 @@ la-fabrik/
 │
 └── src/
     ├── world/                              # Single persistent 3D world
+    │   ├── World.tsx                       # Main scene composition
     │   ├── Map.tsx                         # Base map, always mounted
-    │   ├── Lighting.tsx                   # Ambient, directional, point lights
+    │   ├── Lighting.tsx                    # Ambient, directional, point lights
     │   ├── Environment.tsx                 # HDRI, fog, sky
     │   ├── PostFX.tsx                      # Bloom, SSAO, chromatic aberration
     │   ├── zones/                          # Spatial zones — LOD per zone
@@ -97,12 +98,18 @@ la-fabrik/
     │       ├── vertex.glsl
     │       └── fragment.glsl
     │
-    ├── utils/
-    │   ├── Debug.ts                        # lil-gui panel
-    │   ├── EventEmitter.ts               # Simple pub/sub for manager-to-manager events
-    │   └── Dispose.ts                    # traverse() + dispose() helper
+    ├── debug/                              # Dev-only tools and scene inspection
+    │   ├── Debug.ts                        # Global lil-gui manager
+    │   ├── DebugPerf.tsx                   # r3f-perf overlay mounted in Canvas
+    │   └── scene/
+    │       ├── DebugHelpers.tsx            # Grid + axes helpers shown in debug mode
+    │       └── DebugCameraControls.tsx     # Free debug camera for map inspection
     │
-    ├── App.tsx                             # Canvas + UI superimposed
+    ├── utils/
+    │   ├── EventEmitter.ts                 # Simple pub/sub for manager-to-manager events
+    │   └── Dispose.ts                      # traverse() + dispose() helper
+    │
+    ├── App.tsx                             # Canvas bootstrap
     └── main.tsx
 ```
 
@@ -116,7 +123,11 @@ npm run dev
 ```
 
 Open `http://localhost:5173` — standard experience.
-Open `http://localhost:5173?debug` — debug panel + r3f-perf overlay.
+Open `http://localhost:5173?debug` — debug panel + r3f-perf overlay + free debug camera.
+
+## 🧭 Conventions
+
+Coding conventions and generation rules live in `.agent/skills/best-practices.md`.
 
 ## 📜 License
 

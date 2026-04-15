@@ -11,7 +11,7 @@ http://localhost:5173?debug
 ## Debug singleton
 
 ```ts
-// src/utils/Debug.ts
+// src/debug/Debug.ts
 import GUI from "lil-gui";
 
 export class Debug {
@@ -56,14 +56,15 @@ if (debug.active) {
 r3f-perf is loaded only in debug mode to avoid dependency issues in production:
 
 ```tsx
-// src/components/3d/DebugPerf.tsx
+// src/debug/DebugPerf.tsx
 import { Suspense, lazy } from "react";
+import { Debug } from "@/debug/Debug";
 
 const Perf = lazy(() => import("r3f-perf").then((m) => ({ default: m.Perf })));
 
 export function DebugPerf() {
-  const debug = new URLSearchParams(window.location.search).has("debug");
-  if (!debug) return null;
+  const debug = Debug.getInstance();
+  if (!debug.active) return null;
 
   return (
     <Suspense fallback={null}>
