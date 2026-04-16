@@ -5,7 +5,7 @@ import { DebugHelpers } from "@/utils/debug/scene/DebugHelpers";
 import { Environment } from "@/world/Environment";
 import { Lighting } from "@/world/Lighting";
 import { Map } from "@/world/Map";
-import { FPSController } from "@/world/player/FPSController";
+import { PlayerComponent } from "@/world/player/PlayerComponent";
 
 export function World(): React.JSX.Element {
   const cameraMode = useCameraMode();
@@ -15,7 +15,7 @@ export function World(): React.JSX.Element {
       <Environment />
       <Lighting />
       <DebugHelpers />
-      {cameraMode === "debug" ? <DebugCameraControls /> : <FPSController />}
+      {cameraMode === "debug" ? <DebugCameraControls /> : <PlayerComponent />}
       <Suspense fallback={null}>
         <Map />
       </Suspense>
