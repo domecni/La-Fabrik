@@ -3,16 +3,29 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Capsule } from "three/addons/math/Capsule.js";
 import type { Octree } from "three/addons/math/Octree.js";
-import { InteractionManager } from "@/stateManager/InteractionManager";
 import {
-  PLAYER_EYE_HEIGHT,
+  INTERACT_KEY,
+  JUMP_KEY,
+  MOVE_BACKWARD_KEY,
+  MOVE_FORWARD_KEY,
+  MOVE_LEFT_KEY,
+  MOVE_RIGHT_KEY,
+  PRIMARY_INTERACT_MOUSE_BUTTON,
+} from "@/data/keybindings";
+import {
+  PLAYER_ACCELERATION_MULTIPLIER,
+  PLAYER_AIR_CONTROL_FACTOR,
   PLAYER_CAPSULE_RADIUS,
-} from "@/world/player/PlayerCamera";
-
-const WALK_SPEED = 11;
-const AIR_CONTROL = 0.35;
-const JUMP_SPEED = 9;
-const GRAVITY = 30;
+  PLAYER_EYE_HEIGHT,
+  PLAYER_GRAVITY,
+  PLAYER_JUMP_SPEED,
+  PLAYER_MAX_DELTA,
+  PLAYER_SPAWN_X,
+  PLAYER_SPAWN_Z,
+  PLAYER_WALK_SPEED,
+  PLAYER_XZ_DAMPING_FACTOR,
+} from "@/data/playerConfig";
+import { InteractionManager } from "@/stateManager/InteractionManager";
 
 type Keys = {
   forward: boolean;
@@ -60,11 +73,11 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
   useEffect(() => {
     const spawnY = camera.position.y;
     capsule.current.start.set(
-      0,
+      PLAYER_SPAWN_X,
       spawnY - PLAYER_EYE_HEIGHT + PLAYER_CAPSULE_RADIUS,
-      0,
+      PLAYER_SPAWN_Z,
     );
-    capsule.current.end.set(0, spawnY, 0);
+    capsule.current.end.set(PLAYER_SPAWN_X, spawnY, PLAYER_SPAWN_Z);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,22 +86,22 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
 
     const handleKeyDown = (event: KeyboardEvent): void => {
       switch (event.key.toLowerCase()) {
-        case "z":
+        case MOVE_FORWARD_KEY:
           keys.current.forward = true;
           break;
-        case "s":
+        case MOVE_BACKWARD_KEY:
           keys.current.backward = true;
           break;
-        case "q":
+        case MOVE_LEFT_KEY:
           keys.current.left = true;
           break;
-        case "d":
+        case MOVE_RIGHT_KEY:
           keys.current.right = true;
           break;
-        case " ":
+        case JUMP_KEY:
           wantsJump.current = true;
           break;
-        case "e":
+        case INTERACT_KEY:
           if (interaction.getState().focused?.kind === "trigger") {
             interaction.pressInteract();
           }
@@ -101,19 +114,19 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
 
     const handleKeyUp = (event: KeyboardEvent): void => {
       switch (event.key.toLowerCase()) {
-        case "z":
+        case MOVE_FORWARD_KEY:
           keys.current.forward = false;
           break;
-        case "s":
+        case MOVE_BACKWARD_KEY:
           keys.current.backward = false;
           break;
-        case "q":
+        case MOVE_LEFT_KEY:
           keys.current.left = false;
           break;
-        case "d":
+        case MOVE_RIGHT_KEY:
           keys.current.right = false;
           break;
-        case "e":
+        case INTERACT_KEY:
           if (interaction.getState().focused?.kind === "trigger") {
             interaction.releaseInteract();
           }
@@ -125,14 +138,14 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
     };
 
     const handleMouseDown = (event: MouseEvent): void => {
-      if (event.button !== 0) return;
+      if (event.button !== PRIMARY_INTERACT_MOUSE_BUTTON) return;
       if (interaction.getState().focused?.kind === "grab") {
         interaction.pressInteract();
       }
     };
 
     const handleMouseUp = (event: MouseEvent): void => {
-      if (event.button !== 0) return;
+      if (event.button !== PRIMARY_INTERACT_MOUSE_BUTTON) return;
       if (interaction.getState().holding) {
         interaction.releaseInteract();
       }
@@ -153,8 +166,7 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
   }, []);
 
   useFrame((_, delta) => {
-    // Clamp delta so physics don't explode on tab focus regain
-    const dt = Math.min(delta, 0.05);
+    const dt = Math.min(delta, PLAYER_MAX_DELTA);
 
     // Compute wish direction from camera yaw (XZ only)
     camera.getWorldDirection(_forward);
@@ -172,12 +184,15 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
     if (_wishDir.lengthSq() > 0) _wishDir.normalize();
 
     // Accelerate horizontally
-    const accel = onFloor.current ? WALK_SPEED : WALK_SPEED * AIR_CONTROL;
-    velocity.current.x += _wishDir.x * accel * dt * 9;
-    velocity.current.z += _wishDir.z * accel * dt * 9;
+    const accel = onFloor.current
+      ? PLAYER_WALK_SPEED
+      : PLAYER_WALK_SPEED * PLAYER_AIR_CONTROL_FACTOR;
+    velocity.current.x +=
+      _wishDir.x * accel * dt * PLAYER_ACCELERATION_MULTIPLIER;
+    velocity.current.z +=
+      _wishDir.z * accel * dt * PLAYER_ACCELERATION_MULTIPLIER;
 
-    // Exponential damping on XZ
-    const damping = Math.exp(-8 * dt);
+    const damping = Math.exp(-PLAYER_XZ_DAMPING_FACTOR * dt);
     velocity.current.x *= damping;
     velocity.current.z *= damping;
 
@@ -185,11 +200,11 @@ export function PlayerController({ octree }: PlayerControllerProps): null {
     if (onFloor.current) {
       velocity.current.y = Math.max(0, velocity.current.y);
       if (wantsJump.current) {
-        velocity.current.y = JUMP_SPEED;
+        velocity.current.y = PLAYER_JUMP_SPEED;
         onFloor.current = false;
       }
     } else {
-      velocity.current.y -= GRAVITY * dt;
+      velocity.current.y -= PLAYER_GRAVITY * dt;
     }
     wantsJump.current = false;
 

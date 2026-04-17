@@ -1,9 +1,13 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import type { RefObject } from "react";
+import {
+  INTERACTION_DEBUG_SPHERE_COLOR,
+  INTERACTION_DEBUG_SPHERE_OPACITY,
+  INTERACTION_DEBUG_SPHERE_SEGMENTS,
+} from "@/data/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import {
@@ -17,9 +21,7 @@ interface InteractableObjectProps {
   kind: InteractableKind;
   label: string;
   position: [number, number, number];
-  rigidBodyType?: "dynamic" | "fixed";
-  colliders?: "cuboid" | "ball" | "hull";
-  rbRef?: RefObject<RapierRigidBody | null>;
+  bodyRef?: RefObject<RapierRigidBody | null>;
   onPress: () => void;
   onRelease?: () => void;
   children: React.ReactNode;
@@ -34,16 +36,12 @@ export function InteractableObject({
   kind,
   label,
   position,
-  rigidBodyType = "dynamic",
-  colliders = "cuboid",
-  rbRef,
+  bodyRef,
   onPress,
   onRelease = () => {},
   children,
 }: InteractableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
-  const internalRef = useRef<RapierRigidBody>(null);
-  const bodyRef = rbRef ?? internalRef;
   const groupRef = useRef<THREE.Group>(null);
   const debugSphereRef = useRef<THREE.Mesh>(null);
 
@@ -67,7 +65,6 @@ export function InteractableObject({
   });
 
   useFrame(() => {
-    const body = bodyRef.current;
     const group = groupRef.current;
     const debug = Debug.getInstance();
     const manager = InteractionManager.getInstance();
@@ -77,8 +74,8 @@ export function InteractableObject({
         debug.active && debug.getShowInteractionSpheres();
     }
 
-    if (body) {
-      const t = body.translation();
+    if (bodyRef?.current) {
+      const t = bodyRef.current.translation();
       _objectPos.set(t.x, t.y, t.z);
     } else {
       _objectPos.set(...position);
@@ -99,7 +96,6 @@ export function InteractableObject({
     _raycaster.far = INTERACTION_RADIUS;
 
     const hits = group ? _raycaster.intersectObject(group, true) : [];
-
     const validHit = hits.find((h) => h.object !== debugSphereRef.current);
 
     if (validHit) {
@@ -110,24 +106,23 @@ export function InteractableObject({
   });
 
   return (
-    <RigidBody
-      ref={bodyRef}
-      type={rigidBodyType}
-      colliders={colliders}
-      position={position}
-    >
-      <group ref={groupRef}>
-        {children}
-        <mesh ref={debugSphereRef} visible={false}>
-          <sphereGeometry args={[INTERACTION_RADIUS, 16, 16]} />
-          <meshBasicMaterial
-            color="#facc15"
-            wireframe
-            transparent
-            opacity={0.25}
-          />
-        </mesh>
-      </group>
-    </RigidBody>
+    <group ref={groupRef}>
+      {children}
+      <mesh ref={debugSphereRef} visible={false}>
+        <sphereGeometry
+          args={[
+            INTERACTION_RADIUS,
+            INTERACTION_DEBUG_SPHERE_SEGMENTS,
+            INTERACTION_DEBUG_SPHERE_SEGMENTS,
+          ]}
+        />
+        <meshBasicMaterial
+          color={INTERACTION_DEBUG_SPHERE_COLOR}
+          wireframe
+          transparent
+          opacity={INTERACTION_DEBUG_SPHERE_OPACITY}
+        />
+      </mesh>
+    </group>
   );
 }

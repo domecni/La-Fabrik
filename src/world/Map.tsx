@@ -3,6 +3,7 @@ import { useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { Octree } from "three/addons/math/Octree.js";
+import { MAP_DEBUG_BOX_HELPER_COLOR } from "@/data/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 
 const MAP_PATH = "/models/map/model.gltf";
@@ -38,7 +39,7 @@ export function Map({ onOctreeReady }: MapProps): React.JSX.Element {
 
     groupRef.current.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
-      const helper = new THREE.BoxHelper(child, 0x00ff88);
+      const helper = new THREE.BoxHelper(child, MAP_DEBUG_BOX_HELPER_COLOR);
       scene.add(helper);
       helpers.push(helper);
     });

@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
 import type { Octree } from "three/addons/math/Octree.js";
+import {
+  PLAYER_SPAWN_Y_GAME,
+  PLAYER_SPAWN_Y_PHYSICS,
+} from "@/data/playerConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { DebugCameraControls } from "@/utils/debug/scene/DebugCameraControls";
@@ -32,7 +36,9 @@ export function World(): React.JSX.Element {
       {cameraMode !== "debug" ? (
         <PlayerComponent
           octree={octree}
-          spawnY={sceneMode === "game" ? 100 : 3}
+          spawnY={
+            sceneMode === "game" ? PLAYER_SPAWN_Y_GAME : PLAYER_SPAWN_Y_PHYSICS
+          }
         />
       ) : null}
     </>
