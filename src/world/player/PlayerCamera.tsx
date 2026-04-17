@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { PointerLockControls } from "@react-three/drei";
 
 export const PLAYER_EYE_HEIGHT = 1.75;
+export const PLAYER_CAPSULE_RADIUS = 0.35;
 
 export function PlayerCamera(): React.JSX.Element {
   useEffect(() => {

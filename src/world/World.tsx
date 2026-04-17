@@ -1,15 +1,20 @@
-import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
+import { useState, useCallback } from "react";
+import type { Octree } from "three/addons/math/Octree.js";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
+import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { DebugCameraControls } from "@/utils/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/utils/debug/scene/DebugHelpers";
 import { Environment } from "@/world/Environment";
 import { Lighting } from "@/world/Lighting";
-import { GrabCube } from "@/world/objects/GrabCube";
-import { TriggerSphere } from "@/world/objects/TriggerSphere";
+import { Map } from "@/world/Map";
 import { PlayerComponent } from "@/world/player/PlayerComponent";
+import { TestScene } from "@/world/debug/TestScene";
 
 export function World(): React.JSX.Element {
   const cameraMode = useCameraMode();
+  const sceneMode = useSceneMode();
+  const [octree, setOctree] = useState<Octree | null>(null);
+  const onOctreeReady = useCallback((o: Octree) => setOctree(o), []);
 
   return (
     <>
@@ -17,14 +22,19 @@ export function World(): React.JSX.Element {
       <Lighting />
       <DebugHelpers />
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
-      <Physics>
-        <RigidBody type="fixed">
-          <CuboidCollider args={[50, 0.1, 50]} position={[0, -0.1, 0]} />
-        </RigidBody>
-        <GrabCube />
-        <TriggerSphere />
-        {cameraMode === "debug" ? null : <PlayerComponent />}
-      </Physics>
+
+      {sceneMode === "game" ? (
+        <Map onOctreeReady={onOctreeReady} />
+      ) : (
+        <TestScene onOctreeReady={onOctreeReady} />
+      )}
+
+      {cameraMode !== "debug" ? (
+        <PlayerComponent
+          octree={octree}
+          spawnY={sceneMode === "game" ? 100 : 3}
+        />
+      ) : null}
     </>
   );
 }

@@ -1,5 +1,5 @@
 import GUI from "lil-gui";
-import type { CameraMode } from "@/types/debug";
+import type { CameraMode, SceneMode } from "@/types/debug";
 
 export class Debug {
   private static instance: Debug | null = null;
@@ -12,9 +12,11 @@ export class Debug {
   private readonly controls: {
     cameraMode: CameraMode;
     showInteractionSpheres: boolean;
+    sceneMode: SceneMode;
   } = {
     cameraMode: "player",
     showInteractionSpheres: false,
+    sceneMode: "game",
   };
 
   static getInstance(): Debug {
@@ -39,6 +41,14 @@ export class Debug {
         .name("Camera Mode")
         .onChange((value: CameraMode) => {
           this.controls.cameraMode = value;
+          this.emit();
+        });
+
+      folder
+        .add(this.controls, "sceneMode", { Game: "game", Physics: "physics" })
+        .name("Scene")
+        .onChange((value: SceneMode) => {
+          this.controls.sceneMode = value;
           this.emit();
         });
 
@@ -84,6 +94,10 @@ export class Debug {
 
   getCameraMode(): CameraMode {
     return this.controls.cameraMode;
+  }
+
+  getSceneMode(): SceneMode {
+    return this.controls.sceneMode;
   }
 
   getShowInteractionSpheres(): boolean {
