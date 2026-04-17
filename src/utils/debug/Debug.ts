@@ -7,7 +7,7 @@ export class Debug {
   public readonly active: boolean;
   private readonly gui: GUI | null;
   private readonly folders = new Map<string, GUI>();
-  private readonly registeredFolders = new Set<string>();
+  private readonly folderRefCounts = new Map<string, number>();
   private readonly listeners = new Set<() => void>();
   private readonly controls: {
     cameraMode: CameraMode;
@@ -63,25 +63,39 @@ export class Debug {
   }
 
   /**
-   * Creates a named GUI folder. Returns the folder on first call, null on
-   * subsequent calls with the same name — callers should skip `.add()` when
-   * null is returned to avoid duplicating controls under StrictMode double-mount.
+   * Acquires a named GUI folder. Returns the folder on first acquisition and null
+   * on subsequent acquisitions so callers only register controls once.
    */
   createFolder(name: string): GUI | null {
     if (!this.gui) return null;
 
-    if (this.registeredFolders.has(name)) return null;
-
-    this.registeredFolders.add(name);
-
     const existing = this.folders.get(name);
 
-    if (existing) return existing;
+    if (existing) {
+      this.folderRefCounts.set(name, (this.folderRefCounts.get(name) ?? 0) + 1);
+      return null;
+    }
 
     const folder = this.gui.addFolder(name);
     this.folders.set(name, folder);
+    this.folderRefCounts.set(name, 1);
 
     return folder;
+  }
+
+  destroyFolder(name: string): void {
+    const folder = this.folders.get(name);
+    const refCount = this.folderRefCounts.get(name);
+    if (!folder || refCount === undefined) return;
+
+    if (refCount > 1) {
+      this.folderRefCounts.set(name, refCount - 1);
+      return;
+    }
+
+    folder.destroy();
+    this.folders.delete(name);
+    this.folderRefCounts.delete(name);
   }
 
   subscribe(listener: () => void): () => void {

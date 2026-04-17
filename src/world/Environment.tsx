@@ -1,16 +1,9 @@
-import * as THREE from "three";
-import { useLoader } from "@react-three/fiber";
+import { Environment as DreiEnvironment } from "@react-three/drei";
 import {
+  GAME_SCENE_SKYBOX_PATH,
   PHYSICS_SCENE_BACKGROUND_COLOR,
-  SKYBOX_FACES,
 } from "@/data/environmentConfig";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
-
-function SkyBox(): React.JSX.Element {
-  const texture = useLoader(THREE.CubeTextureLoader, [...SKYBOX_FACES]);
-
-  return <primitive attach="background" object={texture} />;
-}
 
 export function Environment(): React.JSX.Element {
   const sceneMode = useSceneMode();
@@ -21,5 +14,5 @@ export function Environment(): React.JSX.Element {
     );
   }
 
-  return <SkyBox />;
+  return <DreiEnvironment background files={GAME_SCENE_SKYBOX_PATH} />;
 }

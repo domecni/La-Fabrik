@@ -39,12 +39,8 @@ export class InteractionManager {
 
   setFocused(handle: InteractableHandle | null): void {
     if (this._focused === handle) return;
-    // Never interrupt an active grab via focus change
-    if (this._holding) {
-      this._focused = handle;
-      this._emit();
-      return;
-    }
+    if (this._holding) return;
+
     this._focused = handle;
     this._emit();
   }
@@ -59,7 +55,7 @@ export class InteractionManager {
   }
 
   releaseInteract(): void {
-    const handle = this._holdingHandle ?? this._focused;
+    const handle = this._holding ? this._holdingHandle : null;
     if (!handle) return;
 
     handle.onRelease();
@@ -77,6 +73,9 @@ export class InteractionManager {
   }
 
   destroy(): void {
+    this._focused = null;
+    this._holding = false;
+    this._holdingHandle = null;
     this._listeners.clear();
     InteractionManager._instance = null;
   }

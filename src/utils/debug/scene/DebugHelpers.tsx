@@ -1,3 +1,11 @@
+import {
+  DEBUG_AXES_SIZE,
+  DEBUG_GRID_DIVISIONS,
+  DEBUG_GRID_PRIMARY_COLOR,
+  DEBUG_GRID_SECONDARY_COLOR,
+  DEBUG_GRID_SIZE,
+  DEBUG_GRID_Y,
+} from "@/data/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 
 export function DebugHelpers(): React.JSX.Element | null {
@@ -10,10 +18,15 @@ export function DebugHelpers(): React.JSX.Element | null {
   return (
     <>
       <gridHelper
-        args={[180, 36, "#1d4ed8", "#1e293b"]}
-        position={[0, 0.01, 0]}
+        args={[
+          DEBUG_GRID_SIZE,
+          DEBUG_GRID_DIVISIONS,
+          DEBUG_GRID_PRIMARY_COLOR,
+          DEBUG_GRID_SECONDARY_COLOR,
+        ]}
+        position={[0, DEBUG_GRID_Y, 0]}
       />
-      <axesHelper args={[10]} />
+      <axesHelper args={[DEBUG_AXES_SIZE]} />
     </>
   );
 }

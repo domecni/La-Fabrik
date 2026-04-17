@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import { InteractableObject } from "@/components/3d/InteractableObject";
@@ -50,7 +50,6 @@ export function TriggerObject({
   spawnOffset = TRIGGER_DEFAULT_SPAWN_OFFSET,
 }: TriggerObjectProps): React.JSX.Element {
   const [spawned, setSpawned] = useState<SpawnedModel[]>([]);
-  const positionRef = useRef(position);
 
   return (
     <>
@@ -66,9 +65,9 @@ export function TriggerObject({
 
             if (spawnModel) {
               const spawnPos: [number, number, number] = [
-                positionRef.current[0] + spawnOffset[0],
-                positionRef.current[1] + spawnOffset[1],
-                positionRef.current[2] + spawnOffset[2],
+                position[0] + spawnOffset[0],
+                position[1] + spawnOffset[1],
+                position[2] + spawnOffset[2],
               ];
               setSpawned((prev) => [
                 ...prev,

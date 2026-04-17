@@ -3,3 +3,14 @@ export const INTERACTION_DEBUG_SPHERE_COLOR = "#facc15";
 export const INTERACTION_DEBUG_SPHERE_OPACITY = 0.25;
 
 export const MAP_DEBUG_BOX_HELPER_COLOR = 0x00ff88;
+
+export const DEBUG_CAMERA_DAMPING_FACTOR = 0.05;
+export const DEBUG_CAMERA_MIN_DISTANCE = 100;
+export const DEBUG_CAMERA_MAX_DISTANCE = 1000;
+
+export const DEBUG_GRID_SIZE = 180;
+export const DEBUG_GRID_DIVISIONS = 36;
+export const DEBUG_GRID_PRIMARY_COLOR = "#1d4ed8";
+export const DEBUG_GRID_SECONDARY_COLOR = "#1e293b";
+export const DEBUG_GRID_Y = 0.01;
+export const DEBUG_AXES_SIZE = 10;
