@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { InteractionManager } from "@/stateManager/InteractionManager";
 import { PLAYER_EYE_HEIGHT } from "@/world/player/PlayerCamera";
 
 const MOVE_SPEED = 5;
@@ -35,41 +36,89 @@ export function PlayerController(): null {
   const up = useRef(new THREE.Vector3(0, 1, 0));
 
   useEffect(() => {
-    const handleKeyChange =
-      (pressed: boolean) =>
-      (event: KeyboardEvent): void => {
-        switch (event.key.toLowerCase()) {
-          case "z":
-            keys.current.forward = pressed;
-            break;
-          case "s":
-            keys.current.backward = pressed;
-            break;
-          case "q":
-            keys.current.left = pressed;
-            break;
-          case "d":
-            keys.current.right = pressed;
-            break;
-          case " ":
-            if (pressed) keys.current.jump = true;
-            break;
-          default:
-            return;
-        }
+    const interaction = InteractionManager.getInstance();
 
-        event.preventDefault();
-      };
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      switch (event.key.toLowerCase()) {
+        case "z":
+          keys.current.forward = true;
+          break;
+        case "s":
+          keys.current.backward = true;
+          break;
+        case "q":
+          keys.current.left = true;
+          break;
+        case "d":
+          keys.current.right = true;
+          break;
+        case " ":
+          keys.current.jump = true;
+          break;
+        case "e":
+          if (interaction.getState().focused?.kind === "trigger") {
+            interaction.pressInteract();
+          }
+          break;
+        default:
+          return;
+      }
 
-    const handleKeyDown = handleKeyChange(true);
-    const handleKeyUp = handleKeyChange(false);
+      event.preventDefault();
+    };
+
+    const handleKeyUp = (event: KeyboardEvent): void => {
+      switch (event.key.toLowerCase()) {
+        case "z":
+          keys.current.forward = false;
+          break;
+        case "s":
+          keys.current.backward = false;
+          break;
+        case "q":
+          keys.current.left = false;
+          break;
+        case "d":
+          keys.current.right = false;
+          break;
+        case "e":
+          if (interaction.getState().focused?.kind === "trigger") {
+            interaction.releaseInteract();
+          }
+          break;
+        default:
+          return;
+      }
+
+      event.preventDefault();
+    };
+
+    const handleMouseDown = (event: MouseEvent): void => {
+      if (event.button !== 0) return;
+
+      if (interaction.getState().focused?.kind === "grab") {
+        interaction.pressInteract();
+      }
+    };
+
+    const handleMouseUp = (event: MouseEvent): void => {
+      if (event.button !== 0) return;
+
+      if (interaction.getState().holding) {
+        interaction.releaseInteract();
+      }
+    };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mouseup", handleMouseUp);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mouseup", handleMouseUp);
       keys.current = { ...DEFAULT_KEYS };
     };
   }, []);

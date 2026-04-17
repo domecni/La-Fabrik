@@ -1,5 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { Crosshair } from "@/components/ui/Crosshair";
+import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { DebugPerf } from "@/utils/debug/DebugPerf";
 import { World } from "@/world/World";
 
@@ -11,6 +12,7 @@ function App(): React.JSX.Element {
         <DebugPerf />
       </Canvas>
       <Crosshair />
+      <InteractPrompt />
     </>
   );
 }

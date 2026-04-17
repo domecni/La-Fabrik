@@ -6,7 +6,7 @@ export const PLAYER_EYE_HEIGHT = 1.75;
 export function PlayerCamera(): React.JSX.Element {
   useEffect(() => {
     return () => {
-      document.exitPointerLock?.();
+      document.exitPointerLock();
     };
   }, []);
 

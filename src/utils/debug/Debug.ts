@@ -9,8 +9,12 @@ export class Debug {
   private readonly folders = new Map<string, GUI>();
   private readonly registeredFolders = new Set<string>();
   private readonly listeners = new Set<() => void>();
-  private readonly controls: { cameraMode: CameraMode } = {
+  private readonly controls: {
+    cameraMode: CameraMode;
+    showInteractionSpheres: boolean;
+  } = {
     cameraMode: "player",
+    showInteractionSpheres: false,
   };
 
   static getInstance(): Debug {
@@ -28,15 +32,21 @@ export class Debug {
     if (this.gui) {
       const folder = this.createFolder("Debug");
 
-      if (!folder) {
-        return;
-      }
+      if (!folder) return;
 
       folder
         .add(this.controls, "cameraMode", { Player: "player", Debug: "debug" })
         .name("Camera Mode")
         .onChange((value: CameraMode) => {
           this.controls.cameraMode = value;
+          this.emit();
+        });
+
+      folder
+        .add(this.controls, "showInteractionSpheres")
+        .name("Interaction Spheres")
+        .onChange((value: boolean) => {
+          this.controls.showInteractionSpheres = value;
           this.emit();
         });
     }
@@ -48,21 +58,15 @@ export class Debug {
    * null is returned to avoid duplicating controls under StrictMode double-mount.
    */
   createFolder(name: string): GUI | null {
-    if (!this.gui) {
-      return null;
-    }
+    if (!this.gui) return null;
 
-    if (this.registeredFolders.has(name)) {
-      return null;
-    }
+    if (this.registeredFolders.has(name)) return null;
 
     this.registeredFolders.add(name);
 
-    const existingFolder = this.folders.get(name);
+    const existing = this.folders.get(name);
 
-    if (existingFolder) {
-      return existingFolder;
-    }
+    if (existing) return existing;
 
     const folder = this.gui.addFolder(name);
     this.folders.set(name, folder);
@@ -80,6 +84,10 @@ export class Debug {
 
   getCameraMode(): CameraMode {
     return this.controls.cameraMode;
+  }
+
+  getShowInteractionSpheres(): boolean {
+    return this.controls.showInteractionSpheres;
   }
 
   private emit(): void {
