@@ -145,6 +145,28 @@ export function EditorPage(): React.JSX.Element {
     }
   }, [applySnapshot]);
 
+  const handleSaveToServer = useCallback(async () => {
+    if (!sceneData) return;
+    const json = JSON.stringify(sceneData.mapNodes, null, 2);
+    
+    try {
+      const response = await fetch("/api/save-map", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: json,
+      });
+      
+      if (response.ok) {
+        alert("Map enregistrée avec succès!");
+      } else {
+        alert("Erreur lors de l'enregistrement");
+      }
+    } catch (err) {
+      console.error("Error saving map:", err);
+      alert("Erreur lors de l'enregistrement");
+    }
+  }, [sceneData]);
+
   const handleExportJson = useCallback(() => {
     if (!sceneData) return;
     const json = JSON.stringify(sceneData.mapNodes, null, 2);
@@ -406,6 +428,7 @@ export function EditorPage(): React.JSX.Element {
           onUndo={handleUndo}
           onRedo={handleRedo}
           onExportJson={handleExportJson}
+          onSaveToServer={handleSaveToServer}
           onResetCamera={handleResetCamera}
           onPlayerMode={handlePlayerMode}
           isPlayerMode={isPlayerMode}

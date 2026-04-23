@@ -11,6 +11,7 @@ interface EditorControlsProps {
   onUndo: () => void;
   onRedo: () => void;
   onExportJson: () => void;
+  onSaveToServer?: () => void;
   onResetCamera?: () => void;
   onPlayerMode?: () => void;
   isPlayerMode?: boolean;
@@ -27,6 +28,7 @@ export default function EditorControls({
   onUndo,
   onRedo,
   onExportJson,
+  onSaveToServer,
   onResetCamera,
   onPlayerMode,
   isPlayerMode,
@@ -88,6 +90,12 @@ export default function EditorControls({
         <button className="export-button" onClick={onExportJson}>
           💾 Export JSON
         </button>
+
+        {onSaveToServer && (
+          <button className="save-button" onClick={onSaveToServer}>
+            💾 Save to Server
+          </button>
+        )}
 
         <h3>View</h3>
 

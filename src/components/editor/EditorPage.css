@@ -236,6 +236,23 @@ code {
   background: #ff8533;
 }
 
+.save-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.save-button:hover {
+  background: #16a34a;
+}
+
 .reset-button {
   width: 100%;
   padding: 12px;
