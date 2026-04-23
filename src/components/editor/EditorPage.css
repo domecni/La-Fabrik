@@ -1,0 +1,318 @@
+.editor-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.editor-loading,
+.editor-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: white;
+  text-align: center;
+  padding: 2rem;
+}
+
+.editor-loading h2 {
+  font-size: 2rem;
+  color: #ff6600;
+  margin-bottom: 1rem;
+}
+
+.editor-loading p {
+  font-size: 1rem;
+  color: #aaa;
+}
+
+.editor-error h2 {
+  font-size: 1.8rem;
+  color: #ff4444;
+  margin-bottom: 1rem;
+}
+
+.editor-error p {
+  font-size: 1.1rem;
+  color: #ccc;
+  margin-bottom: 2rem;
+  max-width: 600px;
+}
+
+.upload-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 2px dashed rgba(255, 102, 0, 0.3);
+  max-width: 500px;
+  margin-top: 2rem;
+}
+
+.upload-section h3 {
+  color: #ff6600;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.drop-zone {
+  display: block;
+  width: 100%;
+  padding: 2rem 1rem;
+  border: 2px dashed #ff6600;
+  border-radius: 8px;
+  background: rgba(255, 102, 0, 0.1);
+  color: #ff6600;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.drop-zone:hover {
+  background: rgba(255, 102, 0, 0.2);
+  border-color: #ff8533;
+}
+
+.folder-input {
+  display: none;
+}
+
+.folder-structure {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.folder-structure h4 {
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.folder-structure pre {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+  border-radius: 6px;
+  color: #ddd;
+  font-family: "Courier New", monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+code {
+  background: rgba(255, 102, 0, 0.2);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #ff8533;
+  font-family: "Courier New", monospace;
+}
+
+@media (max-width: 768px) {
+  .editor-error h2 {
+    font-size: 1.5rem;
+  }
+
+  .upload-section {
+    padding: 1.5rem;
+  }
+
+  .drop-zone {
+    padding: 1.5rem 1rem;
+  }
+}
+
+/* Editor Controls Styles */
+.editor-camera-info {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 10px 15px;
+  border-radius: 4px;
+  border: 1px solid #00ff00;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.editor-controls-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 250px;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.95);
+  padding: 20px;
+  color: white;
+  border-left: 2px solid #ff6600;
+  overflow-y: auto;
+  font-family: system-ui, sans-serif;
+}
+
+.editor-controls-panel h3 {
+  margin-top: 20px;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #ff6600;
+}
+
+.transform-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transform-button {
+  padding: 12px;
+  background: #333;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.transform-button.active {
+  background: #ff6600;
+  color: black;
+  border-color: #ff6600;
+}
+
+.transform-button:hover {
+  background: #444;
+}
+
+.transform-button.active:hover {
+  background: #ff8533;
+}
+
+.history-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.history-button {
+  flex: 1;
+  padding: 8px;
+  background: #333;
+  color: #aaa;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.history-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.export-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: #ff6600;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.export-button:hover {
+  background: #ff8533;
+}
+
+.reset-button {
+  width: 100%;
+  padding: 12px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.reset-button:hover {
+  background: #555;
+}
+
+.player-button {
+  width: 100%;
+  padding: 12px;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.player-button.active {
+  background: #ff6600;
+  color: black;
+}
+
+.player-button:hover {
+  background: #555;
+}
+
+.player-button.active:hover {
+  background: #ff8533;
+}
+
+.selected-info {
+  background: rgba(255, 102, 0, 0.1);
+  border: 1px solid #ff6600;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.selected-name {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.selected-index {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.no-selection {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed #555;
+  border-radius: 6px;
+  padding: 15px;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.controls-help {
+  background: #222;
+  border-radius: 6px;
+  padding: 15px;
+  border: 1px solid #444;
+}
+
+.controls-help p {
+  margin: 4px 0;
+  font-size: 12px;
+  color: #aaa;
+}

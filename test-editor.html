@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>La-Fabrik Editor - Test Page</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .links {
+        display: flex;
+        gap: 20px;
+        margin: 30px 0;
+      }
+      .link {
+        padding: 15px 30px;
+        background: #ff6600;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: background 0.2s;
+      }
+      .link:hover {
+        background: #ff8533;
+      }
+      .info {
+        background: #f0f0f0;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      code {
+        background: #e0e0e0;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>La-Fabrik Editor Integration</h1>
+
+    <div class="info">
+      <h3>✅ Integration Status: COMPLETED</h3>
+      <p>
+        L'éditeur est maintenant intégré à la route <code>/editor</code> du
+        projet La-Fabrik.
+      </p>
+    </div>
+
+    <div class="links">
+      <a href="http://localhost:5176/" class="link">🎮 Jouer au jeu</a>
+      <a href="http://localhost:5176/editor" class="link"
+        >✏️ Ouvrir l'éditeur</a
+      >
+    </div>
+
+    <h2>Fonctionnalités de l'éditeur</h2>
+    <ul>
+      <li>
+        <strong>Routing React</strong> : React Router pour naviguer entre jeu et
+        éditeur
+      </li>
+      <li>
+        <strong>Chargement automatique</strong> : Recherche de
+        <code>map.json</code> dans <code>public/</code>
+      </li>
+      <li>
+        <strong>Upload de dossier</strong> : Si pas de map.json, possibilité
+        d'upload
+      </li>
+      <li>
+        <strong>Visualisation 3D</strong> : Canvas Three.js avec SceneData
+      </li>
+      <li>
+        <strong>Control de caméra</strong> :
+        <ul>
+          <li>Mode debug : OrbitControls (rotation/pan/zoom)</li>
+          <li>Mode player : FPS controller custom (WASD/ZQSD + souris)</li>
+        </ul>
+      </li>
+      <li><strong>Sélection d'objets</strong> : Click sur cubes/modèles</li>
+      <li><strong>Transformations</strong> : Panneau avec boutons T/R/S</li>
+      <li><strong>Undo/Redo</strong> : Ctrl+Z / Ctrl+Y (compte affiché)</li>
+      <li>
+        <strong>Export JSON</strong> : Bouton pour exporter map.json modifié
+      </li>
+    </ul>
+
+    <h2>Structure de fichiers</h2>
+    <pre>
+src/components/editor/
+├── EditorPage.tsx         # Page route /editor
+├── EditorViewer.tsx      # Composant principal 3D
+├── EditorCamera.tsx      # Caméra (OrbitControls + useCameraMode)
+├── EditorFPSController.tsx # Controller FPS custom
+├── MapViewer.tsx         # Visualisation map.json + modèles
+├── EditorControls.tsx    # Panneau latéral UI
+├── types.ts              # Types MapNode, SceneData, etc.
+└── EditorPage.css        # Styles scoped
+    </pre>
+
+    <h2>À tester</h2>
+    <ol>
+      <li>
+        Accéder à <code>/editor</code> - devrait montrer erreur "map.json
+        introuvable"
+      </li>
+      <li>Uploader un dossier test avec map.json + models/</li>
+      <li>Tester la visualisation 3D (cubes de test existent dans map.json)</li>
+      <li>Tester le mode player (WASD + souris)</li>
+      <li>Tester les transformations T/R/S</li>
+      <li>Tester Undo/Redo (Ctrl+Z / Ctrl+Y)</li>
+      <li>Tester export JSON (bouton "Export JSON")</li>
+      <li>Naviguer vers <code>/</code> - retour au jeu original</li>
+    </ol>
+  </body>
+</html>
