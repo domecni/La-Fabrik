@@ -1,4 +1,12 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useRef,
+  Suspense,
+  Component,
+  type ReactNode,
+} from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
@@ -15,6 +23,31 @@ interface MapNode {
 const MAP_JSON_PATH = "/map.json";
 
 const clonedScenesCache = new Map<string, THREE.Group>();
+
+class GameMapErrorBoundary extends Component<
+  { children: ReactNode; fallback?: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
+    console.warn("GameMap model loading error:", error.message);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
 
 interface GameMapProps {
   onOctreeReady: OctreeReadyHandler;
@@ -50,7 +83,8 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
           try {
             const modelUrl = `/models/${modelName}/model.gltf`;
             const modelResponse = await fetch(modelUrl);
-            if (modelResponse.ok) {
+            const contentType = modelResponse.headers.get("content-type") || "";
+            if (contentType.includes("gltf") || contentType.includes("model")) {
               available.add(modelName);
             }
           } catch {
@@ -79,7 +113,11 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
   return (
     <group ref={groupRef}>
       {nodesToRender.map((node, index) => (
-        <ModelInstance key={index} node={node} />
+        <GameMapErrorBoundary key={index} fallback={null}>
+          <Suspense fallback={null}>
+            <ModelInstance node={node} />
+          </Suspense>
+        </GameMapErrorBoundary>
       ))}
     </group>
   );
