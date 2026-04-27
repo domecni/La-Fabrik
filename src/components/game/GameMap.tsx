@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useState,
-  useMemo,
-  useRef,
-  Suspense,
-  Component,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
@@ -21,33 +13,6 @@ interface MapNode {
 }
 
 const MAP_JSON_PATH = "/map.json";
-
-const clonedScenesCache = new Map<string, THREE.Group>();
-
-class GameMapErrorBoundary extends Component<
-  { children: ReactNode; fallback?: ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
-    console.warn("GameMap model loading error:", error.message);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback || null;
-    }
-    return this.props.children;
-  }
-}
 
 interface GameMapProps {
   onOctreeReady: OctreeReadyHandler;
@@ -113,11 +78,7 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
   return (
     <group ref={groupRef}>
       {nodesToRender.map((node, index) => (
-        <GameMapErrorBoundary key={index} fallback={null}>
-          <Suspense fallback={null}>
-            <ModelInstance node={node} />
-          </Suspense>
-        </GameMapErrorBoundary>
+        <ModelInstance key={index} node={node} />
       ))}
     </group>
   );
@@ -125,26 +86,34 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
 
 function ModelInstance({ node }: { node: MapNode }): React.JSX.Element {
   const modelPath = `/models/${node.name}/model.gltf`;
+  const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(modelPath);
 
-  const groupRef = useRef<THREE.Group>(null);
-
-  const clonedScene = useMemo(() => {
-    if (!clonedScenesCache.has(modelPath)) {
-      const clone = scene.clone(true);
-      clonedScenesCache.set(modelPath, clone);
-      return clone;
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(...node.position);
+      groupRef.current.rotation.set(...node.rotation);
+      groupRef.current.scale.set(...node.scale);
     }
-    return clonedScenesCache.get(modelPath)!;
-  }, [modelPath, scene]);
+  }, [
+    node.position[0],
+    node.position[1],
+    node.position[2],
+    node.rotation[0],
+    node.rotation[1],
+    node.rotation[2],
+    node.scale[0],
+    node.scale[1],
+    node.scale[2],
+  ]);
 
-  const instance = useMemo(() => {
-    const inst = clonedScene.clone(true);
-    inst.position.set(...node.position);
-    inst.rotation.set(...node.rotation);
-    inst.scale.set(...node.scale);
-    return inst;
-  }, [clonedScene, node.position, node.rotation, node.scale]);
-
-  return <primitive ref={groupRef} object={instance} />;
+  return (
+    <primitive
+      ref={groupRef}
+      object={scene}
+      position={node.position}
+      rotation={node.rotation}
+      scale={node.scale}
+    />
+  );
 }

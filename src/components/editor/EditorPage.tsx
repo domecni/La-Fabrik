@@ -282,8 +282,35 @@ export function EditorPage(): React.JSX.Element {
           try {
             const modelUrl = `/models/${modelName}/model.gltf`;
             const modelResponse = await fetch(modelUrl);
+
             if (modelResponse.ok) {
-              models.set(modelName, modelUrl);
+              const contentType =
+                modelResponse.headers.get("content-type") || "";
+
+              if (
+                contentType.includes("gltf") ||
+                contentType.includes("json") ||
+                contentType.includes("model")
+              ) {
+                const text = await modelResponse.text();
+                if (
+                  text.includes('"glTF"') ||
+                  text.includes('"scene"') ||
+                  text.includes('"nodes"')
+                ) {
+                  models.set(modelName, modelUrl);
+                } else {
+                  console.warn(
+                    `Invalid GLTF content for ${modelName}:`,
+                    text.substring(0, 100),
+                  );
+                }
+              } else {
+                console.warn(
+                  `Invalid Content-Type for ${modelName}:`,
+                  contentType,
+                );
+              }
             }
           } catch {
             /* empty */
