@@ -15,10 +15,10 @@ function App(): React.JSX.Element {
         element={
           <>
             <Canvas camera={{ position: [85, 60, 85], fov: 42 }} shadows>
-               <Suspense fallback={null}>
-                  <World />
-                  <DebugPerf />
-                </Suspense>
+              <Suspense fallback={null}>
+                <World />
+                <DebugPerf />
+              </Suspense>
             </Canvas>
             <Crosshair />
             <InteractPrompt />

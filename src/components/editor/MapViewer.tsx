@@ -92,9 +92,9 @@ export default function MapViewer({
       <axesHelper args={[10]} />
 
       <group
-onClick={(e) => {
-        e.stopPropagation();
-        if (!(window as any).isTransforming) {
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!(window as any).isTransforming) {
             onSelectNode(null);
           }
         }}

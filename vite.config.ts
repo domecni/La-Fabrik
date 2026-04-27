@@ -12,7 +12,7 @@ const saveMapPlugin = () => ({
         res.writeHead(405).end();
         return;
       }
-      
+
       let body = "";
       req.on("data", (chunk: any) => (body += chunk));
       req.on("end", () => {

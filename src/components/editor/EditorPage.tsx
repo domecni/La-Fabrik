@@ -107,25 +107,40 @@ export function EditorPage(): React.JSX.Element {
     setTransformMode(mode);
   }, []);
 
-  const applySnapshot = useCallback((snapshot: ObjectTransform[]) => {
-    if (!sceneData) return;
-    setSceneData((prev) => {
-      if (!prev) return null;
-      const newMapNodes = prev.mapNodes.map((node, index) => {
-        const transform = snapshot.find((s) => s.uuid === `node-${index}`);
-        if (transform) {
-          return {
-            ...node,
-            position: [transform.position.x, transform.position.y, transform.position.z] as [number, number, number],
-            rotation: [transform.rotation.x, transform.rotation.y, transform.rotation.z] as [number, number, number],
-            scale: [transform.scale.x, transform.scale.y, transform.scale.z] as [number, number, number],
-          };
-        }
-        return node;
+  const applySnapshot = useCallback(
+    (snapshot: ObjectTransform[]) => {
+      if (!sceneData) return;
+      setSceneData((prev) => {
+        if (!prev) return null;
+        const newMapNodes = prev.mapNodes.map((node, index) => {
+          const transform = snapshot.find((s) => s.uuid === `node-${index}`);
+          if (transform) {
+            return {
+              ...node,
+              position: [
+                transform.position.x,
+                transform.position.y,
+                transform.position.z,
+              ] as [number, number, number],
+              rotation: [
+                transform.rotation.x,
+                transform.rotation.y,
+                transform.rotation.z,
+              ] as [number, number, number],
+              scale: [
+                transform.scale.x,
+                transform.scale.y,
+                transform.scale.z,
+              ] as [number, number, number],
+            };
+          }
+          return node;
+        });
+        return { ...prev, mapNodes: newMapNodes };
       });
-      return { ...prev, mapNodes: newMapNodes };
-    });
-  }, [sceneData]);
+    },
+    [sceneData],
+  );
 
   const handleUndo = useCallback(() => {
     const snapshot = historyManager.current.undo();
@@ -148,14 +163,14 @@ export function EditorPage(): React.JSX.Element {
   const handleSaveToServer = useCallback(async () => {
     if (!sceneData) return;
     const json = JSON.stringify(sceneData.mapNodes, null, 2);
-    
+
     try {
       const response = await fetch("/api/save-map", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: json,
       });
-      
+
       if (response.ok) {
         alert("Map enregistrée avec succès!");
       } else {
@@ -192,8 +207,16 @@ export function EditorPage(): React.JSX.Element {
     if (!sceneData) return;
     const snapshot = sceneData.mapNodes.map((node, index) => ({
       uuid: `node-${index}`,
-      position: { x: node.position[0], y: node.position[1], z: node.position[2] },
-      rotation: { x: node.rotation[0], y: node.rotation[1], z: node.rotation[2] },
+      position: {
+        x: node.position[0],
+        y: node.position[1],
+        z: node.position[2],
+      },
+      rotation: {
+        x: node.rotation[0],
+        y: node.rotation[1],
+        z: node.rotation[2],
+      },
       scale: { x: node.scale[0], y: node.scale[1], z: node.scale[2] },
     }));
     historyManager.current.saveSnapshot(snapshot);
@@ -203,8 +226,16 @@ export function EditorPage(): React.JSX.Element {
     if (!sceneData) return;
     const snapshot = sceneData.mapNodes.map((node, index) => ({
       uuid: `node-${index}`,
-      position: { x: node.position[0], y: node.position[1], z: node.position[2] },
-      rotation: { x: node.rotation[0], y: node.rotation[1], z: node.rotation[2] },
+      position: {
+        x: node.position[0],
+        y: node.position[1],
+        z: node.position[2],
+      },
+      rotation: {
+        x: node.rotation[0],
+        y: node.rotation[1],
+        z: node.rotation[2],
+      },
       scale: { x: node.scale[0], y: node.scale[1], z: node.scale[2] },
     }));
     historyManager.current.saveSnapshot(snapshot);
