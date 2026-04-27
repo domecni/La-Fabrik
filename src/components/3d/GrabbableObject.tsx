@@ -21,6 +21,7 @@ import {
   GRAB_THROW_BOOST_STEP,
 } from "@/data/grabConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
+import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
 import type { ColliderShape, Vector3Tuple } from "@/types/3d";
 
 interface GrabbableObjectProps {
@@ -28,6 +29,7 @@ interface GrabbableObjectProps {
   children: React.ReactNode;
   colliders?: ColliderShape;
   label?: string;
+  handControlled?: boolean;
 }
 
 // Shared params let one debug folder drive every instance.
@@ -42,14 +44,18 @@ const ZERO_ANGULAR_VELOCITY = { x: 0, y: 0, z: 0 };
 const _holdTarget = new THREE.Vector3();
 const _currentPos = new THREE.Vector3();
 const _velocity = new THREE.Vector3();
+const _handNdc = new THREE.Vector3();
+const _handDirection = new THREE.Vector3();
 
 export function GrabbableObject({
   position,
   children,
   colliders = GRAB_DEFAULT_COLLIDERS,
   label = GRAB_DEFAULT_LABEL,
+  handControlled = false,
 }: GrabbableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
+  const { hands } = useHandTrackingSnapshot();
   const rbRef = useRef<RapierRigidBody>(null);
   const isHolding = useRef(false);
 
@@ -84,10 +90,25 @@ export function GrabbableObject({
   });
 
   useFrame(() => {
-    if (!isHolding.current || !rbRef.current) return;
+    if (!rbRef.current) return;
 
-    camera.getWorldDirection(_holdTarget);
-    _holdTarget.multiplyScalar(params.holdDistance).add(camera.position);
+    const pinchingHand = handControlled
+      ? hands.find((hand) => hand.isPinch)
+      : undefined;
+
+    if (!isHolding.current && !pinchingHand) return;
+
+    if (pinchingHand) {
+      _handNdc.set((1 - pinchingHand.x) * 2 - 1, -pinchingHand.y * 2 + 1, 0.5);
+      _handNdc.unproject(camera);
+      _handDirection.subVectors(_handNdc, camera.position).normalize();
+      _holdTarget
+        .copy(camera.position)
+        .addScaledVector(_handDirection, params.holdDistance);
+    } else {
+      camera.getWorldDirection(_holdTarget);
+      _holdTarget.multiplyScalar(params.holdDistance).add(camera.position);
+    }
 
     const t = rbRef.current.translation();
     _currentPos.set(t.x, t.y, t.z);

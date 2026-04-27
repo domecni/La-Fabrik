@@ -54,6 +54,7 @@ export function TestScene({
         <GrabbableObject
           position={TEST_SCENE_GRABBABLE_POSITION}
           colliders="cuboid"
+          handControlled
         >
           <mesh castShadow receiveShadow>
             <boxGeometry args={TEST_SCENE_GRABBABLE_BOX_SIZE} />

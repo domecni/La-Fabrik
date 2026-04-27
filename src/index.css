@@ -79,3 +79,30 @@ canvas {
   color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.03em;
 }
+
+.hand-tracking-overlay {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(4, 7, 13, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.hand-tracking-overlay strong {
+  color: white;
+  font-size: 13px;
+}
+
+.hand-tracking-overlay__error {
+  color: #fca5a5;
+}
