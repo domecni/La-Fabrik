@@ -1,6 +1,26 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { AmbientLight, DirectionalLight } from "three";
+import {
+  AMBIENT_INTENSITY_MAX,
+  AMBIENT_INTENSITY_MIN,
+  AMBIENT_INTENSITY_STEP,
+  AMBIENT_LIGHT_COLOR,
+  LIGHTING_DEFAULTS,
+  SUN_INTENSITY_MAX,
+  SUN_INTENSITY_MIN,
+  SUN_INTENSITY_STEP,
+  SUN_LIGHT_COLOR,
+  SUN_X_MAX,
+  SUN_X_MIN,
+  SUN_X_STEP,
+  SUN_Y_MAX,
+  SUN_Y_MIN,
+  SUN_Y_STEP,
+  SUN_Z_MAX,
+  SUN_Z_MIN,
+  SUN_Z_STEP,
+} from "@/data/lightingConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 
 type LightingState = {
@@ -11,24 +31,40 @@ type LightingState = {
   sunZ: number;
 };
 
-const LIGHTING_STATE: LightingState = {
-  ambientIntensity: 1.8,
-  sunIntensity: 2.8,
-  sunX: 60,
-  sunY: 80,
-  sunZ: 30,
-};
+const LIGHTING_STATE: LightingState = { ...LIGHTING_DEFAULTS };
 
 export function Lighting(): React.JSX.Element {
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
 
   useDebugFolder("Lighting", (folder) => {
-    folder.add(LIGHTING_STATE, "ambientIntensity", 0, 5, 0.1).name("Ambient");
-    folder.add(LIGHTING_STATE, "sunIntensity", 0, 8, 0.1).name("Sun Intensity");
-    folder.add(LIGHTING_STATE, "sunX", -100, 100, 1).name("Sun X");
-    folder.add(LIGHTING_STATE, "sunY", 0, 150, 1).name("Sun Y");
-    folder.add(LIGHTING_STATE, "sunZ", -100, 100, 1).name("Sun Z");
+    folder
+      .add(
+        LIGHTING_STATE,
+        "ambientIntensity",
+        AMBIENT_INTENSITY_MIN,
+        AMBIENT_INTENSITY_MAX,
+        AMBIENT_INTENSITY_STEP,
+      )
+      .name("Ambient");
+    folder
+      .add(
+        LIGHTING_STATE,
+        "sunIntensity",
+        SUN_INTENSITY_MIN,
+        SUN_INTENSITY_MAX,
+        SUN_INTENSITY_STEP,
+      )
+      .name("Sun Intensity");
+    folder
+      .add(LIGHTING_STATE, "sunX", SUN_X_MIN, SUN_X_MAX, SUN_X_STEP)
+      .name("Sun X");
+    folder
+      .add(LIGHTING_STATE, "sunY", SUN_Y_MIN, SUN_Y_MAX, SUN_Y_STEP)
+      .name("Sun Y");
+    folder
+      .add(LIGHTING_STATE, "sunZ", SUN_Z_MIN, SUN_Z_MAX, SUN_Z_STEP)
+      .name("Sun Z");
   });
 
   useFrame(() => {
@@ -51,7 +87,7 @@ export function Lighting(): React.JSX.Element {
       <ambientLight
         ref={ambient}
         intensity={LIGHTING_STATE.ambientIntensity}
-        color="#dbeafe"
+        color={AMBIENT_LIGHT_COLOR}
       />
       <directionalLight
         ref={sun}
@@ -61,7 +97,7 @@ export function Lighting(): React.JSX.Element {
           LIGHTING_STATE.sunZ,
         ]}
         intensity={LIGHTING_STATE.sunIntensity}
-        color="#fff7ed"
+        color={SUN_LIGHT_COLOR}
         castShadow
       />
     </>

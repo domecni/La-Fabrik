@@ -1,8 +1,5 @@
 type Listener<TPayload> = (payload: TPayload) => void;
 
-// TypeScript cannot narrow mapped-type indexed access by a generic key TKey
-// (microsoft/TypeScript#30581). The helper below encapsulates the one necessary
-// cast so the rest of the class stays cast-free.
 type ListenerMap<TEvents extends Record<string, unknown>> = {
   [TKey in keyof TEvents]?: Set<Listener<TEvents[TKey]>>;
 };

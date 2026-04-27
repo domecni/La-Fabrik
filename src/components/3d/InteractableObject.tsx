@@ -1,73 +1,94 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import type GUI from "lil-gui";
 import type { RefObject } from "react";
+import {
+  INTERACTION_DEBUG_SPHERE_COLOR,
+  INTERACTION_DEBUG_SPHERE_OPACITY,
+  INTERACTION_DEBUG_SPHERE_SEGMENTS,
+} from "@/data/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
-import {
-  InteractionManager,
-  type InteractableHandle,
-  type InteractableKind,
-} from "@/stateManager/InteractionManager";
+import { InteractionManager } from "@/stateManager/InteractionManager";
 import { INTERACTION_RADIUS } from "@/data/interactionConfig";
+import type { Vector3Tuple } from "@/types/3d";
+import type { InteractableHandle, InteractableKind } from "@/types/interaction";
 
-interface InteractableObjectProps {
-  kind: InteractableKind;
+interface InteractableObjectBaseProps {
   label: string;
-  position: [number, number, number];
-  rigidBodyType?: "dynamic" | "fixed";
-  colliders?: "cuboid" | "ball" | "hull";
-  rbRef?: RefObject<RapierRigidBody | null>;
+  position: Vector3Tuple;
+  bodyRef?: RefObject<RapierRigidBody | null>;
   onPress: () => void;
-  onRelease?: () => void;
   children: React.ReactNode;
 }
+
+interface TriggerInteractableObjectProps extends InteractableObjectBaseProps {
+  kind: "trigger";
+}
+
+interface GrabInteractableObjectProps extends InteractableObjectBaseProps {
+  kind: "grab";
+  onRelease: () => void;
+}
+
+type InteractableObjectProps =
+  | TriggerInteractableObjectProps
+  | GrabInteractableObjectProps;
+
+type MutableInteractableHandle = {
+  kind: InteractableKind;
+  label: string;
+  onPress: () => void;
+  onRelease?: () => void;
+};
 
 const _cameraPos = new THREE.Vector3();
 const _cameraDir = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
 const _raycaster = new THREE.Raycaster();
 
-export function InteractableObject({
-  kind,
-  label,
-  position,
-  rigidBodyType = "dynamic",
-  colliders = "cuboid",
-  rbRef,
-  onPress,
-  onRelease = () => {},
-  children,
-}: InteractableObjectProps): React.JSX.Element {
+export function InteractableObject(
+  props: InteractableObjectProps,
+): React.JSX.Element {
+  const { kind, label, position, bodyRef, onPress, children } = props;
+  const onRelease = props.kind === "grab" ? props.onRelease : undefined;
   const camera = useThree((state) => state.camera);
-  const internalRef = useRef<RapierRigidBody>(null);
-  const bodyRef = rbRef ?? internalRef;
   const groupRef = useRef<THREE.Group>(null);
   const debugSphereRef = useRef<THREE.Mesh>(null);
 
-  const handle = useRef<InteractableHandle>({
-    kind,
-    label,
-    onPress,
-    onRelease,
-  });
+  const handle = useRef<InteractableHandle>(
+    props.kind === "grab"
+      ? { kind: props.kind, label, onPress, onRelease: props.onRelease }
+      : { kind: props.kind, label, onPress },
+  );
 
   useEffect(() => {
-    handle.current.onPress = onPress;
-    handle.current.onRelease = onRelease;
-  });
+    const current = handle.current as MutableInteractableHandle;
+    current.kind = kind;
+    current.label = label;
+    current.onPress = onPress;
 
-  useDebugFolder("Interaction", (folder) => {
+    if (kind === "grab" && onRelease) {
+      current.onRelease = onRelease;
+      return;
+    }
+
+    delete current.onRelease;
+    return undefined;
+  }, [kind, label, onPress, onRelease]);
+
+  const setupInteractionDebugFolder = useCallback((folder: GUI) => {
     folder
       .add({ radius: INTERACTION_RADIUS }, "radius")
       .name("Interaction radius")
       .disable();
-  });
+  }, []);
+
+  useDebugFolder("Interaction", setupInteractionDebugFolder);
 
   useFrame(() => {
-    const body = bodyRef.current;
     const group = groupRef.current;
     const debug = Debug.getInstance();
     const manager = InteractionManager.getInstance();
@@ -77,8 +98,8 @@ export function InteractableObject({
         debug.active && debug.getShowInteractionSpheres();
     }
 
-    if (body) {
-      const t = body.translation();
+    if (bodyRef?.current) {
+      const t = bodyRef.current.translation();
       _objectPos.set(t.x, t.y, t.z);
     } else {
       _objectPos.set(...position);
@@ -99,7 +120,6 @@ export function InteractableObject({
     _raycaster.far = INTERACTION_RADIUS;
 
     const hits = group ? _raycaster.intersectObject(group, true) : [];
-
     const validHit = hits.find((h) => h.object !== debugSphereRef.current);
 
     if (validHit) {
@@ -110,24 +130,23 @@ export function InteractableObject({
   });
 
   return (
-    <RigidBody
-      ref={bodyRef}
-      type={rigidBodyType}
-      colliders={colliders}
-      position={position}
-    >
-      <group ref={groupRef}>
-        {children}
-        <mesh ref={debugSphereRef} visible={false}>
-          <sphereGeometry args={[INTERACTION_RADIUS, 16, 16]} />
-          <meshBasicMaterial
-            color="#facc15"
-            wireframe
-            transparent
-            opacity={0.25}
-          />
-        </mesh>
-      </group>
-    </RigidBody>
+    <group ref={groupRef}>
+      {children}
+      <mesh ref={debugSphereRef} visible={false}>
+        <sphereGeometry
+          args={[
+            INTERACTION_RADIUS,
+            INTERACTION_DEBUG_SPHERE_SEGMENTS,
+            INTERACTION_DEBUG_SPHERE_SEGMENTS,
+          ]}
+        />
+        <meshBasicMaterial
+          color={INTERACTION_DEBUG_SPHERE_COLOR}
+          wireframe
+          transparent
+          opacity={INTERACTION_DEBUG_SPHERE_OPACITY}
+        />
+      </mesh>
+    </group>
   );
 }

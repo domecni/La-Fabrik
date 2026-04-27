@@ -1,3 +1,4 @@
+import { INTERACT_KEY } from "@/data/keybindings";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useInteraction } from "@/hooks/useInteraction";
 
@@ -10,7 +11,7 @@ export function InteractPrompt(): React.JSX.Element | null {
 
   return (
     <div className="interact-prompt" aria-live="polite">
-      <kbd className="interact-prompt__key">E</kbd>
+      <kbd className="interact-prompt__key">{INTERACT_KEY.toUpperCase()}</kbd>
       <span className="interact-prompt__label">{focused.label}</span>
     </div>
   );

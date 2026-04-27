@@ -1,18 +1,12 @@
-import { useEffect, useState } from "react";
-import {
-  InteractionManager,
-  type InteractionSnapshot,
-} from "@/stateManager/InteractionManager";
+import { useSyncExternalStore } from "react";
+import { InteractionManager } from "@/stateManager/InteractionManager";
+import type { InteractionSnapshot } from "@/types/interaction";
+
+const manager = InteractionManager.getInstance();
 
 export function useInteraction(): InteractionSnapshot {
-  const manager = InteractionManager.getInstance();
-  const [state, setState] = useState<InteractionSnapshot>(manager.getState());
-
-  useEffect(() => {
-    return manager.subscribe(() => {
-      setState({ ...manager.getState() });
-    });
-  }, [manager]);
-
-  return state;
+  return useSyncExternalStore(
+    manager.subscribe.bind(manager),
+    manager.getState.bind(manager),
+  );
 }

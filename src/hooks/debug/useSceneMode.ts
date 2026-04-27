@@ -1,13 +1,6 @@
-import { useSyncExternalStore } from "react";
 import type { SceneMode } from "@/types/debug";
-import { Debug } from "@/utils/debug/Debug";
+import { useDebugStore } from "@/hooks/debug/useDebugStore";
 
 export function useSceneMode(): SceneMode {
-  const debug = Debug.getInstance();
-
-  return useSyncExternalStore(
-    (listener) => debug.subscribe(listener),
-    () => debug.getSceneMode(),
-    () => debug.getSceneMode(),
-  );
+  return useDebugStore((debug) => debug.getSceneMode());
 }

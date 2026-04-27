@@ -1,44 +1,49 @@
 # Implemented Features
 
-This document lists features that are actually implemented in the current codebase.
+This document lists features that are implemented in the current codebase.
 
-## Scene Preview
+## Scene
 
 - Fullscreen React Three Fiber scene
-- Blocking map loaded from `public/models/map/blocking/model.glb`
+- Main map scene loaded from `public/models/map/model.gltf`
+- Debug physics test scene selectable from the debug panel
 - Ambient and directional lighting
-- Solid background environment color
+- Environment background setup
 
-## Camera Modes
+## Player
 
 - Player camera mode
-  - eye height at `1.75m`
-  - pointer lock mouse look
-  - movement with `ZQSD`
-  - vertical clamp to prevent falling below the map plane
-- Debug camera mode
-  - free orbit camera
-  - switchable from the debug panel
+- Pointer lock mouse look
+- Movement with `ZQSD`
+- Jumping
+- Octree-based collision against the loaded map
 
-## UI
+## Interactions
 
-- Center-screen crosshair shown only in player mode
+- Focus detection by distance and raycast
+- Trigger interactions activated with `E`
+- Grab interactions activated with the primary mouse button
+- Interaction prompt shown for trigger interactions
+
+## Audio
+
+- One-shot sound playback for trigger interactions
+- Simple per-sound pooling through `AudioManager`
 
 ## Debug Tooling
 
 - `?debug` query param enables the debug panel
-- `lil-gui` panel with camera mode selection
-- debug lighting controls
-- debug scene helpers
+- `lil-gui` controls for camera mode, scene mode, and interaction spheres
+- Debug scene helpers
+- Free debug camera
 - `r3f-perf` overlay
 
 ## Not Implemented Yet
 
-- missions
-- interactions on `E`
-- gameplay zones
-- cinematics
-- audio systems
+- mission system
+- zone system
+- cinematic system
+- dialogue system
 - loading flow
 - minimap and mission HUD
-- collisions beyond the current simple player height clamp
+- full production separation between gameplay and debug scenes
