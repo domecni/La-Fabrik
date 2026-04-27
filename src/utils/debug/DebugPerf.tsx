@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Debug } from "@/utils/debug/Debug";
 
 const Perf = lazy(() => import("r3f-perf").then((m) => ({ default: m.Perf })));
@@ -10,5 +10,9 @@ export function DebugPerf(): React.JSX.Element | null {
     return null;
   }
 
-  return <Perf position="bottom-right" />;
+  return (
+    <Suspense fallback={null}>
+      <Perf position="bottom-right" />
+    </Suspense>
+  );
 }

@@ -102,16 +102,19 @@ la-fabrik/
     │   ├── EventEmitter.ts                 # Simple typed pub/sub utility
     │   ├── Sizes.ts                        # Viewport size tracking
     │   ├── Time.ts                         # Animation frame timing utility
-    │   ├── Readme.md
     │   └── debug/                          # Dev-only tools and scene inspection
     │       ├── Debug.ts                    # Global lil-gui manager
     │       ├── DebugPerf.tsx               # r3f-perf overlay mounted in Canvas
-    ├── hooks/
-    │   └── debug/
-    │       └── useCameraMode.ts
+    │       ├── isDebugEnabled.ts           # Debug query-string helper
     │       └── scene/
     │           ├── DebugHelpers.tsx        # Grid + axes helpers shown in debug mode
     │           └── DebugCameraControls.tsx # Free debug camera for map inspection
+    ├── hooks/
+    │   └── debug/
+    │       ├── useCameraMode.ts
+    │       ├── useDebugFolder.ts
+    │       ├── useDebugStore.ts
+    │       └── useSceneMode.ts
     │
     ├── App.tsx                             # Canvas bootstrap
     └── main.tsx
