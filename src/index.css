@@ -27,6 +27,168 @@ canvas {
   display: block;
 }
 
+.docs-page {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(77, 146, 217, 0.18),
+      transparent 34rem
+    ),
+    #071019;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.docs-sidebar {
+  padding: 32px 24px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 7, 13, 0.72);
+  overflow-y: auto;
+}
+
+.docs-sidebar h1 {
+  margin: 24px 0 18px;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.docs-sidebar nav {
+  display: grid;
+  gap: 10px;
+}
+
+.docs-sidebar a,
+.docs-back-link {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+}
+
+.docs-sidebar nav a {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.docs-sidebar a:hover,
+.docs-sidebar a:focus-visible {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.docs-back-link {
+  display: inline-flex;
+  font-size: 14px;
+}
+
+.docs-content {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 48px clamp(20px, 5vw, 72px);
+}
+
+.docs-section {
+  max-width: 980px;
+  margin: 0 auto 48px;
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.26);
+}
+
+.docs-section h1,
+.docs-section h2,
+.docs-section h3 {
+  color: white;
+  line-height: 1.15;
+}
+
+.docs-section h1 {
+  margin-top: 0;
+  font-size: clamp(32px, 5vw, 56px);
+}
+
+.docs-section h2 {
+  margin-top: 34px;
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.docs-section h3 {
+  margin-top: 26px;
+  font-size: 20px;
+}
+
+.docs-section p,
+.docs-section li {
+  line-height: 1.75;
+}
+
+.docs-section a {
+  color: #8bd3ff;
+}
+
+.docs-section code {
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #d7f2ff;
+}
+
+.docs-section pre {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.docs-section pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.docs-section table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.docs-section th,
+.docs-section td {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: left;
+}
+
+.docs-section blockquote {
+  margin-left: 0;
+  padding-left: 18px;
+  border-left: 3px solid rgba(139, 211, 255, 0.72);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 760px) {
+  .docs-page {
+    display: block;
+    overflow-y: auto;
+  }
+
+  .docs-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .docs-content {
+    overflow: visible;
+    padding: 24px 16px;
+  }
+}
+
 .crosshair {
   position: fixed;
   top: 50%;
