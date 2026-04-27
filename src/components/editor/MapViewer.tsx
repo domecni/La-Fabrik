@@ -1,4 +1,12 @@
-import { useMemo, useRef, useEffect, useState } from "react";
+import {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  Suspense,
+  Component,
+  type ReactNode,
+} from "react";
 import { useGLTF } from "@react-three/drei";
 import { Grid, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -19,6 +27,31 @@ interface MapViewerProps {
 
 const clonedScenesCache = new Map<string, THREE.Group>();
 
+class ErrorBoundary extends Component<
+  { children: ReactNode; fallback?: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, _errorInfo: React.ErrorInfo): void {
+    console.warn("Model loading error:", error.message);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
 export default function MapViewer({
   sceneData,
   selectedNodeIndex,
@@ -29,7 +62,7 @@ export default function MapViewer({
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
-}: MapViewerProps) {
+}: MapViewerProps): React.JSX.Element {
   const isTransforming = useRef(false);
   const objectsMapRef = useRef<Map<number, THREE.Object3D>>(new Map());
 
@@ -52,7 +85,6 @@ export default function MapViewer({
           rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
           scale: [obj.scale.x, obj.scale.y, obj.scale.z],
         };
-        // Call onNodeTransform BEFORE onTransformEnd so history captures final state
         onNodeTransform?.(selectedNodeIndex, updatedNode);
       }
     }
@@ -101,17 +133,20 @@ export default function MapViewer({
 
           if (modelUrl) {
             return (
-              <ModelNodeWithRef
-                key={index}
-                index={index}
-                node={node}
-                modelUrl={modelUrl}
-                isSelected={selectedNodeIndex === index}
-                isHovered={hoveredNodeIndex === index}
-                objectsMapRef={objectsMapRef}
-                onSelectNode={onSelectNode}
-                onHoverNode={onHoverNode}
-              />
+              <ErrorBoundary key={index} fallback={null}>
+                <Suspense fallback={null}>
+                  <ModelNodeWithRef
+                    index={index}
+                    node={node}
+                    modelUrl={modelUrl}
+                    isSelected={selectedNodeIndex === index}
+                    isHovered={hoveredNodeIndex === index}
+                    objectsMapRef={objectsMapRef}
+                    onSelectNode={onSelectNode}
+                    onHoverNode={onHoverNode}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             );
           } else {
             return (
