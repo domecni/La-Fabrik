@@ -4,7 +4,10 @@ import {
   DEBUG_CAMERA_MAX_DISTANCE,
   DEBUG_CAMERA_MIN_DISTANCE,
 } from "@/data/debugConfig";
-import { PLAYER_EYE_HEIGHT, PLAYER_SPAWN_POSITION_GAME } from "@/data/playerConfig";
+import {
+  PLAYER_EYE_HEIGHT,
+  PLAYER_SPAWN_POSITION_GAME,
+} from "@/data/playerConfig";
 
 const DEBUG_CAMERA_TARGET = [
   PLAYER_SPAWN_POSITION_GAME[0],

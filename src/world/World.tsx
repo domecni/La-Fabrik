@@ -37,10 +37,7 @@ export function World(): React.JSX.Element {
       )}
 
       {cameraMode !== "debug" ? (
-        <PlayerComponent
-          octree={octree}
-          spawnPosition={playerSpawnPosition}
-        />
+        <PlayerComponent octree={octree} spawnPosition={playerSpawnPosition} />
       ) : null}
     </>
   );
