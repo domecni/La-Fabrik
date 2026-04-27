@@ -1,0 +1,14 @@
+import targetArchitecture from "../../../../docs/technical/target-architecture.md?raw";
+import { DocsDocument } from "@/pages/docs/DocsDocument";
+import { targetArchitectureFr } from "@/pages/docs/docsTranslations";
+
+export function DocsTargetArchitecturePage(): React.JSX.Element {
+  return (
+    <DocsDocument
+      content={targetArchitecture}
+      frContent={targetArchitectureFr}
+      meta="03"
+      title="Architecture cible"
+    />
+  );
+}
