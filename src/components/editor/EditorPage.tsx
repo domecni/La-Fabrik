@@ -269,52 +269,27 @@ export function EditorPage(): React.JSX.Element {
           return;
         }
 
-        const mapNodes = await response.json();
+        const mapNodes: MapNode[] = await response.json();
 
         const models = new Map<string, string>();
 
-        try {
-          const traverseModels = async (path: string): Promise<void> => {
-            try {
-              const response = await fetch(path);
-              if (!response.ok) return;
-              const text = await response.text();
+        const uniqueModelNames = [
+          ...new Set(mapNodes.map((n: MapNode) => n.name)),
+        ];
+        console.log("Unique model names in map:", uniqueModelNames);
 
-              if (text.includes("index")) {
-                const modelUrl = path.replace(/\/$/, "") + "/model.glb";
-                const modelResponse = await fetch(modelUrl);
-                if (modelResponse.ok) {
-                  const blob = await modelResponse.blob();
-                  const blobUrl = URL.createObjectURL(blob);
-                  const pathParts = path.split("/").filter(Boolean);
-                  const modelName = pathParts[pathParts.length - 1] || "";
-                  models.set(modelName, blobUrl);
-                }
-              }
-            } catch {
-              /* empty */
+        for (const modelName of uniqueModelNames) {
+          try {
+            const modelUrl = `/models/${modelName}/model.gltf`;
+            const modelResponse = await fetch(modelUrl);
+            if (modelResponse.ok) {
+              models.set(modelName, modelUrl);
             }
-          };
-
-          const baseResponse = await fetch("/models/");
-          if (baseResponse.ok) {
-            const text = await baseResponse.text();
-            const lines = text.split("\n");
-            for (const line of lines) {
-              if (line.includes("href") && line.includes("/")) {
-                const match = line.match(/href="([^"]+)"/);
-                if (match && match[1]) {
-                  const href = match[1];
-                  if (href.endsWith("/")) {
-                    await traverseModels(href);
-                  }
-                }
-              }
-            }
+          } catch {
+            /* empty */
           }
-        } catch (error) {
-          console.warn("Could not scan models directory:", error);
         }
+        console.log("Loaded models:", Array.from(models.keys()));
 
         setSceneData({ mapNodes, models });
         setHasMapJson(true);
@@ -356,7 +331,7 @@ export function EditorPage(): React.JSX.Element {
       const models = new Map<string, string>();
 
       for (const [path, file] of fileMap.entries()) {
-        const modelMatch = path && path.match(/^\/models\/(.+)\/model\.glb$/);
+        const modelMatch = path && path.match(/^\/models\/(.+)\/model\.gltf$/);
         if (modelMatch && modelMatch[1]) {
           const modelName = modelMatch[1];
           const blobUrl = URL.createObjectURL(file);
