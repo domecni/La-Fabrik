@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { Grid, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -31,7 +31,7 @@ export default function MapViewer({
   onNodeTransform,
 }: MapViewerProps) {
   const isTransforming = useRef(false);
-  const objectsRef = useRef<Map<number, THREE.Object3D>>(new Map());
+  const objectsMapRef = useRef<Map<number, THREE.Object3D>>(new Map());
 
   const handleTransformMouseDown = () => {
     isTransforming.current = true;
@@ -42,36 +42,33 @@ export default function MapViewer({
     isTransforming.current = false;
     onTransformEnd?.();
 
-    if (selectedObject && selectedObject.userData?.nodeIndex !== undefined) {
-      const index = selectedObject.userData.nodeIndex as number;
-      const node = sceneData.mapNodes[index];
+    if (selectedNodeIndex !== null) {
+      const obj = objectsMapRef.current.get(selectedNodeIndex);
+      if (!obj) return;
+      const node = sceneData.mapNodes[selectedNodeIndex];
       if (node) {
         const updatedNode: MapNode = {
           ...node,
-          position: [
-            selectedObject.position.x,
-            selectedObject.position.y,
-            selectedObject.position.z,
-          ],
-          rotation: [
-            selectedObject.rotation.x,
-            selectedObject.rotation.y,
-            selectedObject.rotation.z,
-          ],
-          scale: [
-            selectedObject.scale.x,
-            selectedObject.scale.y,
-            selectedObject.scale.z,
-          ],
+          position: [obj.position.x, obj.position.y, obj.position.z],
+          rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+          scale: [obj.scale.x, obj.scale.y, obj.scale.z],
         };
-        onNodeTransform?.(index, updatedNode);
+        onNodeTransform?.(selectedNodeIndex, updatedNode);
       }
     }
   };
 
-  const selectedObject = useMemo(() => {
-    if (selectedNodeIndex === null) return null;
-    return objectsRef.current.get(selectedNodeIndex) || null;
+  const [selectedObject, setSelectedObject] = useState<THREE.Object3D | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (selectedNodeIndex !== null) {
+      const obj = objectsMapRef.current.get(selectedNodeIndex);
+      setSelectedObject(obj || null);
+    } else {
+      setSelectedObject(null);
+    }
   }, [selectedNodeIndex]);
 
   return (
@@ -92,9 +89,11 @@ export default function MapViewer({
       <axesHelper args={[10]} />
 
       <group
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!(window as any).isTransforming) {
+        onClick={(e: unknown) => {
+          (e as { stopPropagation?: () => void }).stopPropagation?.();
+          if (
+            !(window as unknown as { isTransforming?: boolean }).isTransforming
+          ) {
             onSelectNode(null);
           }
         }}
@@ -111,7 +110,7 @@ export default function MapViewer({
                 modelUrl={modelUrl}
                 isSelected={selectedNodeIndex === index}
                 isHovered={hoveredNodeIndex === index}
-                objectsRef={objectsRef}
+                objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
                 onHoverNode={onHoverNode}
               />
@@ -124,7 +123,7 @@ export default function MapViewer({
                 node={node}
                 isSelected={selectedNodeIndex === index}
                 isHovered={hoveredNodeIndex === index}
-                objectsRef={objectsRef}
+                objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
                 onHoverNode={onHoverNode}
               />
@@ -151,7 +150,7 @@ function ModelNodeWithRef({
   modelUrl,
   isSelected,
   isHovered,
-  objectsRef,
+  objectsMapRef,
   onSelectNode,
   onHoverNode,
 }: {
@@ -160,7 +159,7 @@ function ModelNodeWithRef({
   modelUrl: string;
   isSelected: boolean;
   isHovered: boolean;
-  objectsRef: React.RefObject<Map<number, THREE.Object3D>>;
+  objectsMapRef: React.RefObject<Map<number, THREE.Object3D>>;
   onSelectNode: (index: number | null) => void;
   onHoverNode: (index: number | null) => void;
 }) {
@@ -182,28 +181,38 @@ function ModelNodeWithRef({
       groupRef.current.rotation.set(...node.rotation);
       groupRef.current.scale.set(...node.scale);
       groupRef.current.userData = { nodeIndex: index, nodeName: node.name };
-      objectsRef.current.set(index, groupRef.current);
+      objectsMapRef.current.set(index, groupRef.current);
     }
+    const currentMap = objectsMapRef.current;
+    const currentIndex = index;
     return () => {
-      objectsRef.current.delete(index);
+      currentMap.delete(currentIndex);
     };
-  }, [index, node, objectsRef]);
+  }, [index, node, objectsMapRef]);
 
   const instance = useMemo(() => {
     const inst = clonedScene.clone(true);
 
     if (isSelected) {
-      inst.traverse((child: any) => {
-        if (child.isMesh && child.material) {
-          child.material = child.material.clone();
-          child.material.color.set("#ff6600");
+      inst.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh && (child as THREE.Mesh).material) {
+          const mesh = child as THREE.Mesh;
+          const mat = mesh.material as unknown as THREE.MeshStandardMaterial;
+          mesh.material = mat.clone();
+          (mesh.material as unknown as THREE.MeshStandardMaterial).color.set(
+            "#ff6600",
+          );
         }
       });
     } else if (isHovered) {
-      inst.traverse((child: any) => {
-        if (child.isMesh && child.material) {
-          child.material = child.material.clone();
-          child.material.color.set("#ff9900");
+      inst.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh && (child as THREE.Mesh).material) {
+          const mesh = child as THREE.Mesh;
+          const mat = mesh.material as unknown as THREE.MeshStandardMaterial;
+          mesh.material = mat.clone();
+          (mesh.material as unknown as THREE.MeshStandardMaterial).color.set(
+            "#ff9900",
+          );
         }
       });
     }
@@ -219,18 +228,20 @@ function ModelNodeWithRef({
     <primitive
       ref={groupRef}
       object={instance}
-      onClick={(e: any) => {
-        e.stopPropagation();
-        if (!(window as any).isTransforming) {
+      onClick={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
+        if (
+          !(window as unknown as { isTransforming?: boolean }).isTransforming
+        ) {
           onSelectNode(index);
         }
       }}
-      onPointerEnter={(e: any) => {
-        e.stopPropagation();
+      onPointerEnter={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
         onHoverNode(index);
       }}
-      onPointerLeave={(e: any) => {
-        e.stopPropagation();
+      onPointerLeave={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
         onHoverNode(null);
       }}
     />
@@ -242,7 +253,7 @@ function FallbackNodeWithRef({
   node,
   isSelected,
   isHovered,
-  objectsRef,
+  objectsMapRef,
   onSelectNode,
   onHoverNode,
 }: {
@@ -250,7 +261,7 @@ function FallbackNodeWithRef({
   node: MapNode;
   isSelected: boolean;
   isHovered: boolean;
-  objectsRef: React.RefObject<Map<number, THREE.Object3D>>;
+  objectsMapRef: React.RefObject<Map<number, THREE.Object3D>>;
   onSelectNode: (index: number | null) => void;
   onHoverNode: (index: number | null) => void;
 }) {
@@ -262,12 +273,14 @@ function FallbackNodeWithRef({
       meshRef.current.rotation.set(...node.rotation);
       meshRef.current.scale.set(...node.scale);
       meshRef.current.userData = { nodeIndex: index, nodeName: node.name };
-      objectsRef.current.set(index, meshRef.current);
+      objectsMapRef.current.set(index, meshRef.current);
     }
+    const currentMap = objectsMapRef.current;
+    const currentIndex = index;
     return () => {
-      objectsRef.current.delete(index);
+      currentMap.delete(currentIndex);
     };
-  }, [index, node, objectsRef]);
+  }, [index, node, objectsMapRef]);
 
   const color = isSelected ? "#ff6600" : isHovered ? "#ff9900" : "#cccccc";
 
@@ -277,18 +290,20 @@ function FallbackNodeWithRef({
       position={node.position}
       rotation={node.rotation}
       scale={node.scale}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (!(window as any).isTransforming) {
+      onClick={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
+        if (
+          !(window as unknown as { isTransforming?: boolean }).isTransforming
+        ) {
           onSelectNode(index);
         }
       }}
-      onPointerEnter={(e) => {
-        e.stopPropagation();
+      onPointerEnter={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
         onHoverNode(index);
       }}
-      onPointerLeave={(e) => {
-        e.stopPropagation();
+      onPointerLeave={(e: unknown) => {
+        (e as { stopPropagation?: () => void }).stopPropagation?.();
         onHoverNode(null);
       }}
     >

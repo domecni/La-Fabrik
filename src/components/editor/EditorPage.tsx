@@ -293,7 +293,9 @@ export function EditorPage(): React.JSX.Element {
                   models.set(modelName, blobUrl);
                 }
               }
-            } catch {}
+            } catch {
+              /* empty */
+            }
           };
 
           const baseResponse = await fetch("/models/");
@@ -338,7 +340,8 @@ export function EditorPage(): React.JSX.Element {
     const fileMap = new Map<string, File>();
     for (const file of Array.from(files)) {
       const webkitRelativePath =
-        (file as any).webkitRelativePath || "/" + file.name;
+        (file as File & { webkitRelativePath?: string }).webkitRelativePath ||
+        "/" + file.name;
       fileMap.set(webkitRelativePath, file);
     }
 

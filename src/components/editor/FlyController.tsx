@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import * as THREE from "three";
 
 interface FlyControllerProps {
@@ -17,7 +18,7 @@ interface FlyControllerProps {
 }
 
 export interface FlyControllerRef {
-  controls: any;
+  controls: OrbitControlsType | null;
 }
 
 const FlyControllerInner = forwardRef<FlyControllerRef, FlyControllerProps>(
@@ -25,9 +26,10 @@ const FlyControllerInner = forwardRef<FlyControllerRef, FlyControllerProps>(
     { speed = 10, verticalSpeed = 5, onPositionChange, disabled = false },
     ref,
   ) => {
-    const { camera } = useThree();
+    const { camera: rawCamera } = useThree();
+    const cameraRef = useRef(rawCamera);
     const keys = useRef<{ [key: string]: boolean }>({});
-    const controlsRef = useRef<any>(null);
+    const controlsRef = useRef<OrbitControlsType | null>(null);
     const lastPosition = useRef(new THREE.Vector3());
 
     useImperativeHandle(ref, () => ({
@@ -83,21 +85,24 @@ const FlyControllerInner = forwardRef<FlyControllerRef, FlyControllerProps>(
       direction.subVectors(frontVector, sideVector);
       if (direction.lengthSq() > 0) {
         direction.normalize().multiplyScalar(speed * delta);
-        direction.applyQuaternion(camera.quaternion);
-        camera.position.add(direction);
+        direction.applyQuaternion(cameraRef.current.quaternion);
+        cameraRef.current.position.add(direction);
       }
 
       // Space = monter, Shift = descendre
       if (keys.current["Space"]) {
-        camera.position.y += verticalSpeed * delta;
+        cameraRef.current.position.y += verticalSpeed * delta;
       }
       if (keys.current["ShiftLeft"] || keys.current["ShiftRight"]) {
-        camera.position.y -= verticalSpeed * delta;
+        cameraRef.current.position.y -= verticalSpeed * delta;
       }
 
-      if (onPositionChange && !camera.position.equals(lastPosition.current)) {
-        lastPosition.current.copy(camera.position);
-        onPositionChange(camera.position);
+      if (
+        onPositionChange &&
+        !cameraRef.current.position.equals(lastPosition.current)
+      ) {
+        lastPosition.current.copy(cameraRef.current.position);
+        onPositionChange(cameraRef.current.position);
       }
     });
 

@@ -7,7 +7,8 @@ const JUMP_SPEED = 7;
 const MOUSE_SENSITIVITY = 0.002;
 
 export default function EditorFPSController() {
-  const { camera } = useThree();
+  const { camera: rawCamera } = useThree();
+  const cameraRef = useRef(rawCamera);
   const keys = useRef<Set<string>>(new Set());
   const velocity = useRef(new THREE.Vector3());
   const wantsJump = useRef(false);
@@ -38,14 +39,14 @@ export default function EditorFPSController() {
       const movementX = e.movementX || 0;
       const movementY = e.movementY || 0;
 
-      camera.rotation.y -= movementX * MOUSE_SENSITIVITY;
-      camera.rotation.x -= movementY * MOUSE_SENSITIVITY;
-      camera.rotation.x = Math.max(
+      cameraRef.current.rotation.y -= movementX * MOUSE_SENSITIVITY;
+      cameraRef.current.rotation.x -= movementY * MOUSE_SENSITIVITY;
+      cameraRef.current.rotation.x = Math.max(
         -Math.PI / 2,
-        Math.min(Math.PI / 2, camera.rotation.x),
+        Math.min(Math.PI / 2, cameraRef.current.rotation.x),
       );
     },
-    [camera],
+    [cameraRef],
   );
 
   const handleMouseDown = useCallback((e: MouseEvent) => {
@@ -80,8 +81,8 @@ export default function EditorFPSController() {
     const right = new THREE.Vector3(1, 0, 0);
     const up = new THREE.Vector3(0, 1, 0);
 
-    forward.applyQuaternion(camera.quaternion);
-    right.applyQuaternion(camera.quaternion);
+    forward.applyQuaternion(cameraRef.current.quaternion);
+    right.applyQuaternion(cameraRef.current.quaternion);
 
     forward.setY(0);
     right.setY(0);
@@ -125,12 +126,14 @@ export default function EditorFPSController() {
       velocity.current.y -= 20 * dt;
     }
 
-    camera.position.copy(
-      camera.position.clone().add(velocity.current.clone().multiplyScalar(dt)),
+    cameraRef.current.position.copy(
+      cameraRef.current.position
+        .clone()
+        .add(velocity.current.clone().multiplyScalar(dt)),
     );
 
-    if (camera.position.y < 2) {
-      camera.position.y = 2;
+    if (cameraRef.current.position.y < 2) {
+      cameraRef.current.position.y = 2;
       velocity.current.y = 0;
       velocity.current.x *= 0.9;
       velocity.current.z *= 0.9;
