@@ -15,7 +15,18 @@ python3 backend/download_model.py
 
 ## Run
 
+Run the Vite frontend and the Python backend in two separate terminals.
+
+Terminal 1:
+
 ```bash
+npm run dev
+```
+
+Terminal 2:
+
+```bash
+source .venv/bin/activate
 python3 -m backend.main
 ```
 
