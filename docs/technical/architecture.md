@@ -1,381 +1,47 @@
-# Architecture Patterns
-
-The project uses **two complementary patterns**:
-
-- **Singleton service classes** for orchestration and side effects
-- **Declarative React components** for all 3D scene objects
-
-This distinction is intentional. Scene elements such as the map, lights, environment, zones, and player are implemented as **React Three Fiber components** and mounted through `<Canvas>`.
-Global systems such as gameplay flow, cinematics, audio, and debug tooling are implemented as **manager classes**.
-
-Consistency matters, but the codebase does **not** force the same lifecycle pattern on scene components and global services.
-
----
-
-## 1. Singleton Pattern for Global Managers Only
-
-Only cross-cutting services use the singleton pattern.
-
-Examples:
-
-- `GameManager`
-- `CinematicManager`
-- `AudioManager`
-- `ZoneManager`
-- `Debug`
-- `EventEmitter`
-
-These services must exist once, be accessible from anywhere, and coordinate the experience globally.
-
-```ts
-// stateManager/GameManager.ts
-export class GameManager {
-  private static _instance: GameManager | null = null;
-
-  cinematic!: CinematicManager;
-  audio!: AudioManager;
-  zone!: ZoneManager;
-
-  static getInstance(): GameManager {
-    if (!GameManager._instance) {
-      GameManager._instance = new GameManager();
-    }
-    return GameManager._instance;
-  }
-
-  private constructor() {
-    this.cinematic = CinematicManager.getInstance();
-    this.audio = AudioManager.getInstance();
-    this.zone = ZoneManager.getInstance();
-  }
-
-  destroy(): void {
-    this.cinematic.destroy();
-    this.audio.destroy();
-    this.zone.destroy();
-    GameManager._instance = null;
-  }
-}
-```
-
-Usage:
-
-```ts
-const game = GameManager.getInstance();
-game.startMission("workshop");
-```
-
-**Important:** scene objects such as `Map`, `WorkshopZone`, `Lighting`, or `Environment` are **not** singletons and must remain standard React components.
-
----
-
-## 2. Scene Objects Are React Components, Not Manager Classes
-
-All 3D scene objects are implemented as **declarative React components**.
-
-This includes:
-
-- maps
-- lights
-- environments
-- player controllers
-- zones
-- interactive props
-- postprocessing layers
-
-This keeps the code aligned with the R3F runtime instead of rebuilding a parallel imperative engine.
-
-Example:
-
-```tsx
-// world/zones/WorkshopZone.tsx
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
-
-export function WorkshopZone() {
-  const root = useRef<THREE.Group>(null);
-  const gltf = useGLTF("/models/workshop/ebike.glb");
-  const mixer = useRef<THREE.AnimationMixer | null>(null);
-
-  useEffect(() => {
-    mixer.current = new THREE.AnimationMixer(gltf.scene);
-
-    return () => {
-      mixer.current?.stopAllAction();
-      mixer.current = null;
-    };
-  }, [gltf.scene]);
-
-  useFrame((_, delta) => {
-    mixer.current?.update(delta);
-  });
-
-  return <primitive ref={root} object={gltf.scene.clone()} />;
-}
-```
-
-Per-frame values such as movement, interpolation, camera smoothing, and physics must stay in:
-
-- `useRef`
-- `useFrame`
-- Rapier bodies
-- other frame-based systems
-
-They must **never** go through React state.
-
----
-
-## 3. Single Source of Truth for Durable Gameplay State
-
-The project uses a single authoritative `GameManager` for durable gameplay state.
-
-React components subscribe to that state through thin hooks.
-Other managers communicate through `GameManager`, which acts as the main gameplay orchestrator.
-
-High-frequency values such as movement, camera interpolation, or physics never go through React state and stay in refs or frame-based systems.
-
-```ts
-// stateManager/GameManager.ts
-type Phase = "loading" | "intro" | "exploring" | "cinematic" | "outro";
-type ZoneId = "workshop" | "powerGrid" | "farm" | null;
-
-type GameSnapshot = {
-  phase: Phase;
-  activeZone: ZoneId;
-  missionId: string | null;
-  missionStep: number;
-  inputLocked: boolean;
-  dialogueId: string | null;
-};
-
-export class GameManager {
-  private static _instance: GameManager | null = null;
-  private listeners = new Set<() => void>();
-
-  private state: GameSnapshot = {
-    phase: "loading",
-    activeZone: null,
-    missionId: null,
-    missionStep: 0,
-    inputLocked: false,
-    dialogueId: null,
-  };
-
-  static getInstance(): GameManager {
-    if (!GameManager._instance) {
-      GameManager._instance = new GameManager();
-    }
-    return GameManager._instance;
-  }
-
-  getState(): GameSnapshot {
-    return this.state;
-  }
-
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
-  private emit(): void {
-    this.listeners.forEach((cb) => cb());
-  }
-
-  setPhase(phase: Phase): void {
-    this.state.phase = phase;
-    this.emit();
-  }
-
-  setActiveZone(zone: ZoneId): void {
-    this.state.activeZone = zone;
-    this.emit();
-  }
-
-  startMission(id: string): void {
-    this.state.missionId = id;
-    this.state.missionStep = 0;
-    this.emit();
-  }
-}
-```
-
-```ts
-// hooks/useGameState.ts
-import { useEffect, useState } from "react";
-import { GameManager } from "@/stateManager/GameManager";
-
-export function useGameState() {
-  const game = GameManager.getInstance();
-  const [state, setState] = useState(game.getState());
-
-  useEffect(() => {
-    return game.subscribe(() => {
-      setState({ ...game.getState() });
-    });
-  }, [game]);
-
-  return state;
-}
-```
-
-This keeps the architecture simple:
-
-- **GameManager** owns durable gameplay state
-- **other managers** handle side effects
-- **React components** render that state
-- **R3F frame systems** handle fast-changing values
-
----
-
-## 4. Side Effects Stay in Specialized Managers
-
-Managers other than `GameManager` should not become secondary state stores.
-
-Their role is to manage side effects and specialized runtime logic, such as:
-
-- GSAP timelines
-- audio playback
-- zone entry detection
-- interaction triggers
-- camera lock/unlock
-- temporary event coordination
-
-They can read from `GameManager`, react to its state, or notify it of important transitions.
-
-Example flow:
-
-```
-Component / Hook
-      ↓
-GameManager.getInstance()
-      ├── startMission('workshop')
-      ├── cinematic.play('intro_workshop')
-      ├── audio.playAmbience('workshop')
-      └── zone.setActive('workshop')
-```
-
-This keeps the dependency graph understandable while avoiding duplicated durable state.
-
----
-
-## 5. Memory Management — Dispose Only What You Own
-
-GPU memory must be cleaned carefully.
-
-However, the project does **not** blindly deep-dispose every object on unmount.
-Only resources explicitly created and owned by the current component or manager should be disposed.
-
-This includes things like:
-
-- custom materials
-- render targets
-- postprocessing passes
-- manually created geometries
-- manually created textures
-- temporary clones with owned resources
-
-Shared or cached assets must **not** be blindly disposed.
-
-```ts
-// utils/Dispose.ts
-import * as THREE from "three";
-
-export class Dispose {
-  static material(material: THREE.Material): void {
-    for (const value of Object.values(material)) {
-      if (value instanceof THREE.Texture) {
-        value.dispose();
-      }
-    }
-    material.dispose();
-  }
-
-  static mesh(mesh: THREE.Mesh): void {
-    mesh.geometry?.dispose();
-
-    const materials = Array.isArray(mesh.material)
-      ? mesh.material
-      : [mesh.material];
-
-    for (const material of materials) {
-      if (material) this.material(material);
-    }
-  }
-
-  static renderTarget(rt: THREE.WebGLRenderTarget): void {
-    rt.texture.dispose();
-    rt.dispose();
-  }
-}
-```
-
-Example usage:
-
-```ts
-useEffect(() => {
-  const material = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-  });
-
-  meshRef.current.material = material;
-
-  return () => {
-    Dispose.material(material);
-  };
-}, []);
-```
-
-**Rule:** disposal is ownership-based, not automatic and not blind.
-
----
-
-## 6. Debug Utility
-
-The debug panel can be activated by appending `?debug` to the URL:
-
-`http://localhost:5173?debug`
-
-All debug logic is centralized in `Debug.ts`.
-Do not scatter debug checks across the codebase.
-
-```ts
-// utils/Debug.ts
-import GUI from "lil-gui";
-
-export class Debug {
-  private static _instance: Debug | null = null;
-
-  readonly active: boolean;
-  gui: GUI | null = null;
-
-  static getInstance(): Debug {
-    if (!Debug._instance) Debug._instance = new Debug();
-    return Debug._instance;
-  }
-
-  private constructor() {
-    this.active = new URLSearchParams(window.location.search).has("debug");
-    if (this.active) {
-      this.gui = new GUI({ title: "La-Fabrik Debug" });
-    }
-  }
-
-  destroy(): void {
-    this.gui?.destroy();
-    Debug._instance = null;
-  }
-}
-```
-
-Usage:
-
-```ts
-const debug = Debug.getInstance();
-
-if (debug.active) {
-  debug.gui!.add(params, "bloomIntensity", 0, 3).name("Bloom");
-}
-```
+# Current Architecture
+
+This document describes the code that exists today in the repository.
+
+## Runtime Structure
+
+- `src/App.tsx` mounts the `Canvas`, the 3D `World`, the debug perf overlay, and the HTML overlays.
+- `src/world/World.tsx` composes the active scene, including:
+  - environment and lighting
+  - debug helpers and debug camera mode
+  - either the map scene or the debug physics test scene
+  - the player rig when the active camera mode is `player`
+- `src/world/Map.tsx` loads the main map model and builds the collision octree.
+- `src/world/debug/TestScene.tsx` provides a debug-oriented interaction and physics scene.
+- `src/world/player/PlayerComponent.tsx` mounts the camera and controller.
+- `src/world/player/PlayerController.tsx` owns pointer lock movement, jump handling, and interaction input.
+
+## Interaction Model
+
+- `src/stateManager/InteractionManager.ts` is the current interaction state source.
+- `src/components/3d/InteractableObject.tsx` handles focus detection through distance and raycasting.
+- `src/components/3d/TriggerObject.tsx` implements trigger-style interactions.
+- `src/components/3d/GrabbableObject.tsx` implements hold-and-release interactions.
+- `src/hooks/useInteraction.ts` exposes the interaction snapshot to React UI.
+- `src/components/ui/InteractPrompt.tsx` shows the `E` prompt for trigger interactions.
+
+## Audio
+
+- `src/stateManager/AudioManager.ts` currently provides pooled one-shot sound playback.
+- Trigger interactions may play audio directly through `AudioManager`.
+
+## Debug System
+
+- Debug mode is enabled with `?debug`.
+- `src/utils/debug/Debug.ts` owns the `lil-gui` instance and debug controls.
+- `src/hooks/debug/useCameraMode.ts` and `src/hooks/debug/useSceneMode.ts` subscribe to debug state.
+- `src/utils/debug/DebugPerf.tsx` lazily mounts `r3f-perf` in debug mode.
+- `src/utils/debug/scene/DebugHelpers.tsx` mounts debug helpers.
+- `src/utils/debug/scene/DebugCameraControls.tsx` mounts the free debug camera.
+
+## Current Limitations
+
+- The repository is still a prototype, not the full intended game runtime.
+- `src/world/debug/TestScene.tsx` is still part of the active scene composition.
+- There is no central gameplay orchestrator such as `GameManager` yet.
+- Missions, zones, cinematics, and dialogue systems are not implemented.
+- The player uses octree collision and simple movement rules, not a complete gameplay physics stack.

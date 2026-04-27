@@ -3,8 +3,12 @@ name: 🔍 Lint
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches: [develop, main]
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -71,6 +75,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout
         uses: actions/checkout@v6
+        with:
+          lfs: true
 
       - name: 🧰 Setup Node
         uses: actions/setup-node@v6

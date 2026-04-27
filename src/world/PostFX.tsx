@@ -1,1 +1,0 @@
-// src/world/PostFX.tsx

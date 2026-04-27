@@ -1,1 +1,0 @@
-// src/stateManager/CinematicManager.ts
