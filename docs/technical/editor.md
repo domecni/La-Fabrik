@@ -32,11 +32,11 @@ src/
 │       ├── scene/
 │       │   ├── EditorMap.tsx
 │       │   └── EditorScene.tsx
-│       └── utils/
-│           └── loadEditorScene.ts
 ├── types/
 │   └── editor.ts
 └── utils/
+    ├── editor/
+    │   └── loadEditorScene.ts
     └── loadMapSceneData.ts
 ```
 
@@ -58,7 +58,7 @@ src/
 
 `src/utils/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json` and resolves available `public/models/{name}/model.gltf` files.
 
-`src/features/editor/utils/loadEditorScene.ts` contains editor-only upload handling for user-selected folders.
+`src/utils/editor/loadEditorScene.ts` contains editor-only upload handling for user-selected folders.
 
 ## Data Format
 

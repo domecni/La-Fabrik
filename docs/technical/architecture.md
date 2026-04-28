@@ -13,7 +13,7 @@ This document describes the code that exists today in the repository.
   - debug helpers and debug camera mode
   - either the map scene or the debug physics test scene
   - the player rig when the active camera mode is `player`
-- `src/components/game/GameMap.tsx` loads map nodes from `public/map.json`, resolves available models, and builds the collision octree.
+- `src/world/GameMap.tsx` loads map nodes from `public/map.json`, resolves available models, and builds the collision octree.
 - `src/world/debug/TestScene.tsx` provides a debug-oriented interaction and physics scene.
 - `src/world/player/PlayerComponent.tsx` mounts the camera and controller.
 - `src/world/player/PlayerController.tsx` owns pointer lock movement, jump handling, and interaction input.
@@ -50,7 +50,7 @@ This document describes the code that exists today in the repository.
 - `src/features/editor/controls/FlyController.tsx` provides player-style editor navigation.
 - `src/features/editor/hooks/useEditorSceneData.ts` loads scene data and handles folder upload fallback.
 - `src/features/editor/hooks/useEditorHistory.ts` owns editor undo and redo state.
-- `src/features/editor/utils/loadEditorScene.ts` handles editor-only folder upload parsing.
+- `src/utils/editor/loadEditorScene.ts` handles editor-only folder upload parsing.
 - `src/utils/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
 - `src/types/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
 

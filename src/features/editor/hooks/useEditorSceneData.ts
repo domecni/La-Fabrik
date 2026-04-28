@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { createSceneDataFromFiles } from "@/features/editor/utils/loadEditorScene";
+import { createSceneDataFromFiles } from "@/utils/editor/loadEditorScene";
 import { loadMapSceneData } from "@/utils/loadMapSceneData";
 import type { SceneData } from "@/types/editor";
 

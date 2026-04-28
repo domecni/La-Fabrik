@@ -10,7 +10,7 @@ import { DebugCameraControls } from "@/utils/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/utils/debug/scene/DebugHelpers";
 import { Environment } from "@/world/Environment";
 import { Lighting } from "@/world/Lighting";
-import { GameMap } from "@/components/game/GameMap";
+import { GameMap } from "@/world/GameMap";
 import { PlayerComponent } from "@/world/player/PlayerComponent";
 import { TestScene } from "@/world/debug/TestScene";
 
