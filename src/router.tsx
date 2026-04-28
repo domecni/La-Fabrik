@@ -5,6 +5,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { HomePage } from "@/pages/HomePage";
+import { EditorPage } from "@/pages/editor/EditorPage";
 import {
   DocsArchitectureRoute,
   DocsFeaturesRoute,
@@ -21,6 +22,12 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: HomePage,
+});
+
+const editorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/editor",
+  component: EditorPage,
 });
 
 const docsRoute = createRoute({
@@ -55,6 +62,7 @@ const docsFeaturesRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  editorRoute,
   docsRoute.addChildren([
     docsIndexRoute,
     docsArchitectureRoute,
