@@ -1,7 +1,7 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { Home } from "lucide-react";
-import { DocsLanguageProvider } from "@/features/docs/providers/DocsLanguageProvider";
-import { docGroups } from "@/features/docs/data/docsSections";
+import { docGroups } from "@/data/docs/docsSections";
+import { DocsLanguageProvider } from "@/providers/docs/DocsLanguageProvider";
 
 export function DocsLayout(): React.JSX.Element {
   return (

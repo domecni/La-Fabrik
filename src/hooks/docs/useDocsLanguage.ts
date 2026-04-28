@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { DocsLanguageContext } from "@/features/docs/contexts/DocsLanguageContext";
+import { DocsLanguageContext } from "@/contexts/docs/DocsLanguageContext";
 
 export function useDocsLanguage() {
   const context = useContext(DocsLanguageContext);

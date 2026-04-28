@@ -1,7 +1,7 @@
 import { Suspense, lazy } from "react";
 
 const LazyDocsLayout = lazy(() =>
-  import("@/features/docs/components/DocsLayout").then((module) => ({
+  import("@/components/docs/DocsLayout").then((module) => ({
     default: module.DocsLayout,
   })),
 );

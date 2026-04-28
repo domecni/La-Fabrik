@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { EditorControls } from "@/features/editor/components/EditorControls";
-import { useEditorHistory } from "@/features/editor/hooks/useEditorHistory";
-import { useEditorSceneData } from "@/features/editor/hooks/useEditorSceneData";
-import { EditorScene } from "@/features/editor/scene/EditorScene";
+import { EditorControls } from "@/components/editor/EditorControls";
+import { EditorScene } from "@/components/editor/scene/EditorScene";
+import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
+import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
 import type { MapNode, TransformMode } from "@/types/editor";
 
 export function EditorPage(): React.JSX.Element {

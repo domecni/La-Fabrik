@@ -1,6 +1,6 @@
 import targetArchitecture from "../../../../docs/technical/target-architecture.md?raw";
-import { DocsDocument } from "@/features/docs/components/DocsDocument";
-import { targetArchitectureFr } from "@/features/docs/data/docsTranslations";
+import { DocsDocument } from "@/components/docs/DocsDocument";
+import { targetArchitectureFr } from "@/data/docs/docsTranslations";
 
 export function DocsTargetArchitecturePage(): React.JSX.Element {
   return (

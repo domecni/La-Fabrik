@@ -1,6 +1,6 @@
 import features from "../../../../docs/user/features.md?raw";
-import { DocsDocument } from "@/features/docs/components/DocsDocument";
-import { featuresFr } from "@/features/docs/data/docsTranslations";
+import { DocsDocument } from "@/components/docs/DocsDocument";
+import { featuresFr } from "@/data/docs/docsTranslations";
 
 export function DocsFeaturesPage(): React.JSX.Element {
   return (

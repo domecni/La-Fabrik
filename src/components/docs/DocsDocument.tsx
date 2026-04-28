@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useDocsLanguage } from "@/features/docs/hooks/useDocsLanguage";
+import { useDocsLanguage } from "@/hooks/docs/useDocsLanguage";
 
 interface DocsDocumentProps {
   title: string;

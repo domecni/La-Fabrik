@@ -1,6 +1,6 @@
 import editor from "../../../../docs/user/editor.md?raw";
-import { DocsDocument } from "@/features/docs/components/DocsDocument";
-import { editorFr } from "@/features/docs/data/docsTranslations";
+import { DocsDocument } from "@/components/docs/DocsDocument";
+import { editorFr } from "@/data/docs/docsTranslations";
 
 export function DocsEditorPage(): React.JSX.Element {
   return (
