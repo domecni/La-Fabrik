@@ -1,6 +1,6 @@
 export type InteractableKind = "grab" | "trigger";
 
-export interface TriggerInteractableHandle {
+interface TriggerInteractableHandle {
   kind: "trigger";
   label: string;
   onPress: () => void;

@@ -1,22 +1,32 @@
+import { Routes, Route } from "react-router-dom";
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Crosshair } from "@/components/ui/Crosshair";
 import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { DebugPerf } from "@/utils/debug/DebugPerf";
 import { World } from "@/world/World";
+import { EditorPage } from "@/pages/editor/EditorPage";
 
 function App(): React.JSX.Element {
   return (
-    <>
-      <Canvas camera={{ position: [85, 60, 85], fov: 42 }} shadows>
-        <Suspense fallback={null}>
-          <World />
-          <DebugPerf />
-        </Suspense>
-      </Canvas>
-      <Crosshair />
-      <InteractPrompt />
-    </>
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <>
+            <Canvas camera={{ position: [85, 60, 85], fov: 42 }} shadows>
+              <Suspense fallback={null}>
+                <World />
+                <DebugPerf />
+              </Suspense>
+            </Canvas>
+            <Crosshair />
+            <InteractPrompt />
+          </>
+        }
+      />
+      <Route path="/editor" element={<EditorPage />} />
+    </Routes>
   );
 }
 

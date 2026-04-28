@@ -5,7 +5,7 @@ This document lists features that are implemented in the current codebase.
 ## Scene
 
 - Fullscreen React Three Fiber scene
-- Main map scene loaded from `public/models/map/model.gltf`
+- Main map scene loaded from `public/map.json` and matching `public/models/{name}/model.gltf` assets
 - Debug physics test scene selectable from the debug panel
 - Ambient and directional lighting
 - Environment background setup
@@ -38,6 +38,20 @@ This document lists features that are implemented in the current codebase.
 - Free debug camera
 - `r3f-perf` overlay
 
+## Map Editor
+
+- `/editor` route for inspecting and editing `public/map.json`
+- Automatic loading of `public/map.json` when available
+- Folder upload fallback when `map.json` is missing
+- Rendering of available `public/models/{name}/model.gltf` assets
+- Fallback cubes for nodes whose model is missing
+- Object selection by click
+- Transform modes for translate, rotate, and scale
+- Keyboard shortcuts for `T`, `R`, `S`, `Esc`, undo, and redo
+- Player-style navigation mode with `WASD`, `ZQSD`, arrow keys, `Space`, and `Shift`
+- JSON export for downloading the edited map
+- Dev-server save endpoint for writing changes back to `public/map.json`
+
 ## Not Implemented Yet
 
 - mission system
@@ -47,3 +61,4 @@ This document lists features that are implemented in the current codebase.
 - loading flow
 - minimap and mission HUD
 - full production separation between gameplay and debug scenes
+- production backend persistence for editor saves
