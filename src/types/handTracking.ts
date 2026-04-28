@@ -10,6 +10,9 @@ export interface HandTrackingHand {
 
 export type HandTrackingStatus =
   | "idle"
+  | "requesting_camera"
+  | "starting_camera"
+  | "connecting_server"
   | "connecting"
   | "connected"
   | "disconnected"

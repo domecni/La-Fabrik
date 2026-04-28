@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  HAND_TRACKING_CAMERA_TIMEOUT_MS,
   HAND_TRACKING_FRAME_HEIGHT,
   HAND_TRACKING_FRAME_WIDTH,
   HAND_TRACKING_JPEG_QUALITY,
@@ -27,6 +28,32 @@ const INITIAL_SNAPSHOT: HandTrackingSnapshot = {
 
 function getBase64Payload(dataUrl: string): string {
   return dataUrl.slice(dataUrl.indexOf(",") + 1);
+}
+
+function getCameraStreamWithTimeout(
+  constraints: MediaStreamConstraints,
+): Promise<MediaStream> {
+  let didTimeout = false;
+  const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    window.setTimeout(() => {
+      didTimeout = true;
+      reject(
+        new Error(
+          "Camera request timed out. Restart Arc or check camera permissions for localhost:5173.",
+        ),
+      );
+    }, HAND_TRACKING_CAMERA_TIMEOUT_MS);
+  });
+
+  streamPromise.then((stream) => {
+    if (didTimeout) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+  });
+
+  return Promise.race([streamPromise, timeoutPromise]);
 }
 
 export function useRemoteHandTracking({
@@ -116,13 +143,13 @@ export function useRemoteHandTracking({
 
       setSnapshot({
         hands: [],
-        status: "connecting",
+        status: "requesting_camera",
         serverStatus: null,
         error: null,
       });
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getCameraStreamWithTimeout({
           video: {
             width: HAND_TRACKING_FRAME_WIDTH,
             height: HAND_TRACKING_FRAME_HEIGHT,
@@ -136,11 +163,26 @@ export function useRemoteHandTracking({
           return;
         }
 
+        setSnapshot((current) => ({
+          ...current,
+          status: "starting_camera",
+        }));
+
         const video = document.createElement("video");
         video.muted = true;
         video.playsInline = true;
         video.srcObject = stream;
         await video.play();
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        setSnapshot((current) => ({
+          ...current,
+          status: "connecting_server",
+        }));
 
         const canvas = document.createElement("canvas");
         canvas.width = HAND_TRACKING_FRAME_WIDTH;

@@ -1,6 +1,6 @@
 :root {
   color-scheme: dark;
-  font-family: Inter;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
 html,
@@ -83,7 +83,7 @@ canvas {
 .hand-tracking-overlay {
   position: fixed;
   right: 16px;
-  bottom: 16px;
+  bottom: 132px;
   z-index: 20;
   display: flex;
   flex-direction: column;

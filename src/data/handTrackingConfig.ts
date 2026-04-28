@@ -5,6 +5,7 @@ export const HAND_TRACKING_FRAME_WIDTH = 320;
 export const HAND_TRACKING_FRAME_HEIGHT = 240;
 export const HAND_TRACKING_TARGET_FPS = 10;
 export const HAND_TRACKING_JPEG_QUALITY = 0.55;
+export const HAND_TRACKING_CAMERA_TIMEOUT_MS = 8_000;
 export const HAND_TRACKING_RESPONSE_TIMEOUT_MS = 1_500;
 
 export function getHandTrackingWsUrl(): string {

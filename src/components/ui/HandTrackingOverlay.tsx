@@ -1,4 +1,16 @@
 import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
+import type { HandTrackingStatus } from "@/types/handTracking";
+
+const STATUS_LABELS: Record<HandTrackingStatus, string> = {
+  idle: "Idle",
+  requesting_camera: "Requesting camera",
+  starting_camera: "Starting camera",
+  connecting_server: "Connecting server",
+  connecting: "Connecting",
+  connected: "Connected",
+  disconnected: "Disconnected",
+  error: "Error",
+};
 
 export function HandTrackingOverlay(): React.JSX.Element | null {
   const { hands, status, serverStatus, error } = useHandTrackingSnapshot();
@@ -12,7 +24,7 @@ export function HandTrackingOverlay(): React.JSX.Element | null {
   return (
     <aside className="hand-tracking-overlay" aria-label="Hand tracking status">
       <strong>Hand tracking</strong>
-      <span>Status: {status}</span>
+      <span>Status: {STATUS_LABELS[status]}</span>
       {serverStatus ? <span>Server: {serverStatus}</span> : null}
       <span>Hands: {hands.length}</span>
       <span>Pinch: {pinching ? "yes" : "no"}</span>
