@@ -70,10 +70,10 @@ export function EditorMap({
         args={[100, 100]}
         cellSize={1}
         cellThickness={0.5}
-        cellColor="#444444"
+        cellColor="#242424"
         sectionSize={5}
         sectionThickness={1}
-        sectionColor="#666666"
+        sectionColor="#3a3a3a"
         fadeDistance={50}
         fadeStrength={1}
         followCamera={false}
@@ -199,10 +199,10 @@ function EditorModelNode({
         ) {
           if (isSelected) {
             mesh.material = mesh.material.clone();
-            (mesh.material as THREE.MeshStandardMaterial).color.set("#ff6600");
+            (mesh.material as THREE.MeshStandardMaterial).color.set("#ffffff");
           } else if (isHovered) {
             mesh.material = mesh.material.clone();
-            (mesh.material as THREE.MeshStandardMaterial).color.set("#ff9900");
+            (mesh.material as THREE.MeshStandardMaterial).color.set("#b8b8b8");
           }
         }
       }
@@ -281,7 +281,7 @@ function EditorFallbackNode({
     }
   }, [node.position, node.rotation, node.scale]);
 
-  const color = isSelected ? "#ff6600" : isHovered ? "#ff9900" : "#cccccc";
+  const color = isSelected ? "#ffffff" : isHovered ? "#b8b8b8" : "#6f6f6f";
 
   return (
     <mesh
