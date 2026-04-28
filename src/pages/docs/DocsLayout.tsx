@@ -1,7 +1,7 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { Home } from "lucide-react";
 import { DocsLanguageProvider } from "@/pages/docs/DocsLanguageProvider";
-import { docSections } from "@/pages/docs/docsSections";
+import { docGroups } from "@/pages/docs/docsSections";
 
 export function DocsLayout(): React.JSX.Element {
   return (
@@ -20,22 +20,28 @@ export function DocsLayout(): React.JSX.Element {
           </header>
 
           <nav>
-            {docSections.map((section) => (
-              <Link
-                activeProps={{
-                  className: "docs-nav-item docs-nav-item--active",
-                }}
-                activeOptions={{ exact: true }}
-                className="docs-nav-item"
-                key={section.path}
-                to={section.path}
-              >
-                <span>
-                  <strong>{section.title}</strong>
-                  <small>{section.subtitle}</small>
-                </span>
-                <span className="docs-nav-item__meta">{section.meta}</span>
-              </Link>
+            {docGroups.map((group) => (
+              <section className="docs-nav-group" key={group.label}>
+                <h2>{group.label}</h2>
+
+                {group.sections.map((section) => (
+                  <Link
+                    activeProps={{
+                      className: "docs-nav-item docs-nav-item--active",
+                    }}
+                    activeOptions={{ exact: true }}
+                    className="docs-nav-item"
+                    key={section.path}
+                    to={section.path}
+                  >
+                    <span>
+                      <strong>{section.title}</strong>
+                      <small>{section.subtitle}</small>
+                    </span>
+                    <span className="docs-nav-item__meta">{section.meta}</span>
+                  </Link>
+                ))}
+              </section>
             ))}
           </nav>
         </aside>

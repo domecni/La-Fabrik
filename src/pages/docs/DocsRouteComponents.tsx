@@ -24,9 +24,21 @@ const LazyDocsTargetArchitecturePage = lazy(() =>
   })),
 );
 
+const LazyDocsTechnicalEditorPage = lazy(() =>
+  import("@/pages/docs/technical-editor/page").then((module) => ({
+    default: module.DocsTechnicalEditorPage,
+  })),
+);
+
 const LazyDocsFeaturesPage = lazy(() =>
   import("@/pages/docs/features/page").then((module) => ({
     default: module.DocsFeaturesPage,
+  })),
+);
+
+const LazyDocsEditorPage = lazy(() =>
+  import("@/pages/docs/editor/page").then((module) => ({
+    default: module.DocsEditorPage,
   })),
 );
 
@@ -62,10 +74,26 @@ export function DocsTargetArchitectureRoute(): React.JSX.Element {
   );
 }
 
+export function DocsTechnicalEditorRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsTechnicalEditorPage />
+    </Suspense>
+  );
+}
+
 export function DocsFeaturesRoute(): React.JSX.Element {
   return (
     <Suspense fallback={null}>
       <LazyDocsFeaturesPage />
+    </Suspense>
+  );
+}
+
+export function DocsEditorRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsEditorPage />
     </Suspense>
   );
 }

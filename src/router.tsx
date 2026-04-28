@@ -8,10 +8,12 @@ import { HomePage } from "@/pages/HomePage";
 import { EditorPage } from "@/pages/editor/EditorPage";
 import {
   DocsArchitectureRoute,
+  DocsEditorRoute,
   DocsFeaturesRoute,
   DocsLayoutRoute,
   DocsReadmeRoute,
   DocsTargetArchitectureRoute,
+  DocsTechnicalEditorRoute,
 } from "@/pages/docs/DocsRouteComponents";
 
 const rootRoute = createRootRoute({
@@ -54,10 +56,22 @@ const docsTargetArchitectureRoute = createRoute({
   component: DocsTargetArchitectureRoute,
 });
 
+const docsTechnicalEditorRoute = createRoute({
+  getParentRoute: () => docsRoute,
+  path: "/technical-editor",
+  component: DocsTechnicalEditorRoute,
+});
+
 const docsFeaturesRoute = createRoute({
   getParentRoute: () => docsRoute,
   path: "/features",
   component: DocsFeaturesRoute,
+});
+
+const docsEditorRoute = createRoute({
+  getParentRoute: () => docsRoute,
+  path: "/editor",
+  component: DocsEditorRoute,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -67,7 +81,9 @@ const routeTree = rootRoute.addChildren([
     docsIndexRoute,
     docsArchitectureRoute,
     docsTargetArchitectureRoute,
+    docsTechnicalEditorRoute,
     docsFeaturesRoute,
+    docsEditorRoute,
   ]),
 ]);
 
