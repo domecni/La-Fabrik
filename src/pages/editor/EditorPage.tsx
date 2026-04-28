@@ -75,7 +75,7 @@ export function EditorPage(): React.JSX.Element {
     a.href = url;
     a.download = "map.json";
     a.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [sceneData]);
 
   const handlePlayerMode = useCallback(() => {
@@ -185,7 +185,7 @@ export function EditorPage(): React.JSX.Element {
           onUndo={handleUndo}
           onRedo={handleRedo}
           onExportJson={handleExportJson}
-          onSaveToServer={handleSaveToServer}
+          onSaveToServer={import.meta.env.DEV ? handleSaveToServer : undefined}
           onPlayerMode={handlePlayerMode}
           isPlayerMode={isPlayerMode}
         />

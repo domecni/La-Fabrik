@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
@@ -57,6 +57,7 @@ function ModelInstance({ node }: { node: MapNode }): React.JSX.Element {
   const modelPath = `/models/${node.name}/model.gltf`;
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(modelPath);
+  const sceneInstance = useMemo(() => scene.clone(true), [scene]);
   const { position, rotation, scale } = node;
 
   useEffect(() => {
@@ -70,7 +71,7 @@ function ModelInstance({ node }: { node: MapNode }): React.JSX.Element {
   return (
     <primitive
       ref={groupRef}
-      object={scene}
+      object={sceneInstance}
       position={position}
       rotation={rotation}
       scale={scale}

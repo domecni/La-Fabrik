@@ -22,28 +22,19 @@ async function createSceneData(mapNodes: MapNode[]): Promise<SceneData> {
 async function loadMapModelUrls(
   mapNodes: MapNode[],
 ): Promise<Map<string, string>> {
-  const models = new Map<string, string>();
   const uniqueModelNames = [...new Set(mapNodes.map((node) => node.name))];
+  const modelEntries = await Promise.all(
+    uniqueModelNames.map(async (modelName) => {
+      const modelUrl = `/models/${modelName}/${MODEL_FILE_NAME}`;
 
-  for (const modelName of uniqueModelNames) {
-    const modelUrl = `/models/${modelName}/${MODEL_FILE_NAME}`;
-
-    const modelResponse = await fetch(modelUrl);
-    if (!modelResponse.ok) continue;
-
-    const text = await modelResponse.text();
-    if (isGltfContent(text)) {
-      models.set(modelName, modelUrl);
-    }
-  }
-
-  return models;
-}
-
-function isGltfContent(text: string): boolean {
-  return (
-    text.includes('"glTF"') ||
-    text.includes('"scene"') ||
-    text.includes('"nodes"')
+      try {
+        const response = await fetch(modelUrl, { method: "HEAD" });
+        return response.ok ? ([modelName, modelUrl] as const) : null;
+      } catch {
+        return null;
+      }
+    }),
   );
+
+  return new Map(modelEntries.filter((entry) => entry !== null));
 }

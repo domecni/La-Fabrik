@@ -26,8 +26,8 @@ interface EditorControlsProps {
   onUndo: () => void;
   onRedo: () => void;
   onExportJson: () => void;
-  onSaveToServer?: () => void;
-  onPlayerMode?: () => void;
+  onSaveToServer?: (() => void | Promise<void>) | undefined;
+  onPlayerMode?: (() => void) | undefined;
   isPlayerMode?: boolean;
 }
 
@@ -47,20 +47,11 @@ export function EditorControls({
   onPlayerMode,
   isPlayerMode,
 }: EditorControlsProps): React.JSX.Element {
-  const cameraPosition = [0, 50, 100];
   const viewModeLabel = isPlayerMode ? "View locked" : "Lock view";
   const jsonPreview = getJsonPreview(mapNodes, selectedNodeIndex);
 
   return (
     <>
-      <div className="editor-camera-info">
-        <span>Camera</span>
-        <strong>
-          X {cameraPosition[0]!.toFixed(0)} · Y {cameraPosition[1]!.toFixed(0)}{" "}
-          · Z {cameraPosition[2]!.toFixed(0)}
-        </strong>
-      </div>
-
       <aside className="editor-controls-panel" aria-label="Editor controls">
         <header className="editor-panel-header">
           <span className="editor-panel-kicker">Map Editor</span>

@@ -64,6 +64,30 @@ function useRegisteredEditorNode(
   }, [node, objectRef]);
 }
 
+function disposeMaterial(material: THREE.Material | THREE.Material[]): void {
+  if (Array.isArray(material)) {
+    material.forEach((item) => item.dispose());
+    return;
+  }
+
+  material.dispose();
+}
+
+function cloneHighlightedMaterial(
+  material: THREE.Material | THREE.Material[],
+  color: string,
+): THREE.Material | THREE.Material[] {
+  if (Array.isArray(material)) {
+    return material.map((item) => cloneHighlightedMaterial(item, color)).flat();
+  }
+
+  const clone = material.clone();
+  if (clone instanceof THREE.MeshStandardMaterial) {
+    clone.color.set(color);
+  }
+  return clone;
+}
+
 export function EditorMap({
   sceneData,
   selectedNodeIndex,
@@ -194,6 +218,9 @@ function EditorModelNode({
   modelUrl: string;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const originalMaterialsRef = useRef(
+    new Map<THREE.Mesh, THREE.Material | THREE.Material[]>(),
+  );
   const { scene } = useGLTF(modelUrl);
 
   const sceneInstance = useMemo(() => scene.clone(true), [scene]);
@@ -201,23 +228,58 @@ function EditorModelNode({
 
   useEffect(() => {
     if (!groupRef.current) return;
+    const highlightColor = isSelected
+      ? "#ffffff"
+      : isHovered
+        ? "#b8b8b8"
+        : null;
 
     groupRef.current.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) {
         return;
       }
 
-      if (child.material instanceof THREE.MeshStandardMaterial) {
-        if (isSelected) {
-          child.material = child.material.clone();
-          child.material.color.set("#ffffff");
-        } else if (isHovered) {
-          child.material = child.material.clone();
-          child.material.color.set("#b8b8b8");
-        }
+      const originalMaterial = originalMaterialsRef.current.get(child);
+
+      if (!originalMaterial) {
+        originalMaterialsRef.current.set(child, child.material);
+      }
+
+      if (child.material !== originalMaterial && originalMaterial) {
+        disposeMaterial(child.material);
+      }
+
+      if (highlightColor) {
+        child.material = cloneHighlightedMaterial(
+          originalMaterial ?? child.material,
+          highlightColor,
+        );
+      } else if (originalMaterial) {
+        child.material = originalMaterial;
       }
     });
   }, [isSelected, isHovered]);
+
+  useEffect(() => {
+    const group = groupRef.current;
+    const originalMaterials = originalMaterialsRef.current;
+
+    return () => {
+      if (!group) return;
+
+      group.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) {
+          return;
+        }
+
+        const originalMaterial = originalMaterials.get(child);
+        if (originalMaterial && child.material !== originalMaterial) {
+          disposeMaterial(child.material);
+          child.material = originalMaterial;
+        }
+      });
+    };
+  }, []);
 
   return (
     <primitive
