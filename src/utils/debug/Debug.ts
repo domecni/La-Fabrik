@@ -2,6 +2,41 @@ import GUI from "lil-gui";
 import type { CameraMode, SceneMode } from "@/types/debug";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
+const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
+
+interface StoredDebugControls {
+  cameraMode: CameraMode;
+  sceneMode: SceneMode;
+}
+
+function isCameraMode(value: unknown): value is CameraMode {
+  return value === "player" || value === "debug";
+}
+
+function isSceneMode(value: unknown): value is SceneMode {
+  return value === "game" || value === "physics";
+}
+
+function getStoredDebugControls(): Partial<StoredDebugControls> {
+  try {
+    const rawValue = window.localStorage.getItem(DEBUG_CONTROLS_STORAGE_KEY);
+    if (!rawValue) return {};
+
+    const parsedValue = JSON.parse(rawValue) as Partial<StoredDebugControls>;
+
+    return {
+      ...(isCameraMode(parsedValue.cameraMode)
+        ? { cameraMode: parsedValue.cameraMode }
+        : {}),
+      ...(isSceneMode(parsedValue.sceneMode)
+        ? { sceneMode: parsedValue.sceneMode }
+        : {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
 export class Debug {
   private static instance: Debug | null = null;
 
@@ -14,10 +49,6 @@ export class Debug {
     cameraMode: CameraMode;
     showInteractionSpheres: boolean;
     sceneMode: SceneMode;
-  } = {
-    cameraMode: "player",
-    showInteractionSpheres: false,
-    sceneMode: "game",
   };
 
   static getInstance(): Debug {
@@ -30,6 +61,14 @@ export class Debug {
 
   private constructor() {
     this.active = isDebugEnabled();
+    const storedControls = getStoredDebugControls();
+
+    this.controls = {
+      cameraMode: storedControls.cameraMode ?? "player",
+      showInteractionSpheres: false,
+      sceneMode: storedControls.sceneMode ?? "game",
+    };
+
     this.gui = this.active ? new GUI({ title: "La-Fabrik Debug" }) : null;
 
     if (this.gui) {
@@ -42,7 +81,7 @@ export class Debug {
         .name("Camera Mode")
         .onChange((value: CameraMode) => {
           this.controls.cameraMode = value;
-          this.emit();
+          this.saveAndEmit();
         });
 
       folder
@@ -50,7 +89,7 @@ export class Debug {
         .name("Scene")
         .onChange((value: SceneMode) => {
           this.controls.sceneMode = value;
-          this.emit();
+          this.saveAndEmit();
         });
 
       folder
@@ -121,5 +160,21 @@ export class Debug {
 
   private emit(): void {
     this.listeners.forEach((listener) => listener());
+  }
+
+  private saveAndEmit(): void {
+    try {
+      window.localStorage.setItem(
+        DEBUG_CONTROLS_STORAGE_KEY,
+        JSON.stringify({
+          cameraMode: this.controls.cameraMode,
+          sceneMode: this.controls.sceneMode,
+        }),
+      );
+    } catch {
+      // Debug persistence is optional; controls still work if storage is blocked.
+    }
+
+    this.emit();
   }
 }

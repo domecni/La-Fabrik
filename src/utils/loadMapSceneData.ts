@@ -3,6 +3,7 @@ import { parseMapNodes } from "@/utils/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAME = "model.gltf";
+const HTML_CONTENT_TYPE = "text/html";
 type ModelEntry = [modelName: string, modelUrl: string];
 
 export async function loadMapSceneData(): Promise<SceneData | null> {
@@ -31,8 +32,11 @@ async function loadMapModelUrls(
 
       try {
         const response = await fetch(modelUrl, { method: "HEAD" });
+        const contentType = response.headers.get("content-type") ?? "";
         const modelEntry: ModelEntry = [modelName, modelUrl];
-        return response.ok ? modelEntry : null;
+        return response.ok && !contentType.includes(HTML_CONTENT_TYPE)
+          ? modelEntry
+          : null;
       } catch {
         return null;
       }
