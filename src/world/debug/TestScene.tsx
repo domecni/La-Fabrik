@@ -21,7 +21,28 @@ import {
   TEST_SCENE_TRIGGER_SOUND_PATH,
 } from "@/data/testSceneConfig";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
-import type { OctreeReadyHandler } from "@/types/3d";
+import type { OctreeReadyHandler } from "@/types/3d";;import { SimpleModel } from "@/components/3d";
+
+import { useGLTF } from "@react-three/drei";
+// Dans votre composant
+
+
+// ---
+import { AnimatedModel, useAnimatedModel } from "@/components/3d";
+
+const MODEL_PATH = "/models/elec/model.gltf";
+
+function AnimationTester(): React.JSX.Element {
+  const { scene } = useGLTF("/models/elec/model.gltf");
+return (
+  <primitive 
+    object={scene.clone()} 
+    position={[0, 0, -5]} 
+    scale={[1, 1, 1]}
+  />
+);
+}
+
 
 interface TestSceneProps {
   onOctreeReady: OctreeReadyHandler;
@@ -84,7 +105,22 @@ export function TestScene({
             />
           </mesh>
         </TriggerObject>
+
+          
+
       </Physics>
+      <AnimatedModel
+            modelPath={MODEL_PATH}
+            defaultAnimation="Idle"
+            position={[0, 0, -5]}
+          >
+            <AnimationTester />
+          </AnimatedModel>
+      {/* <SimpleModel
+          modelPath="/models/electricenne/model.gltf"
+          position={[0, 1, -5]}
+          scale={1}
+        /> */}
     </>
   );
 }
