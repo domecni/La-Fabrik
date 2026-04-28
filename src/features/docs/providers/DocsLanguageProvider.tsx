@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   DocsLanguageContext,
   type DocsLanguage,
-} from "@/pages/docs/docsLanguageContext";
+} from "@/features/docs/contexts/DocsLanguageContext";
 
 interface DocsLanguageProviderProps {
   children: React.ReactNode;

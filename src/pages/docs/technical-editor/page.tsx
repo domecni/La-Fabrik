@@ -1,5 +1,5 @@
 import technicalEditor from "../../../../docs/technical/editor.md?raw";
-import { DocsDocument } from "@/pages/docs/DocsDocument";
+import { DocsDocument } from "@/features/docs/components/DocsDocument";
 
 export function DocsTechnicalEditorPage(): React.JSX.Element {
   return (

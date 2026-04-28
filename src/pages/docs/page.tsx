@@ -1,6 +1,6 @@
 import readme from "../../../README.md?raw";
-import { DocsDocument } from "@/pages/docs/DocsDocument";
-import { readmeFr } from "@/pages/docs/docsTranslations";
+import { DocsDocument } from "@/features/docs/components/DocsDocument";
+import { readmeFr } from "@/features/docs/data/docsTranslations";
 
 export function DocsReadmePage(): React.JSX.Element {
   return (
