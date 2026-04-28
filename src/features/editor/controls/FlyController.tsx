@@ -21,7 +21,7 @@ export interface FlyControllerRef {
   controls: OrbitControlsType | null;
 }
 
-const FlyControllerInner = forwardRef<FlyControllerRef, FlyControllerProps>(
+export const FlyController = forwardRef<FlyControllerRef, FlyControllerProps>(
   (
     { speed = 10, verticalSpeed = 5, onPositionChange, disabled = false },
     ref,
@@ -122,4 +122,4 @@ const FlyControllerInner = forwardRef<FlyControllerRef, FlyControllerProps>(
   },
 );
 
-export default FlyControllerInner;
+FlyController.displayName = "FlyController";

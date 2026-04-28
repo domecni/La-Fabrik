@@ -12,12 +12,11 @@ interface EditorControlsProps {
   onRedo: () => void;
   onExportJson: () => void;
   onSaveToServer?: () => void;
-  onResetCamera?: () => void;
   onPlayerMode?: () => void;
   isPlayerMode?: boolean;
 }
 
-export default function EditorControls({
+export function EditorControls({
   transformMode,
   onTransformModeChange,
   selectedNodeIndex,
@@ -29,10 +28,9 @@ export default function EditorControls({
   onRedo,
   onExportJson,
   onSaveToServer,
-  onResetCamera,
   onPlayerMode,
   isPlayerMode,
-}: EditorControlsProps) {
+}: EditorControlsProps): React.JSX.Element {
   const cameraPosition = [0, 50, 100];
 
   return (
@@ -47,30 +45,30 @@ export default function EditorControls({
       <div className="editor-controls-panel">
         <h3>Transform</h3>
 
-        <div className="transform-buttons">
+        <div className="editor-transform-buttons">
           <button
-            className={`transform-button ${transformMode === "translate" ? "active" : ""}`}
+            className={`editor-transform-button ${transformMode === "translate" ? "active" : ""}`}
             onClick={() => onTransformModeChange("translate")}
           >
             ✋ Translate (T)
           </button>
           <button
-            className={`transform-button ${transformMode === "rotate" ? "active" : ""}`}
+            className={`editor-transform-button ${transformMode === "rotate" ? "active" : ""}`}
             onClick={() => onTransformModeChange("rotate")}
           >
             🔄 Rotate (R)
           </button>
           <button
-            className={`transform-button ${transformMode === "scale" ? "active" : ""}`}
+            className={`editor-transform-button ${transformMode === "scale" ? "active" : ""}`}
             onClick={() => onTransformModeChange("scale")}
           >
             📐 Scale (S)
           </button>
         </div>
 
-        <div className="history-buttons">
+        <div className="editor-history-buttons">
           <button
-            className="history-button"
+            className="editor-history-button"
             onClick={onUndo}
             disabled={undoCount === 0}
             style={{ color: undoCount > 0 ? "#00ff00" : "#555" }}
@@ -78,7 +76,7 @@ export default function EditorControls({
             ↩ Undo ({undoCount})
           </button>
           <button
-            className="history-button"
+            className="editor-history-button"
             onClick={onRedo}
             disabled={redoCount === 0}
             style={{ color: redoCount > 0 ? "#00ff00" : "#555" }}
@@ -87,27 +85,21 @@ export default function EditorControls({
           </button>
         </div>
 
-        <button className="export-button" onClick={onExportJson}>
+        <button className="editor-export-button" onClick={onExportJson}>
           💾 Export JSON
         </button>
 
         {onSaveToServer && (
-          <button className="save-button" onClick={onSaveToServer}>
+          <button className="editor-save-button" onClick={onSaveToServer}>
             💾 Save to Server
           </button>
         )}
 
         <h3>View</h3>
 
-        {onResetCamera && (
-          <button className="reset-button" onClick={onResetCamera}>
-            🔄 Reset Camera
-          </button>
-        )}
-
         {onPlayerMode && (
           <button
-            className={`player-button ${isPlayerMode ? "active" : ""}`}
+            className={`editor-player-button ${isPlayerMode ? "active" : ""}`}
             onClick={onPlayerMode}
           >
             🎮 Player Controller
@@ -116,23 +108,23 @@ export default function EditorControls({
 
         <h3>Selection</h3>
         {selectedNodeIndex !== null ? (
-          <div className="selected-info">
-            <div className="selected-name">
+          <div className="editor-selected-info">
+            <div className="editor-selected-name">
               Selected:{" "}
               <strong>
                 {selectedNodeName || `Node ${selectedNodeIndex + 1}`}
               </strong>
             </div>
-            <div className="selected-index">
+            <div className="editor-selected-index">
               Index: {selectedNodeIndex + 1} / {nodesCount}
             </div>
           </div>
         ) : (
-          <div className="no-selection">No object selected</div>
+          <div className="editor-no-selection">No object selected</div>
         )}
 
         <h3>Controls</h3>
-        <div className="controls-help">
+        <div className="editor-controls-help">
           <p>Click - Select object</p>
           <p>T/R/S - Transform mode</p>
           <p>Ctrl+Z - Undo</p>

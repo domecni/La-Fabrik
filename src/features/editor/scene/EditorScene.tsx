@@ -1,11 +1,10 @@
 import { useEffect } from "react";
 import { OrbitControls } from "@react-three/drei";
-import EditorCamera from "./EditorCamera";
-import FlyController from "./FlyController";
-import MapViewer from "./MapViewer";
+import { FlyController } from "@/features/editor/controls/FlyController";
+import { EditorMap } from "@/features/editor/scene/EditorMap";
 import type { MapNode, TransformMode, SceneData } from "@/types/editor";
 
-interface EditorViewerProps {
+interface EditorSceneProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
   onSelectNode: (index: number | null) => void;
@@ -21,7 +20,7 @@ interface EditorViewerProps {
   isPlayerMode?: boolean;
 }
 
-export default function EditorViewer({
+export function EditorScene({
   sceneData,
   selectedNodeIndex,
   onSelectNode,
@@ -35,7 +34,7 @@ export default function EditorViewer({
   onUndo,
   onRedo,
   isPlayerMode = false,
-}: EditorViewerProps) {
+}: EditorSceneProps): React.JSX.Element {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
@@ -75,8 +74,6 @@ export default function EditorViewer({
 
   return (
     <>
-      <EditorCamera />
-
       {isPlayerMode ? (
         <FlyController disabled={false} />
       ) : (
@@ -91,7 +88,7 @@ export default function EditorViewer({
         />
       )}
 
-      <MapViewer
+      <EditorMap
         sceneData={sceneData}
         selectedNodeIndex={selectedNodeIndex}
         onSelectNode={onSelectNode}

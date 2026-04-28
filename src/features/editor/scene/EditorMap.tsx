@@ -1,11 +1,10 @@
 import { useMemo, useRef, useEffect, useState } from "react";
-import { useGLTF } from "@react-three/drei";
-import { Grid, TransformControls } from "@react-three/drei";
+import { Grid, TransformControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 import type { SceneData, MapNode, TransformMode } from "@/types/editor";
 
-interface MapViewerProps {
+interface EditorMapProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
   onSelectNode: (index: number | null) => void;
@@ -17,7 +16,7 @@ interface MapViewerProps {
   onNodeTransform: (nodeIndex: number, transform: MapNode) => void;
 }
 
-export default function MapViewer({
+export function EditorMap({
   sceneData,
   selectedNodeIndex,
   onSelectNode,
@@ -27,7 +26,7 @@ export default function MapViewer({
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
-}: MapViewerProps): React.JSX.Element {
+}: EditorMapProps): React.JSX.Element {
   const objectsMapRef = useRef<Map<number, THREE.Object3D>>(new Map());
 
   const handleTransformMouseDown = () => {
@@ -93,7 +92,7 @@ export default function MapViewer({
 
           if (modelUrl) {
             return (
-              <ModelNodeWithRef
+              <EditorModelNode
                 key={index}
                 index={index}
                 node={node}
@@ -107,7 +106,7 @@ export default function MapViewer({
             );
           } else {
             return (
-              <FallbackNodeWithRef
+              <EditorFallbackNode
                 key={index}
                 index={index}
                 node={node}
@@ -134,7 +133,7 @@ export default function MapViewer({
   );
 }
 
-function ModelNodeWithRef({
+function EditorModelNode({
   index,
   node,
   modelUrl,
@@ -233,7 +232,7 @@ function ModelNodeWithRef({
   );
 }
 
-function FallbackNodeWithRef({
+function EditorFallbackNode({
   index,
   node,
   isSelected,

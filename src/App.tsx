@@ -5,7 +5,7 @@ import { Crosshair } from "@/components/ui/Crosshair";
 import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { DebugPerf } from "@/utils/debug/DebugPerf";
 import { World } from "@/world/World";
-import { EditorPage } from "@/pages/EditorPage";
+import { EditorPage } from "@/pages/editor/EditorPage";
 
 function App(): React.JSX.Element {
   return (

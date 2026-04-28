@@ -39,5 +39,6 @@ Thumbs.db
 .drei/
 .glitchdrei-cache/
 
+# Temporaire
 .backend/
 backend/

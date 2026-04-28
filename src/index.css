@@ -136,7 +136,7 @@ canvas {
   font-family: "Courier New", monospace;
 }
 
-.upload-section {
+.editor-upload-section {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   padding: 2rem;
@@ -145,13 +145,13 @@ canvas {
   margin-top: 2rem;
 }
 
-.upload-section h3 {
+.editor-upload-section h3 {
   color: #ff6600;
   margin-bottom: 1rem;
   font-size: 1.4rem;
 }
 
-.drop-zone {
+.editor-drop-zone {
   display: block;
   width: 100%;
   padding: 2rem 1rem;
@@ -167,28 +167,28 @@ canvas {
   margin-bottom: 1.5rem;
 }
 
-.drop-zone:hover {
+.editor-drop-zone:hover {
   background: rgba(255, 102, 0, 0.2);
   border-color: #ff8533;
 }
 
-.folder-input {
+.editor-folder-input {
   display: none;
 }
 
-.folder-structure {
+.editor-folder-structure {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1rem;
 }
 
-.folder-structure h4 {
+.editor-folder-structure h4 {
   color: #aaa;
   margin-bottom: 0.5rem;
 }
 
-.folder-structure pre {
+.editor-folder-structure pre {
   background: rgba(0, 0, 0, 0.5);
   padding: 1rem;
   border-radius: 6px;
@@ -234,13 +234,13 @@ canvas {
   color: #ff6600;
 }
 
-.transform-buttons {
+.editor-transform-buttons {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.transform-button {
+.editor-transform-button {
   padding: 12px;
   background: #333;
   color: white;
@@ -251,27 +251,27 @@ canvas {
   transition: all 0.2s;
 }
 
-.transform-button.active {
+.editor-transform-button.active {
   background: #ff6600;
   color: black;
   border-color: #ff6600;
 }
 
-.transform-button:hover {
+.editor-transform-button:hover {
   background: #444;
 }
 
-.transform-button.active:hover {
+.editor-transform-button.active:hover {
   background: #ff8533;
 }
 
-.history-buttons {
+.editor-history-buttons {
   display: flex;
   gap: 8px;
   margin-top: 10px;
 }
 
-.history-button {
+.editor-history-button {
   flex: 1;
   padding: 8px;
   background: #333;
@@ -282,12 +282,12 @@ canvas {
   font-size: 12px;
 }
 
-.history-button:disabled {
+.editor-history-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.export-button {
+.editor-export-button {
   width: 100%;
   margin-top: 10px;
   padding: 12px;
@@ -300,11 +300,11 @@ canvas {
   font-weight: bold;
 }
 
-.export-button:hover {
+.editor-export-button:hover {
   background: #ff8533;
 }
 
-.save-button {
+.editor-save-button {
   width: 100%;
   margin-top: 10px;
   padding: 12px;
@@ -317,27 +317,11 @@ canvas {
   font-weight: bold;
 }
 
-.save-button:hover {
+.editor-save-button:hover {
   background: #16a34a;
 }
 
-.reset-button {
-  width: 100%;
-  padding: 12px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.reset-button:hover {
-  background: #555;
-}
-
-.player-button {
+.editor-player-button {
   width: 100%;
   padding: 12px;
   background: #444;
@@ -348,20 +332,20 @@ canvas {
   font-size: 14px;
 }
 
-.player-button.active {
+.editor-player-button.active {
   background: #ff6600;
   color: black;
 }
 
-.player-button:hover {
+.editor-player-button:hover {
   background: #555;
 }
 
-.player-button.active:hover {
+.editor-player-button.active:hover {
   background: #ff8533;
 }
 
-.selected-info {
+.editor-selected-info {
   background: rgba(255, 102, 0, 0.1);
   border: 1px solid #ff6600;
   border-radius: 6px;
@@ -369,17 +353,17 @@ canvas {
   margin-bottom: 15px;
 }
 
-.selected-name {
+.editor-selected-name {
   font-size: 16px;
   margin-bottom: 5px;
 }
 
-.selected-index {
+.editor-selected-index {
   font-size: 14px;
   color: #aaa;
 }
 
-.no-selection {
+.editor-no-selection {
   background: rgba(255, 255, 255, 0.05);
   border: 1px dashed #555;
   border-radius: 6px;
@@ -389,14 +373,14 @@ canvas {
   font-style: italic;
 }
 
-.controls-help {
+.editor-controls-help {
   background: #222;
   border-radius: 6px;
   padding: 15px;
   border: 1px solid #444;
 }
 
-.controls-help p {
+.editor-controls-help p {
   margin: 4px 0;
   font-size: 12px;
   color: #aaa;
@@ -407,11 +391,11 @@ canvas {
     font-size: 1.5rem;
   }
 
-  .upload-section {
+  .editor-upload-section {
     padding: 1.5rem;
   }
 
-  .drop-zone {
+  .editor-drop-zone {
     padding: 1.5rem 1rem;
   }
 }
