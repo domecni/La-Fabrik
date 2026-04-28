@@ -10,8 +10,8 @@ The editor is a React route used to inspect and adjust the `public/map.json` sce
 
 - `/` renders the playable La-Fabrik scene.
 - `/editor` renders the map editor.
-- `src/main.tsx` wraps the app with `BrowserRouter`.
-- `src/App.tsx` defines the route and imports `EditorPage` from `src/pages/editor/EditorPage.tsx`.
+- `src/App.tsx` mounts TanStack Router through `RouterProvider`.
+- `src/router.tsx` defines the `/editor` route and imports `EditorPage` from `src/pages/editor/EditorPage.tsx`.
 
 ## File Structure
 

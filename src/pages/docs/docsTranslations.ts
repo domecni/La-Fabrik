@@ -256,3 +256,73 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - minimap et HUD de mission
 - séparation complète production / debug pour les scènes gameplay
 `;
+
+export const editorFr = `# Éditeur de carte
+
+L'éditeur de carte est disponible sur "/editor". Il permet d'inspecter et d'ajuster les objets déclarés dans "/public/map.json" directement depuis le navigateur.
+
+## Ce qui est édité
+
+L'éditeur travaille sur la liste de nodes stockée dans "/public/map.json".
+
+Chaque node décrit un objet de la scène :
+
+- "name" : nom du dossier modèle dans "/public/models/{name}/model.gltf"
+- "type" : catégorie de l'objet
+- "position" : "[x, y, z]"
+- "rotation" : "[x, y, z]"
+- "scale" : "[x, y, z]"
+
+Les modèles sont chargés depuis "/public/models". Si un modèle manque, l'éditeur affiche un cube gris de remplacement pour que le node reste sélectionnable et déplaçable.
+
+## Workflow de base
+
+1. Ouvrir "/editor".
+2. Sélectionner un objet dans la vue 3D.
+3. Choisir un mode de transformation : translation, rotation ou scale.
+4. Déplacer la gizmo de transformation.
+5. Utiliser undo ou redo si nécessaire.
+6. Exporter le JSON mis à jour ou le sauvegarder sur le serveur de dev.
+
+## Contrôles
+
+| Action | Input |
+| --- | --- |
+| Sélectionner un objet | Clic sur l'objet |
+| Désélectionner | "Esc" ou clic dans le vide |
+| Mode translation | "T" |
+| Mode rotation | "R" |
+| Mode scale | "S" |
+| Undo | "Ctrl+Z" |
+| Redo | "Ctrl+Y" |
+| Déplacement en vue verrouillée | "WASD", "ZQSD", flèches |
+| Monter / descendre | "Space", "Shift" |
+
+## Actions fichier
+
+### Export JSON
+
+"Export JSON" télécharge la liste actuelle des nodes sous le nom "map.json". À utiliser pour remplacer manuellement "/public/map.json".
+
+### Save to server
+
+"Save to server" est disponible uniquement en développement local. L'action écrit la carte modifiée dans "/public/map.json" via l'endpoint du serveur de dev Vite.
+
+Cette action est masquée dans les builds de production car il n'existe pas encore d'API de persistance production.
+
+## Inspecteur JSON
+
+Le panneau latéral affiche le JSON brut de la carte :
+
+- sans sélection, il affiche toute la liste des nodes
+- avec un objet sélectionné, il met en évidence les lignes du node sélectionné
+
+Utilise-le pour vérifier les valeurs numériques exactes avant export ou sauvegarde.
+
+## Limites actuelles
+
+- L'éditeur modifie uniquement les nodes existants.
+- Il n'y a pas encore d'interface pour créer ou supprimer des objets.
+- La sauvegarde production n'est pas implémentée.
+- Les modèles manquants s'affichent comme cubes de fallback au lieu de bloquer tout l'éditeur.
+`;
