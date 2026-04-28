@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
-import { InteractableObject } from "@/components/3d/InteractableObject";
+import { InteractableObject } from "@/components/three/InteractableObject";
 import {
   GRAB_DEFAULT_COLLIDERS,
   GRAB_DEFAULT_LABEL,
@@ -19,10 +19,10 @@ import {
   GRAB_THROW_BOOST_MAX,
   GRAB_THROW_BOOST_MIN,
   GRAB_THROW_BOOST_STEP,
-} from "@/data/grabConfig";
+} from "@/data/interaction/grabConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
-import type { ColliderShape, Vector3Tuple } from "@/types/3d";
+import type { ColliderShape, Vector3Tuple } from "@/types/three";
 
 interface GrabbableObjectProps {
   position: Vector3Tuple;

@@ -3,15 +3,15 @@ import type { Octree } from "three/addons/math/Octree.js";
 import {
   PLAYER_SPAWN_POSITION_GAME,
   PLAYER_SPAWN_POSITION_PHYSICS,
-} from "@/data/playerConfig";
+} from "@/data/player/playerConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
-import { DebugCameraControls } from "@/utils/debug/scene/DebugCameraControls";
-import { DebugHelpers } from "@/utils/debug/scene/DebugHelpers";
+import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControls";
+import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { Environment } from "@/world/Environment";
 import { Lighting } from "@/world/Lighting";
-import { Map } from "@/world/Map";
-import { PlayerComponent } from "@/world/player/PlayerComponent";
+import { GameMap } from "@/world/GameMap";
+import { Player } from "@/world/player/Player";
 import { TestScene } from "@/world/debug/TestScene";
 
 export function World(): React.JSX.Element {
@@ -31,13 +31,13 @@ export function World(): React.JSX.Element {
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
 
       {sceneMode === "game" ? (
-        <Map onOctreeReady={setOctree} />
+        <GameMap onOctreeReady={setOctree} />
       ) : (
         <TestScene onOctreeReady={setOctree} />
       )}
 
       {cameraMode !== "debug" ? (
-        <PlayerComponent octree={octree} spawnPosition={playerSpawnPosition} />
+        <Player octree={octree} spawnPosition={playerSpawnPosition} />
       ) : null}
     </>
   );

@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
-import { InteractableObject } from "@/components/3d/InteractableObject";
+import { InteractableObject } from "@/components/three/InteractableObject";
 import {
   TRIGGER_DEFAULT_COLLIDERS,
   TRIGGER_DEFAULT_LABEL,
   TRIGGER_DEFAULT_SOUND_VOLUME,
   TRIGGER_DEFAULT_SPAWN_OFFSET,
-} from "@/data/triggerConfig";
-import { AudioManager } from "@/stateManager/AudioManager";
-import type { ColliderShape, Vector3Tuple } from "@/types/3d";
+} from "@/data/interaction/triggerConfig";
+import { AudioManager } from "@/managers/AudioManager";
+import type { ColliderShape, Vector3Tuple } from "@/types/three";
 
 interface SpawnedModel {
   id: number;

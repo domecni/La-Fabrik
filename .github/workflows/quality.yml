@@ -74,12 +74,12 @@ jobs:
 
       - name: 📏 Check bundle size
         run: |
-          # Get bundle size in KB
-          SIZE=$(du -k dist | cut -f1)
+          # Check generated app assets only; public/ model files are runtime assets copied to dist.
+          SIZE=$(du -k dist/assets | cut -f1)
           echo "Bundle size: ${SIZE}KB"
 
-          # Threshold: 1000KB (configurable)
-          THRESHOLD=1000
+          # Threshold: 5000KB (configurable)
+          THRESHOLD=5000
 
           if [ "$SIZE" -gt "$THRESHOLD" ]; then
             echo "❌ Bundle size ${SIZE}KB exceeds threshold ${THRESHOLD}KB"

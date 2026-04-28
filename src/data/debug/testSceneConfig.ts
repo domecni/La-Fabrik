@@ -1,4 +1,4 @@
-import type { Vector3Tuple } from "@/types/3d";
+import type { Vector3Tuple } from "@/types/three";
 
 export const TEST_SCENE_FLOOR_POSITION: Vector3Tuple = [0, -0.5, 0];
 export const TEST_SCENE_FLOOR_SIZE: Vector3Tuple = [200, 1, 200];
