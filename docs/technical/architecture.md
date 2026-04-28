@@ -44,12 +44,12 @@ This document describes the code that exists today in the repository.
 ## Editor System
 
 - `src/pages/editor/EditorPage.tsx` is the route-level editor page for `/editor`.
-- `src/features/editor/components/EditorControls.tsx` renders the HTML editor control panel.
-- `src/features/editor/scene/EditorScene.tsx` composes the editor canvas scene, camera controls, lights, shortcuts, and map rendering.
-- `src/features/editor/scene/EditorMap.tsx` renders map nodes, fallback cubes, selection highlighting, and transform controls.
-- `src/features/editor/controls/FlyController.tsx` provides player-style editor navigation.
-- `src/features/editor/hooks/useEditorSceneData.ts` loads scene data and handles folder upload fallback.
-- `src/features/editor/hooks/useEditorHistory.ts` owns editor undo and redo state.
+- `src/components/editor/EditorControls.tsx` renders the HTML editor control panel.
+- `src/components/editor/scene/EditorScene.tsx` composes the editor canvas scene, camera controls, lights, shortcuts, and map rendering.
+- `src/components/editor/scene/EditorMap.tsx` renders map nodes, fallback cubes, selection highlighting, and transform controls.
+- `src/controls/editor/FlyController.tsx` provides player-style editor navigation.
+- `src/hooks/editor/useEditorSceneData.ts` loads scene data and handles folder upload fallback.
+- `src/hooks/editor/useEditorHistory.ts` owns editor undo and redo state.
 - `src/utils/editor/loadEditorScene.ts` handles editor-only folder upload parsing.
 - `src/utils/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
 - `src/types/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
@@ -63,9 +63,9 @@ This document describes the code that exists today in the repository.
 
 ## Current Limitations
 
-- The repository is still a prototype, not the full intended game runtime.
-- `src/world/debug/TestScene.tsx` is still part of the active scene composition.
-- There is no central gameplay orchestrator such as `GameManager` yet.
+- The repository is a prototype, not the full intended game runtime.
+- `src/world/debug/TestScene.tsx` is part of the active scene composition.
+- There is no central gameplay orchestrator such as `GameManager`.
 - Missions, zones, cinematics, and dialogue systems are not implemented.
 - The player uses octree collision and simple movement rules, not a complete gameplay physics stack.
 - Editor save-to-server is implemented as a Vite dev-server plugin, not a production backend API.

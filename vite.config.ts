@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { ServerResponse } from "node:http";
 import type { Plugin } from "vite";
+import { parseMapNodes } from "./src/utils/mapNodeValidation";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -20,34 +21,6 @@ function sendJson(
   res
     .writeHead(status, { ...JSON_HEADERS, ...headers })
     .end(JSON.stringify(body));
-}
-
-function isVector3(value: unknown): value is [number, number, number] {
-  return (
-    Array.isArray(value) &&
-    value.length === 3 &&
-    value.every((item) => typeof item === "number" && Number.isFinite(item))
-  );
-}
-
-function isMapNode(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  const node = value as Record<string, unknown>;
-
-  return (
-    typeof node.name === "string" &&
-    typeof node.type === "string" &&
-    isVector3(node.position) &&
-    isVector3(node.rotation) &&
-    isVector3(node.scale)
-  );
-}
-
-function isMapPayload(value: unknown): boolean {
-  return Array.isArray(value) && value.every(isMapNode);
 }
 
 const saveMapPlugin = (): Plugin => ({
@@ -75,7 +48,9 @@ const saveMapPlugin = (): Plugin => ({
 
       try {
         const data = JSON.parse(Buffer.concat(chunks).toString());
-        if (!isMapPayload(data)) {
+        try {
+          parseMapNodes(data);
+        } catch {
           sendJson(res, 400, { error: "Invalid map payload" });
           return;
         }

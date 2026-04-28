@@ -1,4 +1,5 @@
-import type { MapNode, SceneData } from "@/types/editor";
+import type { SceneData } from "@/types/editor";
+import { parseMapNodes } from "@/utils/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 
@@ -16,7 +17,7 @@ export async function createSceneDataFromFiles(
     throw new Error("Fichier map.json manquant à la racine du dossier");
   }
 
-  const mapNodes: MapNode[] = JSON.parse(await mapFile.text());
+  const mapNodes = parseMapNodes(JSON.parse(await mapFile.text()));
   const models = new Map<string, string>();
 
   for (const [path, file] of fileMap.entries()) {

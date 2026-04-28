@@ -3,7 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
 import { loadMapSceneData } from "@/utils/loadMapSceneData";
-import type { OctreeReadyHandler } from "@/types/3d";
+import type { OctreeReadyHandler } from "@/types/three";
 import type { MapNode } from "@/types/editor";
 
 interface GameMapProps {
@@ -15,7 +15,7 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const groupRef = useRef<THREE.Group>(null);
 
-  useOctreeGraphNode(groupRef, onOctreeReady);
+  useOctreeGraphNode(groupRef, onOctreeReady, mapNodes.length);
 
   useEffect(() => {
     const loadMap = async () => {
@@ -27,9 +27,19 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
           return;
         }
 
-        setMapNodes(
-          sceneData.mapNodes.filter((node) => sceneData.models.has(node.name)),
+        const loadedMapNodes = sceneData.mapNodes.filter((node) =>
+          sceneData.models.has(node.name),
         );
+        const missingModelCount =
+          sceneData.mapNodes.length - loadedMapNodes.length;
+
+        if (missingModelCount > 0) {
+          console.warn(
+            `${missingModelCount} map nodes were skipped because their model files are missing.`,
+          );
+        }
+
+        setMapNodes(loadedMapNodes);
       } catch (error) {
         console.error("Error loading map:", error);
       } finally {
@@ -40,15 +50,12 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
     loadMap();
   }, []);
 
-  if (isLoading) {
-    return <></>;
-  }
-
   return (
     <group ref={groupRef}>
-      {mapNodes.map((node, index) => (
-        <ModelInstance key={index} node={node} />
-      ))}
+      {!isLoading &&
+        mapNodes.map((node, index) => (
+          <ModelInstance key={index} node={node} />
+        ))}
     </group>
   );
 }
