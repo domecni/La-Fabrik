@@ -4,8 +4,8 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { HomePage } from "@/pages/HomePage";
-import { EditorPage } from "@/pages/editor/EditorPage";
+import { HomePage } from "@/pages/page";
+import { EditorPage } from "@/pages/editor/page";
 import {
   DocsArchitectureRoute,
   DocsEditorRoute,
