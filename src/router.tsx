@@ -38,53 +38,25 @@ const docsRoute = createRoute({
   component: DocsLayoutRoute,
 });
 
-const docsIndexRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/",
-  component: DocsReadmeRoute,
-});
-
-const docsArchitectureRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/architecture",
-  component: DocsArchitectureRoute,
-});
-
-const docsTargetArchitectureRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/target-architecture",
-  component: DocsTargetArchitectureRoute,
-});
-
-const docsTechnicalEditorRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/technical-editor",
-  component: DocsTechnicalEditorRoute,
-});
-
-const docsFeaturesRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/features",
-  component: DocsFeaturesRoute,
-});
-
-const docsEditorRoute = createRoute({
-  getParentRoute: () => docsRoute,
-  path: "/editor",
-  component: DocsEditorRoute,
-});
+const docsChildRoutes = [
+  { path: "/", component: DocsReadmeRoute },
+  { path: "/architecture", component: DocsArchitectureRoute },
+  { path: "/target-architecture", component: DocsTargetArchitectureRoute },
+  { path: "/technical-editor", component: DocsTechnicalEditorRoute },
+  { path: "/features", component: DocsFeaturesRoute },
+  { path: "/editor", component: DocsEditorRoute },
+].map(({ path, component }) =>
+  createRoute({
+    getParentRoute: () => docsRoute,
+    path,
+    component,
+  }),
+);
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   editorRoute,
-  docsRoute.addChildren([
-    docsIndexRoute,
-    docsArchitectureRoute,
-    docsTargetArchitectureRoute,
-    docsTechnicalEditorRoute,
-    docsFeaturesRoute,
-    docsEditorRoute,
-  ]),
+  docsRoute.addChildren(docsChildRoutes),
 ]);
 
 export const router = createRouter({ routeTree });
