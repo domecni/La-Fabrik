@@ -20,6 +20,7 @@ import {
   GRAB_THROW_BOOST_MIN,
   GRAB_THROW_BOOST_STEP,
 } from "@/data/interaction/grabConfig";
+import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
 import type { ColliderShape, Vector3Tuple } from "@/types/three";
@@ -46,6 +47,9 @@ const _currentPos = new THREE.Vector3();
 const _velocity = new THREE.Vector3();
 const _handNdc = new THREE.Vector3();
 const _handDirection = new THREE.Vector3();
+const _cameraPos = new THREE.Vector3();
+const _objectPos = new THREE.Vector3();
+const _handRaycaster = new THREE.Raycaster();
 
 export function GrabbableObject({
   position,
@@ -56,8 +60,10 @@ export function GrabbableObject({
 }: GrabbableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const { hands } = useHandTrackingSnapshot();
+  const groupRef = useRef<THREE.Group>(null);
   const rbRef = useRef<RapierRigidBody>(null);
   const isHolding = useRef(false);
+  const isHandHolding = useRef(false);
 
   useDebugFolder("GrabbableObject", (folder) => {
     folder
@@ -96,22 +102,42 @@ export function GrabbableObject({
       ? hands.find((hand) => hand.isFist)
       : undefined;
 
-    if (!isHolding.current && !fistHand) return;
+    const t = rbRef.current.translation();
+    _currentPos.set(t.x, t.y, t.z);
 
     if (fistHand) {
       _handNdc.set((1 - fistHand.x) * 2 - 1, -fistHand.y * 2 + 1, 0.5);
       _handNdc.unproject(camera);
-      _handDirection.subVectors(_handNdc, camera.position).normalize();
+      camera.getWorldPosition(_cameraPos);
+      _handDirection.subVectors(_handNdc, _cameraPos).normalize();
+
+      if (!isHandHolding.current) {
+        _objectPos.copy(_currentPos);
+        _handRaycaster.set(_cameraPos, _handDirection);
+        _handRaycaster.far = INTERACTION_RADIUS;
+
+        const isObjectInRange =
+          _cameraPos.distanceTo(_objectPos) <= INTERACTION_RADIUS;
+        const hits = groupRef.current
+          ? _handRaycaster.intersectObject(groupRef.current, true)
+          : [];
+
+        isHandHolding.current = isObjectInRange && hits.length > 0;
+      }
+    } else {
+      isHandHolding.current = false;
+    }
+
+    if (!isHolding.current && !isHandHolding.current) return;
+
+    if (fistHand && isHandHolding.current) {
       _holdTarget
-        .copy(camera.position)
+        .copy(_cameraPos)
         .addScaledVector(_handDirection, params.holdDistance);
     } else {
       camera.getWorldDirection(_holdTarget);
       _holdTarget.multiplyScalar(params.holdDistance).add(camera.position);
     }
-
-    const t = rbRef.current.translation();
-    _currentPos.set(t.x, t.y, t.z);
 
     _velocity
       .subVectors(_holdTarget, _currentPos)
@@ -131,31 +157,36 @@ export function GrabbableObject({
       colliders={colliders}
       position={position}
     >
-      <InteractableObject
-        kind="grab"
-        label={label}
-        position={position}
-        bodyRef={rbRef}
-        onPress={() => {
-          isHolding.current = true;
-        }}
-        onRelease={() => {
-          isHolding.current = false;
-          if (!rbRef.current || params.throwBoost === GRAB_THROW_BOOST_DEFAULT)
-            return;
-          const v = rbRef.current.linvel();
-          rbRef.current.setLinvel(
-            {
-              x: v.x * params.throwBoost,
-              y: v.y * params.throwBoost,
-              z: v.z * params.throwBoost,
-            },
-            true,
-          );
-        }}
-      >
-        {children}
-      </InteractableObject>
+      <group ref={groupRef}>
+        <InteractableObject
+          kind="grab"
+          label={label}
+          position={position}
+          bodyRef={rbRef}
+          onPress={() => {
+            isHolding.current = true;
+          }}
+          onRelease={() => {
+            isHolding.current = false;
+            if (
+              !rbRef.current ||
+              params.throwBoost === GRAB_THROW_BOOST_DEFAULT
+            )
+              return;
+            const v = rbRef.current.linvel();
+            rbRef.current.setLinvel(
+              {
+                x: v.x * params.throwBoost,
+                y: v.y * params.throwBoost,
+                z: v.z * params.throwBoost,
+              },
+              true,
+            );
+          }}
+        >
+          {children}
+        </InteractableObject>
+      </group>
     </RigidBody>
   );
 }
