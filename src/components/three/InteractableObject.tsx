@@ -74,6 +74,7 @@ export function InteractableObject(
 
   useEffect(() => {
     const currentHandle = handle.current;
+    const manager = InteractionManager.getInstance();
 
     if (currentHandle.kind === kind) {
       currentHandle.label = label;
@@ -87,6 +88,8 @@ export function InteractableObject(
       return;
     }
 
+    manager.setNearby(currentHandle, false);
+
     if (kind === "grab") {
       if (!onRelease) return;
       handle.current = { kind, label, onPress, onRelease };
@@ -94,11 +97,22 @@ export function InteractableObject(
       handle.current = { kind, label, onPress };
     }
 
-    const manager = InteractionManager.getInstance();
     if (manager.getState().focused === currentHandle) {
       manager.setFocused(handle.current);
     }
   }, [kind, label, onPress, onRelease]);
+
+  useEffect(() => {
+    const currentHandle = handle.current;
+
+    return () => {
+      const manager = InteractionManager.getInstance();
+      manager.setNearby(currentHandle, false);
+      if (manager.getState().focused === currentHandle) {
+        manager.setFocused(null);
+      }
+    };
+  }, []);
 
   const setupInteractionDebugFolder = useCallback((folder: GUI) => {
     folder
@@ -128,8 +142,11 @@ export function InteractableObject(
 
     camera.getWorldPosition(_cameraPos);
     const dist = _cameraPos.distanceTo(_objectPos);
+    const isNearby = dist <= INTERACTION_RADIUS;
 
-    if (dist > INTERACTION_RADIUS) {
+    manager.setNearby(handle.current, isNearby);
+
+    if (!isNearby) {
       if (manager.getState().focused === handle.current) {
         manager.setFocused(null);
       }

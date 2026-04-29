@@ -19,5 +19,7 @@ export type InteractableHandle =
 
 export interface InteractionSnapshot {
   focused: InteractableHandle | null;
+  nearby: boolean;
   holding: boolean;
+  handHolding: boolean;
 }

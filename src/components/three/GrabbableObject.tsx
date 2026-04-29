@@ -23,6 +23,11 @@ import {
 import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
+import { InteractionManager } from "@/managers/InteractionManager";
+import type {
+  HandTrackingHand,
+  HandTrackingLandmark,
+} from "@/types/handTracking";
 import type { ColliderShape, Vector3Tuple } from "@/types/three";
 
 interface GrabbableObjectProps {
@@ -50,6 +55,14 @@ const _handDirection = new THREE.Vector3();
 const _cameraPos = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
 const _handRaycaster = new THREE.Raycaster();
+
+function getHandAnchorPoint(hand: HandTrackingHand): HandTrackingLandmark {
+  return hand.landmarks.reduce<HandTrackingLandmark>(
+    (lowestPoint, landmark) =>
+      landmark.y > lowestPoint.y ? landmark : lowestPoint,
+    { x: hand.x, y: hand.y, z: hand.z },
+  );
+}
 
 export function GrabbableObject({
   position,
@@ -107,7 +120,9 @@ export function GrabbableObject({
     _currentPos.set(t.x, t.y, t.z);
 
     if (fistHand) {
-      _handNdc.set((1 - fistHand.x) * 2 - 1, -fistHand.y * 2 + 1, 0.5);
+      const handAnchor = getHandAnchorPoint(fistHand);
+
+      _handNdc.set((1 - handAnchor.x) * 2 - 1, -handAnchor.y * 2 + 1, 0.5);
       _handNdc.unproject(camera);
       camera.getWorldPosition(_cameraPos);
       _handDirection.subVectors(_handNdc, _cameraPos).normalize();
@@ -127,10 +142,12 @@ export function GrabbableObject({
         handHoldDistance.current = isHandHolding.current
           ? hits[0].distance
           : null;
+        InteractionManager.getInstance().setHandHolding(isHandHolding.current);
       }
     } else {
       isHandHolding.current = false;
       handHoldDistance.current = null;
+      InteractionManager.getInstance().setHandHolding(false);
     }
 
     if (!isHolding.current && !isHandHolding.current) return;

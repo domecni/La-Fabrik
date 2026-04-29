@@ -14,10 +14,11 @@ export function HandTrackingProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const sceneMode = useSceneMode();
-  const { focused, holding } = useInteraction();
-  const isInInteractionZone = focused !== null || holding;
+  const { nearby, holding, handHolding } = useInteraction();
   const enabled =
-    isDebugEnabled() && sceneMode === "physics" && isInInteractionZone;
+    isDebugEnabled() &&
+    sceneMode === "physics" &&
+    (nearby || holding || handHolding);
   const snapshot = useRemoteHandTracking({ enabled });
 
   return (

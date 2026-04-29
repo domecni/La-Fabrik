@@ -8,11 +8,15 @@ export class InteractionManager {
   private static _instance: InteractionManager | null = null;
 
   private _focused: InteractableHandle | null = null;
+  private readonly _nearbyHandles = new Set<InteractableHandle>();
   private _holding = false;
+  private _handHolding = false;
   private _holdingHandle: GrabInteractableHandle | null = null;
   private _snapshot: InteractionSnapshot = {
     focused: null,
+    nearby: false,
     holding: false,
+    handHolding: false,
   };
   private readonly _listeners = new Set<() => void>();
 
@@ -35,6 +39,26 @@ export class InteractionManager {
     if (this._holding) return;
 
     this._focused = handle;
+    this._emit();
+  }
+
+  setNearby(handle: InteractableHandle, nearby: boolean): void {
+    const hadHandle = this._nearbyHandles.has(handle);
+    if (nearby === hadHandle) return;
+
+    if (nearby) {
+      this._nearbyHandles.add(handle);
+    } else {
+      this._nearbyHandles.delete(handle);
+    }
+
+    this._emit();
+  }
+
+  setHandHolding(holding: boolean): void {
+    if (this._handHolding === holding) return;
+
+    this._handHolding = holding;
     this._emit();
   }
 
@@ -73,11 +97,15 @@ export class InteractionManager {
 
   destroy(): void {
     this._focused = null;
+    this._nearbyHandles.clear();
     this._holding = false;
+    this._handHolding = false;
     this._holdingHandle = null;
     this._snapshot = {
       focused: null,
+      nearby: false,
       holding: false,
+      handHolding: false,
     };
     this._listeners.clear();
     InteractionManager._instance = null;
@@ -86,7 +114,9 @@ export class InteractionManager {
   private _emit(): void {
     this._snapshot = {
       focused: this._focused,
+      nearby: this._nearbyHandles.size > 0,
       holding: this._holding,
+      handHolding: this._handHolding,
     };
     this._listeners.forEach((cb) => cb());
   }
