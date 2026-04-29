@@ -1,4 +1,4 @@
-import { INTERACT_KEY } from "@/data/keybindings";
+import { INTERACT_KEY } from "@/data/input/keybindings";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useInteraction } from "@/hooks/useInteraction";
 

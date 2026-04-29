@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
-import { GrabbableObject } from "@/components/3d/GrabbableObject";
-import { TriggerObject } from "@/components/3d/TriggerObject";
-import { AnimatedModel } from "@/components/3d";
+import { GrabbableObject } from "@/components/three/GrabbableObject";
+import { TriggerObject } from "@/components/three/TriggerObject";
+import { AnimatedModel } from "@/components/three/AnimatedModel";
 import {
   TEST_SCENE_FLOOR_COLLIDER_HALF_EXTENTS,
   TEST_SCENE_FLOOR_POSITION,
@@ -20,9 +20,9 @@ import {
   TEST_SCENE_TRIGGER_ROUGHNESS,
   TEST_SCENE_TRIGGER_SEGMENTS,
   TEST_SCENE_TRIGGER_SOUND_PATH,
-} from "@/data/testSceneConfig";
+} from "@/data/debug/testSceneConfig";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
-import type { OctreeReadyHandler } from "@/types/3d";
+import type { OctreeReadyHandler } from "@/types/three";
 
 interface TestSceneProps {
   onOctreeReady: OctreeReadyHandler;

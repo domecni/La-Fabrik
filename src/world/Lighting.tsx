@@ -20,7 +20,7 @@ import {
   SUN_Z_MAX,
   SUN_Z_MIN,
   SUN_Z_STEP,
-} from "@/data/lightingConfig";
+} from "@/data/world/lightingConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 
 type LightingState = {

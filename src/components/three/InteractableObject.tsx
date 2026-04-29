@@ -8,13 +8,13 @@ import {
   INTERACTION_DEBUG_SPHERE_COLOR,
   INTERACTION_DEBUG_SPHERE_OPACITY,
   INTERACTION_DEBUG_SPHERE_SEGMENTS,
-} from "@/data/debugConfig";
+} from "@/data/debug/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
-import { InteractionManager } from "@/stateManager/InteractionManager";
-import { INTERACTION_RADIUS } from "@/data/interactionConfig";
-import type { Vector3Tuple } from "@/types/3d";
-import type { InteractableHandle, InteractableKind } from "@/types/interaction";
+import { InteractionManager } from "@/managers/InteractionManager";
+import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
+import type { Vector3Tuple } from "@/types/three";
+import type { InteractableHandle } from "@/types/interaction";
 
 interface InteractableObjectBaseProps {
   label: string;
@@ -37,46 +37,67 @@ type InteractableObjectProps =
   | TriggerInteractableObjectProps
   | GrabInteractableObjectProps;
 
-type MutableInteractableHandle = {
-  kind: InteractableKind;
-  label: string;
-  onPress: () => void;
-  onRelease?: () => void;
-};
-
 const _cameraPos = new THREE.Vector3();
 const _cameraDir = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
 const _raycaster = new THREE.Raycaster();
 
+function createInteractableHandle(
+  props: InteractableObjectProps,
+): InteractableHandle {
+  if (props.kind === "grab") {
+    return {
+      kind: props.kind,
+      label: props.label,
+      onPress: props.onPress,
+      onRelease: props.onRelease,
+    };
+  }
+
+  return {
+    kind: props.kind,
+    label: props.label,
+    onPress: props.onPress,
+  };
+}
+
 export function InteractableObject(
   props: InteractableObjectProps,
 ): React.JSX.Element {
   const { kind, label, position, bodyRef, onPress, children } = props;
-  const onRelease = props.kind === "grab" ? props.onRelease : undefined;
+  const onRelease = props.kind === "grab" ? props.onRelease : null;
   const camera = useThree((state) => state.camera);
   const groupRef = useRef<THREE.Group>(null);
   const debugSphereRef = useRef<THREE.Mesh>(null);
 
-  const handle = useRef<InteractableHandle>(
-    props.kind === "grab"
-      ? { kind: props.kind, label, onPress, onRelease: props.onRelease }
-      : { kind: props.kind, label, onPress },
-  );
+  const handle = useRef<InteractableHandle>(createInteractableHandle(props));
 
   useEffect(() => {
-    const current = handle.current as MutableInteractableHandle;
-    current.kind = kind;
-    current.label = label;
-    current.onPress = onPress;
+    const currentHandle = handle.current;
 
-    if (kind === "grab" && onRelease) {
-      current.onRelease = onRelease;
+    if (currentHandle.kind === kind) {
+      currentHandle.label = label;
+      currentHandle.onPress = onPress;
+
+      if (currentHandle.kind === "grab") {
+        if (!onRelease) return;
+        currentHandle.onRelease = onRelease;
+      }
+
       return;
     }
 
-    delete current.onRelease;
-    return undefined;
+    if (kind === "grab") {
+      if (!onRelease) return;
+      handle.current = { kind, label, onPress, onRelease };
+    } else {
+      handle.current = { kind, label, onPress };
+    }
+
+    const manager = InteractionManager.getInstance();
+    if (manager.getState().focused === currentHandle) {
+      manager.setFocused(handle.current);
+    }
   }, [kind, label, onPress, onRelease]);
 
   const setupInteractionDebugFolder = useCallback((folder: GUI) => {

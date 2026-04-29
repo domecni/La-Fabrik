@@ -5,7 +5,7 @@ import {
   DEBUG_GRID_SECONDARY_COLOR,
   DEBUG_GRID_SIZE,
   DEBUG_GRID_Y,
-} from "@/data/debugConfig";
+} from "@/data/debug/debugConfig";
 import { Debug } from "@/utils/debug/Debug";
 
 export function DebugHelpers(): React.JSX.Element | null {
