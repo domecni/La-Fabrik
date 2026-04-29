@@ -1,10 +1,48 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import type { ReactNode } from "react";
+import { Component } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
 import { loadMapSceneData } from "@/utils/loadMapSceneData";
 import type { OctreeReadyHandler } from "@/types/three";
 import type { MapNode } from "@/types/editor";
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ModelErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static getDerivedStateFromError(_error: Error): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  componentDidCatch(_error: Error): void {
+    console.warn(`Failed to load model`);
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return this.props.fallback ?? null;
+    }
+    return this.props.children;
+  }
+}
 
 interface GameMapProps {
   onOctreeReady: OctreeReadyHandler;
@@ -54,14 +92,17 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
     <group ref={groupRef}>
       {!isLoading &&
         mapNodes.map((node, index) => (
-          <ModelInstance key={index} node={node} />
+          <ModelErrorBoundary key={index}>
+            <ModelInstance node={node} />
+          </ModelErrorBoundary>
         ))}
     </group>
   );
 }
 
-function ModelInstance({ node }: { node: MapNode }): React.JSX.Element {
+function ModelInstance({ node }: { node: MapNode }): React.JSX.Element | null {
   const modelPath = `/models/${node.name}/model.gltf`;
+
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(modelPath);
   const sceneInstance = useMemo(() => scene.clone(true), [scene]);

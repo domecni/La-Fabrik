@@ -67,6 +67,12 @@ export const docGroups: DocGroup[] = [
         subtitle: "Editing workflow",
         meta: "08",
       },
+      {
+        path: "/docs/animation",
+        title: "Animation & 3D Model System",
+        subtitle: "Components and usage",
+        meta: "07",
+      },
     ],
   },
 ];

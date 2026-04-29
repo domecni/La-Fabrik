@@ -1,8 +1,9 @@
 import { useRef } from "react";
-import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
 import * as THREE from "three";
+import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
 import { GrabbableObject } from "@/components/three/GrabbableObject";
 import { TriggerObject } from "@/components/three/TriggerObject";
+import { AnimatedModel } from "@/components/three/AnimatedModel";
 import {
   TEST_SCENE_FLOOR_COLLIDER_HALF_EXTENTS,
   TEST_SCENE_FLOOR_POSITION,
@@ -86,6 +87,13 @@ export function TestScene({
           </mesh>
         </TriggerObject>
       </Physics>
+
+      <AnimatedModel
+        modelPath="/models/elec/model.gltf"
+        defaultAnimation="Idle"
+        position={[0, 0, -5]}
+        scale={1}
+      />
     </>
   );
 }

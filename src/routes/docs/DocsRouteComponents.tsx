@@ -54,6 +54,12 @@ const LazyDocsEditorPage = lazy(() =>
   })),
 );
 
+const LazyDocsAnimationPage = lazy(() =>
+  import("@/pages/docs/animation/page").then((module) => ({
+    default: module.DocsAnimationPage,
+  })),
+);
+
 export function DocsLayoutRoute(): React.JSX.Element {
   return (
     <Suspense fallback={null}>
@@ -122,6 +128,14 @@ export function DocsEditorRoute(): React.JSX.Element {
   return (
     <Suspense fallback={null}>
       <LazyDocsEditorPage />
+    </Suspense>
+  );
+}
+
+export function DocsAnimationRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsAnimationPage />
     </Suspense>
   );
 }
