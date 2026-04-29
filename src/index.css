@@ -428,6 +428,45 @@ canvas {
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
 }
 
+.model-selector-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 190px;
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(4, 7, 13, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 8px;
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.model-selector-panel strong {
+  color: white;
+  font-size: 13px;
+}
+
+.model-selector-panel ul {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.model-selector-panel li {
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.model-selector-panel li.is-selected {
+  color: #020617;
+  background: #38bdf8;
+}
+
 /* Editor page */
 .editor-container {
   position: fixed;

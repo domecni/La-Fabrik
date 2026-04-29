@@ -25,6 +25,7 @@ interface TriggerObjectProps {
   soundVolume?: number;
   spawnModel?: string;
   spawnOffset?: Vector3Tuple;
+  onTrigger?: () => void;
 }
 
 let _spawnCounter = 0;
@@ -49,6 +50,7 @@ export function TriggerObject({
   soundVolume = TRIGGER_DEFAULT_SOUND_VOLUME,
   spawnModel,
   spawnOffset = TRIGGER_DEFAULT_SPAWN_OFFSET,
+  onTrigger,
 }: TriggerObjectProps): React.JSX.Element {
   const [spawned, setSpawned] = useState<SpawnedModel[]>([]);
 
@@ -63,6 +65,8 @@ export function TriggerObject({
             if (soundPath) {
               AudioManager.getInstance().playSound(soundPath, soundVolume);
             }
+
+            onTrigger?.();
 
             if (spawnModel) {
               const spawnPos: Vector3Tuple = [
