@@ -10,7 +10,9 @@ import {
   DocsArchitectureRoute,
   DocsEditorRoute,
   DocsFeaturesRoute,
+  DocsHandTrackingRoute,
   DocsLayoutRoute,
+  DocsMainFeatureRoute,
   DocsReadmeRoute,
   DocsTargetArchitectureRoute,
   DocsTechnicalEditorRoute,
@@ -43,7 +45,9 @@ const docsChildRoutes = [
   { path: "architecture", component: DocsArchitectureRoute },
   { path: "target-architecture", component: DocsTargetArchitectureRoute },
   { path: "technical-editor", component: DocsTechnicalEditorRoute },
+  { path: "hand-tracking", component: DocsHandTrackingRoute },
   { path: "features", component: DocsFeaturesRoute },
+  { path: "main-feature", component: DocsMainFeatureRoute },
   { path: "editor", component: DocsEditorRoute },
 ].map(({ path, component }) =>
   createRoute({

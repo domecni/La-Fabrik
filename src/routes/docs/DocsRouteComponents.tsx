@@ -30,9 +30,21 @@ const LazyDocsTechnicalEditorPage = lazy(() =>
   })),
 );
 
+const LazyDocsHandTrackingPage = lazy(() =>
+  import("@/pages/docs/hand-tracking/page").then((module) => ({
+    default: module.DocsHandTrackingPage,
+  })),
+);
+
 const LazyDocsFeaturesPage = lazy(() =>
   import("@/pages/docs/features/page").then((module) => ({
     default: module.DocsFeaturesPage,
+  })),
+);
+
+const LazyDocsMainFeaturePage = lazy(() =>
+  import("@/pages/docs/main-feature/page").then((module) => ({
+    default: module.DocsMainFeaturePage,
   })),
 );
 
@@ -82,10 +94,26 @@ export function DocsTechnicalEditorRoute(): React.JSX.Element {
   );
 }
 
+export function DocsHandTrackingRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsHandTrackingPage />
+    </Suspense>
+  );
+}
+
 export function DocsFeaturesRoute(): React.JSX.Element {
   return (
     <Suspense fallback={null}>
       <LazyDocsFeaturesPage />
+    </Suspense>
+  );
+}
+
+export function DocsMainFeatureRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsMainFeaturePage />
     </Suspense>
   );
 }
