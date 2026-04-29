@@ -34,7 +34,7 @@ export function useCharacterAnimation(
     fadeDuration = DEFAULT_FADE_DURATION,
   } = config;
 
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group | null>(null);
   const { scene, animations } = useGLTF(modelPath);
   const { actions, names, mixer } = useAnimations(animations, groupRef);
   const [currentAnimation, setCurrentAnimation] = useState(initialAnimation);
