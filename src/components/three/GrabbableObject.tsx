@@ -51,17 +51,71 @@ const _holdTarget = new THREE.Vector3();
 const _currentPos = new THREE.Vector3();
 const _velocity = new THREE.Vector3();
 const _handNdc = new THREE.Vector3();
+const _handHitNdc = new THREE.Vector3();
 const _handDirection = new THREE.Vector3();
+const _handHitDirection = new THREE.Vector3();
 const _cameraPos = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
 const _handRaycaster = new THREE.Raycaster();
 
-function getHandAnchorPoint(hand: HandTrackingHand): HandTrackingLandmark {
-  return hand.landmarks.reduce<HandTrackingLandmark>(
-    (lowestPoint, landmark) =>
-      landmark.y > lowestPoint.y ? landmark : lowestPoint,
-    { x: hand.x, y: hand.y, z: hand.z },
-  );
+const HAND_GRAB_SCREEN_RADIUS = 0.04;
+const HAND_DEPTH_SENSITIVITY = 4;
+const HAND_HIT_OFFSETS: Array<[number, number]> = [
+  [0, 0],
+  [HAND_GRAB_SCREEN_RADIUS, 0],
+  [-HAND_GRAB_SCREEN_RADIUS, 0],
+  [0, HAND_GRAB_SCREEN_RADIUS],
+  [0, -HAND_GRAB_SCREEN_RADIUS],
+];
+
+function getHandCenterPoint(hand: HandTrackingHand): HandTrackingLandmark {
+  const landmarks = hand.landmarks ?? [];
+  if (landmarks.length === 0) {
+    return { x: hand.x, y: hand.y, z: hand.z };
+  }
+
+  let minX = landmarks[0].x;
+  let maxX = landmarks[0].x;
+  let minY = landmarks[0].y;
+  let maxY = landmarks[0].y;
+
+  landmarks.forEach((landmark) => {
+    minX = Math.min(minX, landmark.x);
+    maxX = Math.max(maxX, landmark.x);
+    minY = Math.min(minY, landmark.y);
+    maxY = Math.max(maxY, landmark.y);
+  });
+
+  return {
+    x: (minX + maxX) / 2,
+    y: (minY + maxY) / 2,
+    z: hand.z,
+  };
+}
+
+function getHandHit(
+  group: THREE.Group | null,
+  camera: THREE.Camera,
+  cameraPos: THREE.Vector3,
+  handCenter: HandTrackingLandmark,
+): THREE.Intersection | null {
+  if (!group) return null;
+
+  const baseX = (1 - handCenter.x) * 2 - 1;
+  const baseY = -handCenter.y * 2 + 1;
+
+  for (const [offsetX, offsetY] of HAND_HIT_OFFSETS) {
+    _handHitNdc.set(baseX + offsetX, baseY + offsetY, 0.5);
+    _handHitNdc.unproject(camera);
+    _handHitDirection.subVectors(_handHitNdc, cameraPos).normalize();
+    _handRaycaster.set(cameraPos, _handHitDirection);
+    _handRaycaster.far = INTERACTION_RADIUS;
+
+    const hits = _handRaycaster.intersectObject(group, true);
+    if (hits.length > 0) return hits[0];
+  }
+
+  return null;
 }
 
 export function GrabbableObject({
@@ -78,6 +132,7 @@ export function GrabbableObject({
   const isHolding = useRef(false);
   const isHandHolding = useRef(false);
   const handHoldDistance = useRef<number | null>(null);
+  const handHoldStartZ = useRef<number | null>(null);
 
   useDebugFolder("GrabbableObject", (folder) => {
     folder
@@ -120,40 +175,46 @@ export function GrabbableObject({
     _currentPos.set(t.x, t.y, t.z);
 
     if (fistHand) {
-      const handAnchor = getHandAnchorPoint(fistHand);
+      const handCenter = getHandCenterPoint(fistHand);
 
-      _handNdc.set((1 - handAnchor.x) * 2 - 1, -handAnchor.y * 2 + 1, 0.5);
+      _handNdc.set((1 - handCenter.x) * 2 - 1, -handCenter.y * 2 + 1, 0.5);
       _handNdc.unproject(camera);
       camera.getWorldPosition(_cameraPos);
       _handDirection.subVectors(_handNdc, _cameraPos).normalize();
 
       if (!isHandHolding.current) {
         _objectPos.copy(_currentPos);
-        _handRaycaster.set(_cameraPos, _handDirection);
-        _handRaycaster.far = INTERACTION_RADIUS;
 
         const isObjectInRange =
           _cameraPos.distanceTo(_objectPos) <= INTERACTION_RADIUS;
-        const hits = groupRef.current
-          ? _handRaycaster.intersectObject(groupRef.current, true)
-          : [];
-
-        isHandHolding.current = isObjectInRange && hits.length > 0;
-        handHoldDistance.current = isHandHolding.current
-          ? hits[0].distance
+        const hit = isObjectInRange
+          ? getHandHit(groupRef.current, camera, _cameraPos, handCenter)
           : null;
+
+        isHandHolding.current = Boolean(hit);
+        handHoldDistance.current = hit?.distance ?? null;
+        handHoldStartZ.current = hit ? fistHand.z : null;
         InteractionManager.getInstance().setHandHolding(isHandHolding.current);
       }
     } else {
       isHandHolding.current = false;
       handHoldDistance.current = null;
+      handHoldStartZ.current = null;
       InteractionManager.getInstance().setHandHolding(false);
     }
 
     if (!isHolding.current && !isHandHolding.current) return;
 
     if (fistHand && isHandHolding.current) {
-      const holdDistance = handHoldDistance.current ?? params.holdDistance;
+      const depthOffset =
+        handHoldStartZ.current === null
+          ? 0
+          : (fistHand.z - handHoldStartZ.current) * HAND_DEPTH_SENSITIVITY;
+      const holdDistance = THREE.MathUtils.clamp(
+        (handHoldDistance.current ?? params.holdDistance) + depthOffset,
+        GRAB_HOLD_DISTANCE_MIN,
+        GRAB_HOLD_DISTANCE_MAX,
+      );
 
       _holdTarget
         .copy(_cameraPos)

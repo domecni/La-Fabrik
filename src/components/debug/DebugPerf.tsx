@@ -12,7 +12,7 @@ export function DebugPerf(): React.JSX.Element | null {
 
   return (
     <Suspense fallback={null}>
-      <Perf position="bottom-right" />
+      <Perf position="top-right" />
     </Suspense>
   );
 }
