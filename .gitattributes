@@ -3,6 +3,7 @@
 
 *.glb filter=lfs diff=lfs merge=lfs -text
 *.gltf filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
 
 # Textures
 *.png filter=lfs diff=lfs merge=lfs -text
