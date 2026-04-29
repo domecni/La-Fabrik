@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import type { AnimationAction, AnimationMixer } from "three";

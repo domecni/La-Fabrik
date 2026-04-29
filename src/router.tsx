@@ -7,6 +7,7 @@ import {
 import { HomePage } from "@/pages/page";
 import { EditorPage } from "@/pages/editor/page";
 import {
+  DocsAnimationRoute,
   DocsArchitectureRoute,
   DocsEditorRoute,
   DocsFeaturesRoute,
@@ -45,6 +46,7 @@ const docsChildRoutes = [
   { path: "technical-editor", component: DocsTechnicalEditorRoute },
   { path: "features", component: DocsFeaturesRoute },
   { path: "editor", component: DocsEditorRoute },
+  { path: "animation", component: DocsAnimationRoute },
 ].map(({ path, component }) =>
   createRoute({
     getParentRoute: () => docsRoute,

@@ -26,10 +26,12 @@ class ModelErrorBoundary extends Component<
     this.state = { hasError: false };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static getDerivedStateFromError(_error: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   componentDidCatch(_error: Error): void {
     console.warn(`Failed to load model`);
   }

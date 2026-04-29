@@ -1,15 +1,9 @@
-import {
-  createContext,
-  useContext,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+/* eslint-disable react-hooks/immutability */
+import { createContext, useRef, useState, useEffect, useCallback } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import type { AnimationAction } from "three";
 import * as THREE from "three";
-import type { Vector3Tuple } from "@/types/3d";
+import type { Vector3Tuple } from "@/types/three";
 
 export interface AnimatedModelConfig {
   modelPath: string;
@@ -25,7 +19,7 @@ export interface AnimatedModelConfig {
   onAnimationEnd?: (animationName: string) => void;
 }
 
-interface AnimatedModelContextValue {
+export interface AnimatedModelContextValue {
   play: (name: string, fade?: number) => void;
   stop: (fade?: number) => void;
   fadeTo: (name: string, fade?: number) => void;
@@ -39,13 +33,7 @@ const AnimatedModelContext = createContext<AnimatedModelContextValue | null>(
   null,
 );
 
-export function useAnimatedModel(): AnimatedModelContextValue {
-  const context = useContext(AnimatedModelContext);
-  if (!context) {
-    throw new Error("useAnimatedModel must be used within AnimatedModel");
-  }
-  return context;
-}
+export { AnimatedModelContext };
 
 interface AnimatedModelProps extends AnimatedModelConfig {
   children?: React.ReactNode;
@@ -53,7 +41,6 @@ interface AnimatedModelProps extends AnimatedModelConfig {
 
 export function AnimatedModel({
   modelPath,
-  animations: _animations = [],
   defaultAnimation = "Idle",
   position = [0, 0, 0],
   rotation = [0, 0, 0],
@@ -144,28 +131,31 @@ export function AnimatedModel({
   );
 
   useEffect(() => {
-    if (autoPlay && names.length > 0) {
-      console.log(`[AnimatedModel] Available animations: ${names.join(", ")}`);
-
-      let defaultAction = actions[defaultAnimation as string];
-
-      if (!defaultAction && names.length > 0) {
-        console.log(
-          `[AnimatedModel] "${defaultAnimation}" not found, using: ${names[0]}`,
-        );
-        defaultAction = actions[names[0] as string];
-      }
-
-      if (defaultAction) {
-        defaultAction.play();
-        setIsReady(true);
-        setCurrentAnim(defaultAction.getClip().name);
-        onLoaded?.();
-      } else {
-        console.log("[AnimatedModel] No available animation in actions");
-      }
-    } else if (names.length === 0) {
+    if (!autoPlay || names.length === 0) {
       console.log("[AnimatedModel] No animation found in model");
+      return;
+    }
+
+    console.log(`[AnimatedModel] Available animations: ${names.join(", ")}`);
+
+    let defaultAction = actions[defaultAnimation as string];
+
+    if (!defaultAction && names.length > 0) {
+      console.log(
+        `[AnimatedModel] "${defaultAnimation}" not found, using: ${names[0]}`,
+      );
+      defaultAction = actions[names[0] as string];
+    }
+
+    if (defaultAction) {
+      defaultAction.play();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsReady(true);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentAnim(defaultAction.getClip().name);
+      onLoaded?.();
+    } else {
+      console.log("[AnimatedModel] No available animation in actions");
     }
   }, [actions, defaultAnimation, names, autoPlay, onLoaded]);
 
@@ -179,7 +169,6 @@ export function AnimatedModel({
     names,
   };
 
-  // Apply transforms to scene directly
   useEffect(() => {
     scene.position.set(...position);
     scene.rotation.set(
