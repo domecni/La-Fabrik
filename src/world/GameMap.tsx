@@ -6,12 +6,17 @@ import { loadMapSceneData } from "@/utils/loadMapSceneData";
 import type { OctreeReadyHandler } from "@/types/three";
 import type { MapNode } from "@/types/editor";
 
+interface LoadedMapNode {
+  node: MapNode;
+  modelUrl: string;
+}
+
 interface GameMapProps {
   onOctreeReady: OctreeReadyHandler;
 }
 
 export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
-  const [mapNodes, setMapNodes] = useState<MapNode[]>([]);
+  const [mapNodes, setMapNodes] = useState<LoadedMapNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const groupRef = useRef<THREE.Group>(null);
 
@@ -27,9 +32,10 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
           return;
         }
 
-        const loadedMapNodes = sceneData.mapNodes.filter((node) =>
-          sceneData.models.has(node.name),
-        );
+        const loadedMapNodes = sceneData.mapNodes.flatMap((node) => {
+          const modelUrl = sceneData.models.get(node.name);
+          return modelUrl ? [{ node, modelUrl }] : [];
+        });
         const missingModelCount =
           sceneData.mapNodes.length - loadedMapNodes.length;
 
@@ -54,16 +60,25 @@ export function GameMap({ onOctreeReady }: GameMapProps): React.JSX.Element {
     <group ref={groupRef}>
       {!isLoading &&
         mapNodes.map((node, index) => (
-          <ModelInstance key={index} node={node} />
+          <ModelInstance
+            key={index}
+            node={node.node}
+            modelUrl={node.modelUrl}
+          />
         ))}
     </group>
   );
 }
 
-function ModelInstance({ node }: { node: MapNode }): React.JSX.Element {
-  const modelPath = `/models/${node.name}/model.gltf`;
+function ModelInstance({
+  node,
+  modelUrl,
+}: {
+  node: MapNode;
+  modelUrl: string;
+}): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF(modelPath);
+  const { scene } = useGLTF(modelUrl);
   const sceneInstance = useMemo(() => scene.clone(true), [scene]);
   const { position, rotation, scale } = node;
 

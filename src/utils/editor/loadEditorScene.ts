@@ -21,9 +21,12 @@ export async function createSceneDataFromFiles(
   const models = new Map<string, string>();
 
   for (const [path, file] of fileMap.entries()) {
-    const modelMatch = path.match(/^\/models\/(.+)\/model\.gltf$/);
-    if (modelMatch?.[1]) {
-      models.set(modelMatch[1], URL.createObjectURL(file));
+    const modelMatch = path.match(/^\/models\/(.+)\/model\.(glb|gltf)$/);
+    const modelName = modelMatch?.[1];
+    const modelExtension = modelMatch?.[2];
+
+    if (modelName && (modelExtension === "glb" || !models.has(modelName))) {
+      models.set(modelName, URL.createObjectURL(file));
     }
   }
 

@@ -9,7 +9,7 @@ Use the editor when you need to move, rotate, or scale existing map objects with
 The editor reads the same map data as the runtime scene:
 
 - `public/map.json` contains the object list.
-- `public/models/{name}/model.gltf` contains the matching 3D model for each object name.
+- `public/models/{name}/model.glb` contains the matching 3D model for each object name. `model.gltf` is still supported as a fallback during migration.
 - Missing models are displayed as gray fallback cubes, so incomplete maps remain editable.
 
 ## Map Node Format

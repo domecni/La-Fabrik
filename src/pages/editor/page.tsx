@@ -138,7 +138,7 @@ export function EditorPage(): React.JSX.Element {
               <h4>Structure requise :</h4>
               <pre>
                 public/ ├── <strong>map.json</strong> (à la racine) └── models/
-                ├── arbre/ │ └── model.gltf ├── building/ │ └── model.gltf └──
+                ├── arbre/ │ └── model.glb ├── building/ │ └── model.gltf └──
                 ...
               </pre>
             </div>

@@ -57,7 +57,7 @@ This document describes the code that exists today in the repository.
 ## Map Data
 
 - `public/map.json` is expected to be a `MapNode[]`.
-- Each map node `name` maps to `public/models/{name}/model.gltf`.
+- Each map node `name` maps to `public/models/{name}/model.glb` when available, with `public/models/{name}/model.gltf` kept as fallback.
 - The editor renders a fallback cube for missing models.
 - The game scene filters out nodes whose model cannot be resolved.
 

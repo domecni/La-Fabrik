@@ -57,7 +57,7 @@ src/
 
 `src/controls/editor/FlyController.tsx` provides editor movement controls for player-style navigation.
 
-`src/utils/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json` and resolves available `public/models/{name}/model.gltf` files.
+`src/utils/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json` and resolves available `public/models/{name}/model.glb` files first, then falls back to `public/models/{name}/model.gltf`.
 
 `src/utils/editor/loadEditorScene.ts` contains editor-only upload handling for user-selected folders.
 
@@ -96,10 +96,10 @@ public/
 ├── map.json
 └── models/
     └── pylone/
-        └── model.gltf
+        └── model.glb
 ```
 
-If a model is missing, the editor renders a fallback cube so the node can still be selected and transformed.
+If `model.glb` and `model.gltf` are both missing, the editor renders a fallback cube so the node can still be selected and transformed.
 
 ## Editor Flow
 

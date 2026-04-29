@@ -214,7 +214,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 ## Scène
 
 - Scène React Three Fiber plein écran
-- Carte principale chargée depuis \`public/models/map/model.gltf\`
+- Carte principale chargée depuis \`public/models/{name}/model.glb\`, avec fallback vers \`model.gltf\`
 - Scène de test physique debug sélectionnable depuis le panneau debug
 - Éclairage ambiant et directionnel
 - Configuration de l'environnement de fond
@@ -268,7 +268,7 @@ L'éditeur travaille sur la liste de nodes stockée dans "/public/map.json".
 
 Chaque node décrit un objet de la scène :
 
-- "name" : nom du dossier modèle dans "/public/models/{name}/model.gltf"
+- "name" : nom du dossier modèle dans "/public/models/{name}/model.glb", avec fallback vers "model.gltf"
 - "type" : catégorie de l'objet
 - "position" : "[x, y, z]"
 - "rotation" : "[x, y, z]"

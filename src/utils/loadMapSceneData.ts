@@ -2,7 +2,7 @@ import type { MapNode, SceneData } from "@/types/editor";
 import { parseMapNodes } from "@/utils/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
-const MODEL_FILE_NAME = "model.gltf";
+const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];
 const HTML_CONTENT_TYPE = "text/html";
 type ModelEntry = [modelName: string, modelUrl: string];
 
@@ -27,21 +27,26 @@ async function loadMapModelUrls(
 ): Promise<Map<string, string>> {
   const uniqueModelNames = [...new Set(mapNodes.map((node) => node.name))];
   const modelEntries = await Promise.all(
-    uniqueModelNames.map(async (modelName) => {
-      const modelUrl = `/models/${modelName}/${MODEL_FILE_NAME}`;
-
-      try {
-        const response = await fetch(modelUrl, { method: "HEAD" });
-        const contentType = response.headers.get("content-type") ?? "";
-        const modelEntry: ModelEntry = [modelName, modelUrl];
-        return response.ok && !contentType.includes(HTML_CONTENT_TYPE)
-          ? modelEntry
-          : null;
-      } catch {
-        return null;
-      }
-    }),
+    uniqueModelNames.map((modelName) => loadModelEntry(modelName)),
   );
 
   return new Map(modelEntries.filter((entry) => entry !== null));
+}
+
+async function loadModelEntry(modelName: string): Promise<ModelEntry | null> {
+  for (const fileName of MODEL_FILE_NAMES) {
+    const modelUrl = `/models/${modelName}/${fileName}`;
+
+    try {
+      const response = await fetch(modelUrl, { method: "HEAD" });
+      const contentType = response.headers.get("content-type") ?? "";
+      if (response.ok && !contentType.includes(HTML_CONTENT_TYPE)) {
+        return [modelName, modelUrl];
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
