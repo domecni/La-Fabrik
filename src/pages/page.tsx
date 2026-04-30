@@ -1,11 +1,8 @@
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Crosshair } from "@/components/ui/Crosshair";
-import { HandTrackingOverlay } from "@/components/ui/HandTrackingOverlay";
-import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
-import { HandTrackingVisualizer } from "@/components/ui/HandTrackingVisualizer";
-import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { DebugPerf } from "@/components/debug/DebugPerf";
+import { GameUI } from "@/components/ui/GameUI";
+import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
 import { World } from "@/world/World";
 
 export function HomePage(): React.JSX.Element {
@@ -17,10 +14,7 @@ export function HomePage(): React.JSX.Element {
           <DebugPerf />
         </Suspense>
       </Canvas>
-      <Crosshair />
-      <InteractPrompt />
-      <HandTrackingVisualizer />
-      <HandTrackingOverlay />
+      <GameUI />
     </HandTrackingProvider>
   );
 }

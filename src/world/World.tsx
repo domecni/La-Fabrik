@@ -12,6 +12,7 @@ import { Environment } from "@/world/Environment";
 import { GameMusic } from "@/world/GameMusic";
 import { Lighting } from "@/world/Lighting";
 import { GameMap } from "@/world/GameMap";
+import { GameStageContent } from "@/world/GameStageContent";
 import { Player } from "@/world/player/Player";
 import { TestMap } from "@/world/debug/TestMap";
 
@@ -35,6 +36,7 @@ export function World(): React.JSX.Element {
         <>
           <GameMusic />
           <GameMap onOctreeReady={setOctree} />
+          <GameStageContent />
         </>
       ) : (
         <TestMap onOctreeReady={setOctree} />

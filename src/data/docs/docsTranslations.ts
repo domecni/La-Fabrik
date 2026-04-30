@@ -206,6 +206,165 @@ Ce document décrit l'architecture visée à moyen terme pour le projet.
 - Les chemins runtime uniquement debug doivent être clairement marqués et faciles à retirer plus tard.
 `;
 
+export const zustandFr = `# État de jeu Zustand
+
+Ce document explique comment Zustand est utilisé dans le projet actuel.
+
+## Pourquoi Zustand existe ici
+
+Le projet a besoin d'une source de vérité partagée pour suivre la progression du joueur dans l'expérience.
+
+La progression actuelle est découpée en main states :
+
+| Main state | Rôle |
+| --- | --- |
+| \`intro\` | Onboarding et séquence d'ouverture |
+| \`bike\` | Séquence de réparation du vélo électrique |
+| \`pylone\` | Séquence du réseau électrique |
+| \`ferme\` | Séquence de la ferme verticale |
+| \`outro\` | Séquence de fin |
+
+Chaque main state peut aussi posséder un sous-état plus fin, comme l'étape de mission courante, l'audio de dialogue ou des flags de complétion.
+
+Zustand est utile parce que les composants React et React Three Fiber peuvent s'abonner uniquement à la partie de state dont ils ont besoin. Quand cette partie change, seuls les composants abonnés se mettent à jour.
+
+## Emplacement du store
+
+Le store de progression du jeu vit ici :
+
+\`\`\`txt
+src/managers/stores/useGameStore.ts
+\`\`\`
+
+Le store est placé dans \`src/managers/stores/\` parce qu'il appartient à la couche d'orchestration gameplay, pas à un composant visuel précis.
+
+## Managers vs Store
+
+Les managers sont responsables des objets runtime locaux et des comportements impératifs.
+
+Exemples :
+
+- \`AudioManager\` possède les éléments audio et les pools de sons.
+- \`InteractionManager\` possède les handles d'interaction transitoires et la logique orientée input.
+
+Un manager peut lire ou mettre à jour le store Zustand quand son comportement local doit impacter la progression globale du jeu.
+
+Le store Zustand est responsable de l'état global durable :
+
+- main state courant
+- sous-état de mission
+- flags de progression
+- références de dialogue/audio
+- transitions de state
+
+Règle simple :
+
+- manager = objets runtime, effets de bord et logique impérative locale
+- store = état gameplay global auquel l'UI ou le world peuvent s'abonner
+
+## Forme actuelle
+
+Le store expose :
+
+- \`mainState\` : phase active du jeu
+- \`intro\` : état spécifique à l'intro
+- \`bike\` : état de la mission vélo
+- \`pylone\` : état de la mission réseau électrique
+- \`ferme\` : état de la mission ferme
+- \`outro\` : état de fin
+- des actions de mise à jour directe et des actions de progression
+
+Les étapes de mission utilisent actuellement cette séquence :
+
+\`\`\`ts
+"locked" | "waiting" | "inspected" | "fragmented" | "scanning" | "repairing" | "done"
+\`\`\`
+
+## Lire le state dans un composant
+
+Utilise des selectors pour lire uniquement ce dont le composant a besoin.
+
+\`\`\`tsx
+import { useGameStore } from "@/managers/stores/useGameStore";
+
+export function Example(): React.JSX.Element {
+  const mainState = useGameStore((state) => state.mainState);
+
+  return <p>State courant : {mainState}</p>;
+}
+\`\`\`
+
+C'est mieux que de lire tout le store, car le composant se re-render uniquement quand \`mainState\` change.
+
+## Mettre à jour le state
+
+Préfère les actions explicites du store.
+
+\`\`\`ts
+const advanceGameState = useGameStore((state) => state.advanceGameState);
+
+advanceGameState();
+\`\`\`
+
+Pour le développement et le debug, des setters directs existent aussi :
+
+\`\`\`ts
+const setMainState = useGameStore((state) => state.setMainState);
+
+setMainState("bike");
+\`\`\`
+
+Les setters directs sont pratiques pour les panneaux debug, mais le gameplay de production devrait préférer les actions métier comme \`advanceGameState\`, \`completeBike\` ou \`completePylone\`.
+
+## Intégration avec le World
+
+\`src/world/GameStageContent.tsx\` s'abonne à \`mainState\` et monte le contenu spécifique au state courant.
+
+La scène peut donc évoluer progressivement vers ce pattern :
+
+\`\`\`tsx
+switch (mainState) {
+  case "intro":
+    return <IntroContent />;
+  case "bike":
+    return <BikeContent />;
+  case "pylone":
+    return <PyloneContent />;
+  case "ferme":
+    return <FarmContent />;
+  case "outro":
+    return <OutroContent />;
+}
+\`\`\`
+
+Dans React Three Fiber, monter ou démonter du JSX contrôle ce qui apparaît dans la scène Three.js. Quand un composant lié à un state disparaît du JSX, React le retire de la scène.
+
+## Intégration UI
+
+\`src/components/ui/GameUI.tsx\` regroupe les overlays HTML utilisés par la route jouable.
+
+Overlays actuels :
+
+- \`GameStateHUD\` : panneau de progression debug visible avec \`?debug\`
+- \`Crosshair\` : aide de visée joueur
+- \`InteractPrompt\` : prompt d'interaction
+
+\`src/pages/page.tsx\` doit rester fin et monter seulement le canvas et \`GameUI\`.
+
+## Règles anti-régression
+
+- Ne pas stocker les valeurs mises à jour à chaque frame dans Zustand.
+- Utiliser \`useRef\` pour les valeurs mutables fréquentes comme la vélocité joueur, les vecteurs temporaires ou les données de boucle d'animation.
+- Utiliser des selectors au lieu de lire tout le store dans les composants.
+- Garder les transitions gameplay dans les actions du store quand possible.
+- Garder les contrôles debug derrière \`?debug\`.
+- Ajouter du state uniquement quand une vraie fonctionnalité runtime en a besoin.
+
+## Prochaines étapes
+
+La prochaine étape naturelle est de remplacer les ancres temporaires de \`GameStageContent\` par de vrais composants de phase, par exemple \`IntroContent\`, \`BikeContent\`, \`PyloneContent\`, \`FermeContent\` et \`OutroContent\`.
+`;
+
 export const featuresFr = `# Fonctionnalités implémentées
 
 Ce document liste les fonctionnalités présentes dans le code actuel.

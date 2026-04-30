@@ -17,6 +17,7 @@ import {
   DocsReadmeRoute,
   DocsTargetArchitectureRoute,
   DocsTechnicalEditorRoute,
+  DocsZustandRoute,
 } from "@/routes/DocsRoute";
 
 const rootRoute = createRootRoute({
@@ -47,6 +48,7 @@ const docsChildRoutes = [
   { path: "target-architecture", component: DocsTargetArchitectureRoute },
   { path: "technical-editor", component: DocsTechnicalEditorRoute },
   { path: "hand-tracking", component: DocsHandTrackingRoute },
+  { path: "zustand", component: DocsZustandRoute },
   { path: "features", component: DocsFeaturesRoute },
   { path: "main-feature", component: DocsMainFeatureRoute },
   { path: "editor", component: DocsEditorRoute },

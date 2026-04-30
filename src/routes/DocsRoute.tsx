@@ -43,6 +43,10 @@ const LazyDocsHandTrackingPage = lazyNamed(
   () => import("@/pages/docs/hand-tracking/page"),
   "DocsHandTrackingPage",
 );
+const LazyDocsZustandPage = lazyNamed(
+  () => import("@/pages/docs/zustand/page"),
+  "DocsZustandPage",
+);
 const LazyDocsFeaturesPage = lazyNamed(
   () => import("@/pages/docs/features/page"),
   "DocsFeaturesPage",
@@ -82,6 +86,10 @@ export function DocsTechnicalEditorRoute(): React.JSX.Element {
 
 export function DocsHandTrackingRoute(): React.JSX.Element {
   return withDocsSuspense(LazyDocsHandTrackingPage);
+}
+
+export function DocsZustandRoute(): React.JSX.Element {
+  return withDocsSuspense(LazyDocsZustandPage);
 }
 
 export function DocsFeaturesRoute(): React.JSX.Element {
