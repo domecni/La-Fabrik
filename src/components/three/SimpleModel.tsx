@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import type { Vector3Tuple } from "@/types/3d";
+import type { Vector3Tuple } from "@/types/three";
 
 export interface SimpleModelConfig {
   modelPath: string;

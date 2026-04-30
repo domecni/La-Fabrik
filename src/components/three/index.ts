@@ -1,4 +1,4 @@
-export { AnimatedModel, useAnimatedModel } from "./AnimatedModel";
+export { AnimatedModel } from "./AnimatedModel";
 export type { AnimatedModelConfig } from "./AnimatedModel";
 
 export { SimpleModel } from "./SimpleModel";
