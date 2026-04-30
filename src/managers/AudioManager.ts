@@ -7,6 +7,9 @@ interface PlaySoundOptions {
 export class AudioManager {
   private static _instance: AudioManager | null = null;
   private readonly _audioPools = new Map<string, HTMLAudioElement[]>();
+  private _music: HTMLAudioElement | null = null;
+  private _musicPath: string | null = null;
+  private _musicUnlockHandler: (() => void) | null = null;
 
   private static readonly MAX_POOL_SIZE_PER_SOUND = 6;
   private static readonly IGNORED_PLAYBACK_ERRORS = new Set([
@@ -45,7 +48,44 @@ export class AudioManager {
     });
   }
 
+  playMusic(path: string, volume = 1): void {
+    if (this._musicPath === path && this._music) {
+      this._music.volume = Math.max(0, Math.min(1, volume));
+      if (!this._music.paused) return;
+    } else {
+      this.stopMusic();
+      this._music = new Audio(path);
+      this._music.loop = true;
+      this._musicPath = path;
+    }
+
+    this._music.volume = Math.max(0, Math.min(1, volume));
+
+    void this._music.play().catch((error: unknown) => {
+      if (
+        error instanceof DOMException &&
+        AudioManager.IGNORED_PLAYBACK_ERRORS.has(error.name)
+      ) {
+        this._waitForUserGestureToPlayMusic();
+        return;
+      }
+
+      logger.error("AudioManager", "Failed to play music", {
+        path,
+        error: AudioManager._toLogValue(error),
+      });
+    });
+  }
+
+  stopMusic(): void {
+    this._removeMusicUnlockHandler();
+    this._music?.pause();
+    this._music = null;
+    this._musicPath = null;
+  }
+
   destroy(): void {
+    this.stopMusic();
     this._audioPools.forEach((pool) => {
       pool.forEach((audio) => {
         audio.pause();
@@ -78,6 +118,30 @@ export class AudioManager {
     const initialAudio = new Audio(path);
     this._audioPools.set(path, [initialAudio]);
     return initialAudio;
+  }
+
+  private _waitForUserGestureToPlayMusic(): void {
+    if (this._musicUnlockHandler) return;
+
+    this._musicUnlockHandler = () => {
+      this._removeMusicUnlockHandler();
+      void this._music?.play();
+    };
+
+    window.addEventListener("pointerdown", this._musicUnlockHandler, {
+      once: true,
+    });
+    window.addEventListener("keydown", this._musicUnlockHandler, {
+      once: true,
+    });
+  }
+
+  private _removeMusicUnlockHandler(): void {
+    if (!this._musicUnlockHandler) return;
+
+    window.removeEventListener("pointerdown", this._musicUnlockHandler);
+    window.removeEventListener("keydown", this._musicUnlockHandler);
+    this._musicUnlockHandler = null;
   }
 
   private static _toLogValue(error: unknown): Error | DOMException | string {

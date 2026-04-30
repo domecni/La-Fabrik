@@ -10,9 +10,8 @@ interface MainFeatureObjectProps {
 }
 
 const CASE_MODEL_PATH = "/models/packderelance/model.gltf";
-const CASE_SOUND_PATH = "/sounds/effect/fa.mp3";
-const CASE_OPEN_SOUND_RATE = 1.08;
-const CASE_CLOSE_SOUND_RATE = 0.82;
+const CASE_OPEN_SOUND_PATH = "/sounds/effect/open-malette.mp3";
+const CASE_CLOSE_SOUND_PATH = "/sounds/effect/close-malette.mp3";
 
 export function MainFeatureObject({
   position,
@@ -25,9 +24,9 @@ export function MainFeatureObject({
       colliders="cuboid"
       label={open ? "Fermer la mallette" : "Ouvrir la mallette"}
       onTrigger={() => {
-        AudioManager.getInstance().playSound(CASE_SOUND_PATH, 1, {
-          playbackRate: open ? CASE_CLOSE_SOUND_RATE : CASE_OPEN_SOUND_RATE,
-        });
+        AudioManager.getInstance().playSound(
+          open ? CASE_CLOSE_SOUND_PATH : CASE_OPEN_SOUND_PATH,
+        );
         onToggle();
       }}
     >

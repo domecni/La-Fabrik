@@ -9,6 +9,7 @@ import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { Environment } from "@/world/Environment";
+import { GameMusic } from "@/world/GameMusic";
 import { Lighting } from "@/world/Lighting";
 import { GameMap } from "@/world/GameMap";
 import { Player } from "@/world/player/Player";
@@ -31,7 +32,10 @@ export function World(): React.JSX.Element {
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
 
       {sceneMode === "game" ? (
-        <GameMap onOctreeReady={setOctree} />
+        <>
+          <GameMusic />
+          <GameMap onOctreeReady={setOctree} />
+        </>
       ) : (
         <TestMap onOctreeReady={setOctree} />
       )}
