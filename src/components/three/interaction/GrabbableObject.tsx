@@ -22,13 +22,13 @@ import {
 } from "@/data/interaction/grabConfig";
 import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
-import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
+import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { InteractionManager } from "@/managers/InteractionManager";
 import type {
   HandTrackingHand,
   HandTrackingLandmark,
-} from "@/types/handTracking";
-import type { ColliderShape, Vector3Tuple } from "@/types/three";
+} from "@/types/handTracking/handTracking";
+import type { ColliderShape, Vector3Tuple } from "@/types/three/three";
 
 interface GrabbableObjectProps {
   position: Vector3Tuple;
@@ -38,7 +38,6 @@ interface GrabbableObjectProps {
   handControlled?: boolean;
 }
 
-// Shared params let one debug folder drive every instance.
 const grabDebugParams = {
   stiffness: GRAB_STIFFNESS_DEFAULT,
   throwBoost: GRAB_THROW_BOOST_DEFAULT,
@@ -74,10 +73,10 @@ function getHandCenterPoint(hand: HandTrackingHand): HandTrackingLandmark {
     return { x: hand.x, y: hand.y, z: hand.z };
   }
 
-  let minX = landmarks[0].x;
-  let maxX = landmarks[0].x;
-  let minY = landmarks[0].y;
-  let maxY = landmarks[0].y;
+  let minX = landmarks[0]!.x;
+  let maxX = landmarks[0]!.x;
+  let minY = landmarks[0]!.y;
+  let maxY = landmarks[0]!.y;
 
   landmarks.forEach((landmark) => {
     minX = Math.min(minX, landmark.x);
@@ -112,7 +111,7 @@ function getHandHit(
     _handRaycaster.far = INTERACTION_RADIUS;
 
     const hits = _handRaycaster.intersectObject(group, true);
-    if (hits.length > 0) return hits[0];
+    if (hits?.length > 0) return hits[0] ?? null;
   }
 
   return null;

@@ -1,4 +1,4 @@
-import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
+import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 
 const HAND_CONNECTIONS: Array<[number, number]> = [
   [0, 1],

@@ -1,5 +1,5 @@
-import type { MapNode, SceneData } from "@/types/editor";
-import { parseMapNodes } from "@/utils/mapNodeValidation";
+import type { MapNode, SceneData } from "@/types/editor/editor";
+import { parseMapNodes } from "@/utils/map/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];

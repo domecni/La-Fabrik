@@ -57,13 +57,13 @@ src/
 
 `src/controls/editor/FlyController.tsx` provides editor movement controls for player-style navigation.
 
-`src/utils/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json` and resolves available `public/models/{name}/model.glb` files first, then falls back to `public/models/{name}/model.gltf`.
+`src/utils/map/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json` and resolves available `public/models/{name}/model.glb` files first, then falls back to `public/models/{name}/model.gltf`.
 
 `src/utils/editor/loadEditorScene.ts` contains editor-only upload handling for user-selected folders.
 
 ## Data Format
 
-The shared editor type lives in `src/types/editor.ts`.
+The shared editor type lives in `src/types/editor/editor.ts`.
 
 ```ts
 interface MapNode {

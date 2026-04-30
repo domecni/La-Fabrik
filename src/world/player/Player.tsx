@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useThree } from "@react-three/fiber";
 import type { Octree } from "three/addons/math/Octree.js";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 import { PlayerCamera } from "@/world/player/PlayerCamera";
 import { PlayerController } from "@/world/player/PlayerController";
 

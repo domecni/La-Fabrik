@@ -10,7 +10,7 @@ The feature is currently scoped to the debug physics scene and is not yet a prod
 
 ## Runtime Flow
 
-1. The browser captures webcam frames in `src/hooks/useRemoteHandTracking.ts`.
+1. The browser captures webcam frames in `src/hooks/handTracking/useRemoteHandTracking.ts`.
 2. Frames are sent to the local Python backend over WebSocket.
 3. The backend runs MediaPipe hand landmark detection.
 4. The backend returns hand data including landmarks, handedness, score, center point, and `isFist`.
@@ -46,7 +46,7 @@ The backend sends normalized hand coordinates and landmarks. The frontend treats
 
 ## Frontend Data Shape
 
-The shared types live in `src/types/handTracking.ts`.
+The shared types live in `src/types/handTracking/handTracking.ts`.
 
 ```ts
 interface HandTrackingHand {

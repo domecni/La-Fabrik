@@ -25,7 +25,7 @@ This document describes the code that exists today in the repository.
 - `src/components/three/interaction/InteractableObject.tsx` handles focus detection through distance and raycasting.
 - `src/components/three/interaction/TriggerObject.tsx` implements trigger-style interactions.
 - `src/components/three/interaction/GrabbableObject.tsx` implements hold-and-release interactions.
-- `src/hooks/useInteraction.ts` exposes the interaction snapshot to React UI.
+- `src/hooks/interaction/useInteraction.ts` exposes the interaction snapshot to React UI.
 - `src/components/ui/InteractPrompt.tsx` shows the `E` prompt for trigger interactions.
 
 ## Audio
@@ -59,8 +59,8 @@ This document describes the code that exists today in the repository.
 - `src/hooks/editor/useEditorSceneData.ts` loads scene data and handles folder upload fallback.
 - `src/hooks/editor/useEditorHistory.ts` owns editor undo and redo state.
 - `src/utils/editor/loadEditorScene.ts` handles editor-only folder upload parsing.
-- `src/utils/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
-- `src/types/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
+- `src/utils/map/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
+- `src/types/editor/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
 
 ## Map Data
 

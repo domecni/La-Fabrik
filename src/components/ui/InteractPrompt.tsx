@@ -1,6 +1,6 @@
 import { INTERACT_KEY } from "@/data/input/keybindings";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
-import { useInteraction } from "@/hooks/useInteraction";
+import { useInteraction } from "@/hooks/interaction/useInteraction";
 
 export function InteractPrompt(): React.JSX.Element | null {
   const cameraMode = useCameraMode();

@@ -1,12 +1,12 @@
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
-import { RepairCaseModel } from "@/components/three/gameplay/repairGame/RepairCaseModel";
+import { RepairCaseModel } from "@/components/three/gameplay/RepairCaseModel";
 import {
   REPAIR_CASE_CLOSE_SOUND_PATH,
   REPAIR_CASE_MODEL_PATH,
   REPAIR_CASE_OPEN_SOUND_PATH,
-} from "@/data/repairGame/repairCaseConfig";
+} from "@/data/gameplay/repairCaseConfig";
 import { AudioManager } from "@/managers/AudioManager";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 interface RepairCaseObjectProps {
   position: Vector3Tuple;

@@ -9,7 +9,7 @@ import {
   TRIGGER_DEFAULT_SPAWN_OFFSET,
 } from "@/data/interaction/triggerConfig";
 import { AudioManager } from "@/managers/AudioManager";
-import type { ColliderShape, Vector3Tuple } from "@/types/three";
+import type { ColliderShape, Vector3Tuple } from "@/types/three/three";
 
 interface SpawnedModel {
   id: number;

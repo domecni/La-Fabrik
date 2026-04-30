@@ -2,10 +2,10 @@ import { Html } from "@react-three/drei";
 import { useCallback, useState } from "react";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import { ExplodableModel } from "@/components/three/models/ExplodableModel";
-import { REPAIR_GAME_MODEL_CATALOG } from "@/data/repairGame/repairGameModelCatalog";
-import type { ModelCatalogItem } from "@/data/repairGame/repairGameModelCatalog";
-import { useModelSelection } from "@/hooks/useModelSelection";
-import type { Vector3Tuple } from "@/types/three";
+import { REPAIR_GAME_MODEL_CATALOG } from "@/data/gameplay/repairGameModelCatalog";
+import type { ModelCatalogItem } from "@/data/gameplay/repairGameModelCatalog";
+import { useModelSelection } from "@/hooks/gameplay/useModelSelection";
+import type { Vector3Tuple } from "@/types/three/three";
 
 interface RepairModuleSlotProps {
   position: Vector3Tuple;

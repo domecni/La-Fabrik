@@ -1,5 +1,5 @@
 import GUI from "lil-gui";
-import type { CameraMode, SceneMode } from "@/types/debug";
+import type { CameraMode, SceneMode } from "@/types/debug/debug";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";

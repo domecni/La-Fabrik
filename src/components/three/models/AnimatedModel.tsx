@@ -6,7 +6,7 @@ import {
   AnimatedModelContext,
   type AnimatedModelContextValue,
 } from "@/components/three/models/useAnimatedModel";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export interface AnimatedModelConfig {
   modelPath: string;

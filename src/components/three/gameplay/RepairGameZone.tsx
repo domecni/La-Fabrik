@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Text } from "@react-three/drei";
-import { RepairCaseObject } from "@/components/three/gameplay/repairGame/RepairCaseObject";
-import { RepairModuleSlot } from "@/components/three/gameplay/repairGame/RepairModuleSlot";
+import { RepairCaseObject } from "@/components/three/gameplay/RepairCaseObject";
+import { RepairModuleSlot } from "@/components/three/gameplay/RepairModuleSlot";
 import {
   REPAIR_GAME_MODULE_SLOTS,
   REPAIR_GAME_ZONE_LABEL,
   REPAIR_GAME_ZONE_ORIGIN,
   REPAIR_GAME_ZONE_RADIUS,
-} from "@/data/repairGame/repairGameConfig";
+} from "@/data/gameplay/repairGameConfig";
 
 export function RepairGameZone(): React.JSX.Element {
   const [caseOpen, setCaseOpen] = useState(false);

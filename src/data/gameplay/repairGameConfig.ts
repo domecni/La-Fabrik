@@ -1,4 +1,4 @@
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export const REPAIR_GAME_ZONE_ORIGIN: Vector3Tuple = [10, 0.4, -8];
 export const REPAIR_GAME_ZONE_RADIUS = 4.2;

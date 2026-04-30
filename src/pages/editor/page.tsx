@@ -4,7 +4,7 @@ import { EditorControls } from "@/components/editor/EditorControls";
 import { EditorScene } from "@/components/editor/scene/EditorScene";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
-import type { MapNode, SceneData, TransformMode } from "@/types/editor";
+import type { MapNode, SceneData, TransformMode } from "@/types/editor/editor";
 
 const SAVE_ERROR_MESSAGE = "Erreur lors de l'enregistrement";
 

@@ -12,7 +12,7 @@ import type {
   HandTrackingFrameMessage,
   HandTrackingServerMessage,
   HandTrackingSnapshot,
-} from "@/types/handTracking";
+} from "@/types/handTracking/handTracking";
 
 interface UseRemoteHandTrackingOptions {
   enabled: boolean;

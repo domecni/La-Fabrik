@@ -1,5 +1,5 @@
-import type { SceneData } from "@/types/editor";
-import { parseMapNodes } from "@/utils/mapNodeValidation";
+import type { SceneData } from "@/types/editor/editor";
+import { parseMapNodes } from "@/utils/map/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 

@@ -2,10 +2,10 @@ import type { ReactNode } from "react";
 import { Component, useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
-import { loadMapSceneData } from "@/utils/loadMapSceneData";
-import type { OctreeReadyHandler } from "@/types/three";
-import type { MapNode } from "@/types/editor";
+import { useOctreeGraphNode } from "@/hooks/three/useOctreeGraphNode";
+import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
+import type { MapNode } from "@/types/editor/editor";
+import type { OctreeReadyHandler } from "@/types/three/three";
 
 interface LoadedMapNode {
   node: MapNode;

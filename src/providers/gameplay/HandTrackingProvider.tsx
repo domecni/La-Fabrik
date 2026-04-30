@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
-import { useInteraction } from "@/hooks/useInteraction";
+import { useInteraction } from "@/hooks/interaction/useInteraction";
 import {
   HAND_TRACKING_IDLE_SNAPSHOT,
   HandTrackingContext,
-} from "@/hooks/useHandTrackingSnapshot";
-import { useRemoteHandTracking } from "@/hooks/useRemoteHandTracking";
+} from "@/hooks/handTracking/useHandTrackingSnapshot";
+import { useRemoteHandTracking } from "@/hooks/handTracking/useRemoteHandTracking";
 
 export function HandTrackingProvider({
   children,

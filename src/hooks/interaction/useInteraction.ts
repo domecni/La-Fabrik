@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { InteractionManager } from "@/managers/InteractionManager";
-import type { InteractionSnapshot } from "@/types/interaction";
+import type { InteractionSnapshot } from "@/types/interaction/interaction";
 
 const manager = InteractionManager.getInstance();
 

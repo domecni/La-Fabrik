@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import type { MapNode, SceneData } from "@/types/editor";
+import type { MapNode, SceneData } from "@/types/editor/editor";
 
 interface ObjectTransform {
   uuid: string;

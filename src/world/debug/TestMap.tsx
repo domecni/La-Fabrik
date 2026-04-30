@@ -21,8 +21,8 @@ import {
   TEST_SCENE_TRIGGER_SEGMENTS,
   TEST_SCENE_TRIGGER_SOUND_PATH,
 } from "@/data/debug/testSceneConfig";
-import { useOctreeGraphNode } from "@/hooks/useOctreeGraphNode";
-import type { OctreeReadyHandler } from "@/types/three";
+import { useOctreeGraphNode } from "@/hooks/three/useOctreeGraphNode";
+import type { OctreeReadyHandler } from "@/types/three/three";
 
 interface TestMapProps {
   onOctreeReady: OctreeReadyHandler;

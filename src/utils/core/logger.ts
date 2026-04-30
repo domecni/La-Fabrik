@@ -3,7 +3,7 @@ import type {
   LogEntry,
   LogLevel,
   LoggerConfig,
-} from "@/types/logger";
+} from "@/types/logger/logger";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Crosshair } from "@/components/ui/Crosshair";
 import { HandTrackingOverlay } from "@/components/ui/HandTrackingOverlay";
-import { HandTrackingProvider } from "@/components/ui/HandTrackingProvider";
+import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
 import { HandTrackingVisualizer } from "@/components/ui/HandTrackingVisualizer";
 import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { DebugPerf } from "@/components/debug/DebugPerf";

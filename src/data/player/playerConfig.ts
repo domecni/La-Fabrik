@@ -1,4 +1,4 @@
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export const PLAYER_EYE_HEIGHT = 1.75;
 export const PLAYER_CAPSULE_RADIUS = 0.35;

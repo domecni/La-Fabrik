@@ -109,7 +109,7 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
 - \`src/components/three/interaction/InteractableObject.tsx\` gère la détection de focus par distance et raycasting.
 - \`src/components/three/interaction/TriggerObject.tsx\` implémente les interactions de type trigger.
 - \`src/components/three/interaction/GrabbableObject.tsx\` implémente les interactions saisir / relâcher.
-- \`src/hooks/useInteraction.ts\` expose un snapshot d'interaction à l'UI React.
+- \`src/hooks/interaction/useInteraction.ts\` expose un snapshot d'interaction à l'UI React.
 - \`src/components/ui/InteractPrompt.tsx\` affiche le prompt \`E\` pour les interactions trigger.
 
 ## Audio

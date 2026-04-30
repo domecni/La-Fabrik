@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createSceneDataFromFiles } from "@/utils/editor/loadEditorScene";
-import { loadMapSceneData } from "@/utils/loadMapSceneData";
-import type { SceneData } from "@/types/editor";
+import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
+import type { SceneData } from "@/types/editor/editor";
 
 interface UseEditorSceneDataResult {
   hasMapJson: boolean;

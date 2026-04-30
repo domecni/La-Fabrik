@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { OrbitControls } from "@react-three/drei";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
 import { FlyController } from "@/controls/editor/FlyController";
-import type { MapNode, TransformMode, SceneData } from "@/types/editor";
+import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
 
 interface EditorSceneProps {
   sceneData: SceneData;

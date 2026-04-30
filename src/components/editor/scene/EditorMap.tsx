@@ -3,7 +3,7 @@ import { Grid, TransformControls, useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
-import type { SceneData, MapNode, TransformMode } from "@/types/editor";
+import type { SceneData, MapNode, TransformMode } from "@/types/editor/editor";
 
 interface EditorMapProps {
   sceneData: SceneData;

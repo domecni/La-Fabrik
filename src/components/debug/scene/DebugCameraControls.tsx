@@ -8,7 +8,7 @@ import {
   PLAYER_EYE_HEIGHT,
   PLAYER_SPAWN_POSITION_GAME,
 } from "@/data/player/playerConfig";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 const DEBUG_CAMERA_TARGET: Vector3Tuple = [
   PLAYER_SPAWN_POSITION_GAME[0],

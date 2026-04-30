@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export interface SimpleModelConfig {
   modelPath: string;

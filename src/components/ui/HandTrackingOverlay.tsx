@@ -1,5 +1,5 @@
-import { useHandTrackingSnapshot } from "@/hooks/useHandTrackingSnapshot";
-import type { HandTrackingStatus } from "@/types/handTracking";
+import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
+import type { HandTrackingStatus } from "@/types/handTracking/handTracking";
 
 const STATUS_LABELS: Record<HandTrackingStatus, string> = {
   idle: "Idle",

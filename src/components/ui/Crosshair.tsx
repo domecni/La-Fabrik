@@ -1,5 +1,5 @@
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
-import { useInteraction } from "@/hooks/useInteraction";
+import { useInteraction } from "@/hooks/interaction/useInteraction";
 
 export function Crosshair(): React.JSX.Element | null {
   const cameraMode = useCameraMode();

@@ -12,7 +12,7 @@ import {
   Save,
   Undo2,
 } from "lucide-react";
-import type { MapNode, TransformMode } from "@/types/editor";
+import type { MapNode, TransformMode } from "@/types/editor/editor";
 
 interface EditorControlsProps {
   transformMode: TransformMode;

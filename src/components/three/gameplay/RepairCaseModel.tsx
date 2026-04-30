@@ -14,8 +14,8 @@ import {
   REPAIR_CASE_OPEN_ROTATION_OFFSET_DEGREES,
   REPAIR_CASE_ROTATION_AMPLITUDE_DEGREES,
   REPAIR_CASE_ROTATION_RESET_SPEED,
-} from "@/data/repairGame/repairCaseConfig";
-import type { Vector3Tuple } from "@/types/three";
+} from "@/data/gameplay/repairCaseConfig";
+import type { Vector3Tuple } from "@/types/three/three";
 
 interface RepairCaseModelProps {
   modelPath: string;

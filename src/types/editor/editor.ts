@@ -1,4 +1,4 @@
-import type { Vector3Tuple } from "./three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export interface MapNode {
   name: string;

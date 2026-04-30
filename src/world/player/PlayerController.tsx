@@ -24,7 +24,7 @@ import {
   PLAYER_XZ_DAMPING_FACTOR,
 } from "@/data/player/playerConfig";
 import { InteractionManager } from "@/managers/InteractionManager";
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 type Keys = {
   forward: boolean;

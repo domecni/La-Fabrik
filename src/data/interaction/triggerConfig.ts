@@ -1,4 +1,4 @@
-import type { Vector3Tuple } from "@/types/three";
+import type { Vector3Tuple } from "@/types/three/three";
 
 export const TRIGGER_DEFAULT_COLLIDERS = "ball";
 export const TRIGGER_DEFAULT_LABEL = "Interagir";

@@ -2,7 +2,7 @@ import type {
   GrabInteractableHandle,
   InteractableHandle,
   InteractionSnapshot,
-} from "@/types/interaction";
+} from "@/types/interaction/interaction";
 
 export class InteractionManager {
   private static _instance: InteractionManager | null = null;

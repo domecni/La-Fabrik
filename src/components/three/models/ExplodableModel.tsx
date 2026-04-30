@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { Component, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { ExplodedModel } from "@/utils/ExplodedModel";
-import type { Vector3Tuple } from "@/types/three";
+import { ExplodedModel } from "@/utils/three/ExplodedModel";
+import type { Vector3Tuple } from "@/types/three/three";
 
 interface ModelErrorBoundaryProps {
   children: ReactNode;
@@ -52,7 +52,7 @@ export function ExplodableModel(
   return (
     <ModelErrorBoundary
       key={props.modelPath}
-      fallback={<MissingModelFallback position={props.position} />}
+      fallback={<MissingModelFallback position={props.position ?? [0, 0, 0]} />}
     >
       <ExplodableModelInner {...props} />
     </ModelErrorBoundary>

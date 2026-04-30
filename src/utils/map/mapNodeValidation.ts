@@ -1,4 +1,4 @@
-import type { MapNode } from "../types/editor";
+import type { MapNode } from "@/types/editor/editor";
 
 function isVector3Tuple(value: unknown): value is [number, number, number] {
   return (

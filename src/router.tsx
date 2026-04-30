@@ -17,7 +17,7 @@ import {
   DocsReadmeRoute,
   DocsTargetArchitectureRoute,
   DocsTechnicalEditorRoute,
-} from "@/routes/docs/DocsRouteComponents";
+} from "@/routes/DocsRoute";
 
 const rootRoute = createRootRoute({
   component: Outlet,
