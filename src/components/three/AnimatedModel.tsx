@@ -151,7 +151,7 @@ export function AnimatedModel({
       defaultAction.play();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsReady(true);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       setCurrentAnim(defaultAction.getClip().name);
       onLoaded?.();
     } else {
