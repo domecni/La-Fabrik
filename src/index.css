@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+/* Base document reset */
 :root {
   color-scheme: dark;
   font-family: "Helvetica Neue", Helvetica, Inter, Arial, sans-serif;
@@ -29,6 +30,7 @@ canvas {
   display: block;
 }
 
+/* Docs layout */
 .docs-page {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
@@ -40,6 +42,7 @@ canvas {
   font-family: "Helvetica Neue", Helvetica, Inter, Arial, sans-serif;
 }
 
+/* Docs sidebar navigation */
 .docs-sidebar {
   border-right: 2px solid #d8d0c4;
   background: #050505;
@@ -150,6 +153,7 @@ canvas {
   color: #050505;
 }
 
+/* Docs content */
 .docs-content {
   overflow-y: auto;
   scroll-behavior: smooth;
@@ -321,6 +325,7 @@ canvas {
   color: #a9a196;
 }
 
+/* Docs responsive layout */
 @media (max-width: 760px) {
   .docs-page {
     display: block;
@@ -338,6 +343,7 @@ canvas {
   }
 }
 
+/* In-game interaction UI */
 .crosshair {
   position: fixed;
   top: 50%;
@@ -391,6 +397,7 @@ canvas {
   letter-spacing: 0.03em;
 }
 
+/* Hand tracking debug UI */
 .hand-tracking-overlay {
   position: fixed;
   top: 16px;
@@ -428,6 +435,7 @@ canvas {
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
 }
 
+/* Repair model selector UI */
 .model-selector-panel {
   display: flex;
   flex-direction: column;
@@ -467,6 +475,7 @@ canvas {
   background: #38bdf8;
 }
 
+/* Zustand game state debug UI */
 .game-state-hud {
   position: fixed;
   top: 18px;
@@ -538,7 +547,7 @@ canvas {
   outline: none;
 }
 
-/* Editor page */
+/* Editor page shell */
 .editor-container {
   position: fixed;
   top: 0;
@@ -604,6 +613,7 @@ canvas {
   font-family: "SFMono-Regular", "Courier New", monospace;
 }
 
+/* Editor loading and upload states */
 .editor-upload-section {
   width: min(520px, calc(100vw - 2rem));
   background: #0d0d0d;
@@ -679,6 +689,7 @@ canvas {
   white-space: pre-wrap;
 }
 
+/* Editor scene overlays */
 .editor-camera-info {
   position: absolute;
   top: 16px;
@@ -707,6 +718,7 @@ canvas {
   font-weight: 600;
 }
 
+/* Editor controls panel */
 .editor-controls-panel {
   position: absolute;
   right: 16px;
@@ -1001,6 +1013,7 @@ canvas {
   text-align: right;
 }
 
+/* Editor JSON inspector */
 .editor-json-section {
   display: flex;
   flex-direction: column;
@@ -1076,6 +1089,7 @@ canvas {
   font-size: 0.74rem;
 }
 
+/* Editor responsive layout */
 @media (max-width: 768px) {
   .editor-error h2 {
     font-size: 1.5rem;
