@@ -13,9 +13,9 @@ interface RepairCaseModelProps {
 }
 
 const CASE_LID_NODE_NAME = "partiesup";
-const CASE_OPEN_ROTATION_OFFSET_Z = 0;
-const CASE_CLOSED_ROTATION_OFFSET_Z = THREE.MathUtils.degToRad(-115);
-const CASE_ANIMATION_DURATION = 1.2;
+const CASE_CLOSED_ROTATION_OFFSET_Z = 0;
+const CASE_OPEN_ROTATION_OFFSET_Z = THREE.MathUtils.degToRad(115);
+const CASE_ANIMATION_DURATION = 0.8;
 
 export function RepairCaseModel({
   modelPath,
@@ -37,8 +37,12 @@ export function RepairCaseModel({
     lidRef.current = lid ?? null;
     openedRotationZ.current = lid?.rotation.z ?? 0;
 
-    if (lid && !initialOpen.current) {
-      lid.rotation.z = openedRotationZ.current + CASE_CLOSED_ROTATION_OFFSET_Z;
+    if (lid) {
+      lid.rotation.z =
+        openedRotationZ.current +
+        (initialOpen.current
+          ? CASE_OPEN_ROTATION_OFFSET_Z
+          : CASE_CLOSED_ROTATION_OFFSET_Z);
     }
   }, [model]);
 
