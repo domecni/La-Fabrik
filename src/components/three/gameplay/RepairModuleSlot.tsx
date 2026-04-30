@@ -10,26 +10,38 @@ import type { Vector3Tuple } from "@/types/three/three";
 interface RepairModuleSlotProps {
   position: Vector3Tuple;
   label: string;
+  disabled?: boolean;
+  onModelSelected?: () => void;
+  onSplit?: () => void;
 }
 
 export function RepairModuleSlot({
   position,
   label,
+  disabled = false,
+  onModelSelected,
+  onSplit,
 }: RepairModuleSlotProps): React.JSX.Element {
   const [selectedModel, setSelectedModel] = useState<ModelCatalogItem | null>(
     null,
   );
   const [split, setSplit] = useState(false);
-  const handleSelect = useCallback((model: ModelCatalogItem) => {
-    setSelectedModel(model);
-    setSplit(false);
-  }, []);
+  const handleSelect = useCallback(
+    (model: ModelCatalogItem) => {
+      setSelectedModel(model);
+      setSplit(false);
+      onModelSelected?.();
+    },
+    [onModelSelected],
+  );
   const selection = useModelSelection(REPAIR_GAME_MODEL_CATALOG, handleSelect);
-  const triggerLabel = selectedModel
-    ? split
-      ? `Réassembler ${label}`
-      : `Démonter ${label}`
-    : `Choisir ${label}`;
+  const triggerLabel = disabled
+    ? "Ouvrir la mallette d'abord"
+    : selectedModel
+      ? split
+        ? `Réassembler ${label}`
+        : `Démonter ${label}`
+      : `Choisir ${label}`;
 
   return (
     <group>
@@ -38,8 +50,16 @@ export function RepairModuleSlot({
         colliders="cuboid"
         label={triggerLabel}
         onTrigger={() => {
+          if (disabled) return;
+
           if (selectedModel) {
-            setSplit((value) => !value);
+            setSplit((value) => {
+              const nextSplit = !value;
+              if (nextSplit) {
+                onSplit?.();
+              }
+              return nextSplit;
+            });
             return;
           }
 

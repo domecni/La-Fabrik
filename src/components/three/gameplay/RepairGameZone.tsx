@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Text } from "@react-three/drei";
 import { RepairCaseObject } from "@/components/three/gameplay/RepairCaseObject";
 import { RepairModuleSlot } from "@/components/three/gameplay/RepairModuleSlot";
@@ -8,9 +7,47 @@ import {
   REPAIR_GAME_ZONE_ORIGIN,
   REPAIR_GAME_ZONE_RADIUS,
 } from "@/data/gameplay/repairGameConfig";
+import { useGameStore } from "@/managers/stores/useGameStore";
+
+const CASE_CLOSED_STEPS = new Set(["locked", "waiting"]);
 
 export function RepairGameZone(): React.JSX.Element {
-  const [caseOpen, setCaseOpen] = useState(false);
+  const mainState = useGameStore((state) => state.mainState);
+  const bikeStep = useGameStore((state) => state.bike.currentStep);
+  const setMainState = useGameStore((state) => state.setMainState);
+  const setBikeState = useGameStore((state) => state.setBikeState);
+  const caseOpen = !CASE_CLOSED_STEPS.has(bikeStep);
+  const slotsDisabled = !caseOpen;
+
+  const inspectRepairCase = (): void => {
+    if (mainState !== "bike") {
+      setMainState("bike");
+    }
+
+    if (CASE_CLOSED_STEPS.has(bikeStep)) {
+      setBikeState({ currentStep: "inspected" });
+    }
+  };
+
+  const markModelSelected = (): void => {
+    if (mainState !== "bike") {
+      setMainState("bike");
+    }
+
+    if (bikeStep === "inspected") {
+      setBikeState({ currentStep: "fragmented" });
+    }
+  };
+
+  const markModuleSplit = (): void => {
+    if (mainState !== "bike") {
+      setMainState("bike");
+    }
+
+    if (bikeStep === "fragmented") {
+      setBikeState({ currentStep: "scanning" });
+    }
+  };
 
   return (
     <group>
@@ -62,7 +99,7 @@ export function RepairGameZone(): React.JSX.Element {
       <RepairCaseObject
         position={REPAIR_GAME_ZONE_ORIGIN}
         open={caseOpen}
-        onToggle={() => setCaseOpen((value) => !value)}
+        onInspect={inspectRepairCase}
       />
 
       {REPAIR_GAME_MODULE_SLOTS.map((slot) => (
@@ -74,6 +111,9 @@ export function RepairGameZone(): React.JSX.Element {
             REPAIR_GAME_ZONE_ORIGIN[1] + slot.offset[1],
             REPAIR_GAME_ZONE_ORIGIN[2] + slot.offset[2],
           ]}
+          disabled={slotsDisabled}
+          onModelSelected={markModelSelected}
+          onSplit={markModuleSplit}
         />
       ))}
     </group>

@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
 import { RepairGameZone } from "@/components/three/gameplay/RepairGameZone";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
+import { AnimatedModel } from "@/components/three/models/AnimatedModel";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import {
   TEST_SCENE_FLOOR_COLLIDER_HALF_EXTENTS,
@@ -88,13 +89,12 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
         <RepairGameZone />
       </Physics>
 
-      {/* Temporary: re-enable when Git LFS downloads are available again.
       <AnimatedModel
         modelPath="/models/elec/model.gltf"
         defaultAnimation="Idle"
         position={[0, 0, -5]}
         scale={1}
-      /> */}
+      />
     </>
   );
 }
