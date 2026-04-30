@@ -30,6 +30,12 @@ const LazyDocsTechnicalEditorPage = lazy(() =>
   })),
 );
 
+const LazyDocsZustandPage = lazy(() =>
+  import("@/pages/docs/zustand/page").then((module) => ({
+    default: module.DocsZustandPage,
+  })),
+);
+
 const LazyDocsFeaturesPage = lazy(() =>
   import("@/pages/docs/features/page").then((module) => ({
     default: module.DocsFeaturesPage,
@@ -84,6 +90,14 @@ export function DocsTechnicalEditorRoute(): React.JSX.Element {
   return (
     <Suspense fallback={null}>
       <LazyDocsTechnicalEditorPage />
+    </Suspense>
+  );
+}
+
+export function DocsZustandRoute(): React.JSX.Element {
+  return (
+    <Suspense fallback={null}>
+      <LazyDocsZustandPage />
     </Suspense>
   );
 }
