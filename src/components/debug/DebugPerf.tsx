@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Debug } from "@/utils/debug/Debug";
+import { useShowDebugPerf } from "@/hooks/debug/useShowDebugPerf";
 
 const Perf = lazy(() => import("r3f-perf").then((m) => ({ default: m.Perf })));
 
@@ -7,9 +7,9 @@ const DEBUG_GUI_WIDTH = 245;
 const DEBUG_PANEL_GAP = 20;
 
 export function DebugPerf(): React.JSX.Element | null {
-  const debug = Debug.getInstance();
+  const showDebugPerf = useShowDebugPerf();
 
-  if (!debug.active) {
+  if (!showDebugPerf) {
     return null;
   }
 

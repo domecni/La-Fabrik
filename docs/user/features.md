@@ -33,7 +33,8 @@ This document lists features that are implemented in the current codebase.
 ## Debug Tooling
 
 - `?debug` query param enables the debug panel
-- `lil-gui` controls for camera mode, scene mode, and interaction spheres
+- `lil-gui` controls for camera mode, scene mode, `R3F Perf`, `Debug Overlay`, and interaction tuning
+- Compact debug overlay for game state controls and hand tracking status
 - Debug scene helpers
 - Free debug camera
 - `r3f-perf` overlay

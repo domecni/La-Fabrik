@@ -122,8 +122,12 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
 - \`src/utils/debug/Debug.ts\` possède l'instance \`lil-gui\` et les contrôles debug.
 - \`src/hooks/debug/useCameraMode.ts\` et \`src/hooks/debug/useSceneMode.ts\` s'abonnent à l'état debug.
 - \`src/components/debug/DebugPerf.tsx\` monte \`r3f-perf\` en lazy uniquement en mode debug.
+- \`src/components/ui/debug/DebugOverlayLayout.tsx\` monte l'overlay HTML debug compact quand il est activé depuis \`lil-gui\`.
+- \`src/components/ui/debug/GameStateDebugPanel.tsx\` expose l'état de jeu courant, le changement de main/sub-state, les contrôles previous/next step et le reset.
+- \`src/components/ui/debug/HandTrackingDebugPanel.tsx\` affiche le statut hand tracking, l'usage, le placeholder de modèle chargé, le nombre de mains et l'état fist pendant l'activation du hand tracking.
 - \`src/components/debug/scene/DebugHelpers.tsx\` monte les helpers debug.
 - \`src/components/debug/scene/DebugCameraControls.tsx\` monte la caméra libre debug.
+- Les contrôles globaux \`lil-gui\` incluent camera mode, scene mode, \`R3F Perf\` et \`Debug Overlay\`; les contrôles d'interaction vivent dans le dossier \`Interaction\`.
 
 ## Limites actuelles
 
@@ -345,7 +349,8 @@ Dans React Three Fiber, monter ou démonter du JSX contrôle ce qui apparaît da
 
 Overlays actuels :
 
-- \`GameStateHUD\` : panneau de progression debug visible avec \`?debug\`
+- \`DebugOverlayLayout\` : layout compact des panels debug HTML visible avec \`?debug\`
+- \`GameStateDebugPanel\` : panneau de progression debug pour consulter/changer le main state, le sub state, avancer/reculer et reset le store
 - \`Crosshair\` : aide de visée joueur
 - \`InteractPrompt\` : prompt d'interaction
 
@@ -400,7 +405,8 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 ## Outils debug
 
 - Le paramètre \`?debug\` active le panneau debug
-- Contrôles \`lil-gui\` pour le mode caméra, le mode scène et les sphères d'interaction
+- Contrôles \`lil-gui\` pour le mode caméra, le mode scène, \`R3F Perf\`, \`Debug Overlay\` et le tuning d'interaction
+- Overlay debug compact pour les contrôles de game state et le statut hand tracking
 - Helpers de scène debug
 - Caméra libre debug
 - Overlay \`r3f-perf\`

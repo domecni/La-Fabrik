@@ -52,7 +52,9 @@ export class Debug {
   private readonly listeners = new Set<() => void>();
   private readonly controls: {
     cameraMode: CameraMode;
+    showDebugOverlay: boolean;
     showInteractionSpheres: boolean;
+    showPerf: boolean;
     sceneMode: SceneMode;
   };
 
@@ -70,7 +72,9 @@ export class Debug {
 
     this.controls = {
       cameraMode: storedControls.cameraMode ?? "player",
+      showDebugOverlay: true,
       showInteractionSpheres: false,
+      showPerf: true,
       sceneMode: storedControls.sceneMode ?? "game",
     };
 
@@ -98,10 +102,18 @@ export class Debug {
         });
 
       folder
-        .add(this.controls, "showInteractionSpheres")
-        .name("Interaction Spheres")
+        .add(this.controls, "showPerf")
+        .name("R3F Perf")
         .onChange((value: boolean) => {
-          this.controls.showInteractionSpheres = value;
+          this.controls.showPerf = value;
+          this.emit();
+        });
+
+      folder
+        .add(this.controls, "showDebugOverlay")
+        .name("Debug Overlay")
+        .onChange((value: boolean) => {
+          this.controls.showDebugOverlay = value;
           this.emit();
         });
     }
@@ -159,8 +171,21 @@ export class Debug {
     return this.controls.sceneMode;
   }
 
+  getShowDebugOverlay(): boolean {
+    return this.active && this.controls.showDebugOverlay;
+  }
+
   getShowInteractionSpheres(): boolean {
     return this.controls.showInteractionSpheres;
+  }
+
+  setShowInteractionSpheres(value: boolean): void {
+    this.controls.showInteractionSpheres = value;
+    this.emit();
+  }
+
+  getShowPerf(): boolean {
+    return this.active && this.controls.showPerf;
   }
 
   private emit(): void {

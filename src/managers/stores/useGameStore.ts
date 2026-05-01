@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
-type MissionStep =
+export type MissionStep =
   | "locked"
   | "waiting"
   | "inspected"
@@ -52,6 +52,7 @@ interface GameActions {
   completeFerme: () => void;
   startOutro: () => void;
   advanceGameState: () => void;
+  rewindGameState: () => void;
   resetGame: () => void;
 }
 
@@ -73,6 +74,24 @@ function getNextMissionStep(step: MissionStep): MissionStep {
     case "repairing":
     case "done":
       return "done";
+  }
+}
+
+function getPreviousMissionStep(step: MissionStep): MissionStep {
+  switch (step) {
+    case "locked":
+    case "waiting":
+      return "locked";
+    case "inspected":
+      return "waiting";
+    case "fragmented":
+      return "inspected";
+    case "scanning":
+      return "fragmented";
+    case "repairing":
+      return "scanning";
+    case "done":
+      return "repairing";
   }
 }
 
@@ -228,6 +247,41 @@ export const useGameStore = create<GameStore>()((set) => ({
       }
 
       return startOutroState(state);
+    }),
+  rewindGameState: () =>
+    set((state) => {
+      if (state.mainState === "intro") {
+        return { intro: { ...state.intro, hasCompleted: false } };
+      }
+
+      if (state.mainState === "bike") {
+        return {
+          bike: {
+            ...state.bike,
+            currentStep: getPreviousMissionStep(state.bike.currentStep),
+          },
+        };
+      }
+
+      if (state.mainState === "pylone") {
+        return {
+          pylone: {
+            ...state.pylone,
+            currentStep: getPreviousMissionStep(state.pylone.currentStep),
+          },
+        };
+      }
+
+      if (state.mainState === "ferme") {
+        return {
+          ferme: {
+            ...state.ferme,
+            currentStep: getPreviousMissionStep(state.ferme.currentStep),
+          },
+        };
+      }
+
+      return { outro: { ...state.outro, hasStarted: false } };
     }),
   resetGame: () => set(createInitialGameState()),
 }));

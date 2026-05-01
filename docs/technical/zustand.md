@@ -143,7 +143,8 @@ In React Three Fiber, mounting and unmounting JSX controls what appears in the T
 
 Current overlays:
 
-- `GameStateHUD`: debug-only progression panel shown with `?debug`
+- `DebugOverlayLayout`: debug-only overlay shown with `?debug`, including the `GameStateDebugPanel` progression panel
+- `GameStateDebugPanel`: compact debug UI for viewing and switching main/sub states, stepping backward or forward, and resetting the store
 - `Crosshair`: player aiming helper
 - `InteractPrompt`: interaction prompt
 

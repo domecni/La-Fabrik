@@ -115,6 +115,18 @@ export function InteractableObject(
   }, []);
 
   const setupInteractionDebugFolder = useCallback((folder: GUI) => {
+    const debug = Debug.getInstance();
+    const controls = {
+      showInteractionSpheres: debug.getShowInteractionSpheres(),
+    };
+
+    folder
+      .add(controls, "showInteractionSpheres")
+      .name("Interaction Spheres")
+      .onChange((value: boolean) => {
+        debug.setShowInteractionSpheres(value);
+      });
+
     folder
       .add({ radius: INTERACTION_RADIUS }, "radius")
       .name("Interaction radius")

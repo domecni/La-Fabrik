@@ -68,7 +68,10 @@ la-fabrik/
     │   │   └── world/                      # Environment-specific 3D objects
     │   └── ui/                             # HTML overlays — outside Canvas
     │       ├── Crosshair.tsx
-    │       ├── HandTrackingOverlay.tsx
+    │       ├── debug/                       # Debug-only HTML overlay panels
+    │       │   ├── DebugOverlayLayout.tsx
+    │       │   ├── GameStateDebugPanel.tsx
+    │       │   └── HandTrackingDebugPanel.tsx
     │       ├── HandTrackingVisualizer.tsx
     │       └── InteractPrompt.tsx
     │

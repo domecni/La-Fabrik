@@ -104,12 +104,12 @@ The final hold distance is clamped between the configured grab minimum and maxim
 
 The current debug UI includes:
 
-- `HandTrackingOverlay` for status, usage, server state, hand count, and fist state
+- `HandTrackingDebugPanel` inside `DebugOverlayLayout` for status, usage, model-loaded placeholder, server state, hand count, and fist state
 - `HandTrackingVisualizer` for the SVG landmark wireframe
 - `r3f-perf` for render performance
 - `lil-gui` for scene, camera, lighting, interaction, and grab controls
 
-The hand tracking overlay is an HTML overlay outside the canvas. The hand wireframe is also HTML/SVG, not a 3D hand model.
+The hand tracking debug panel is a compact HTML grid outside the canvas. `Model loaded` is currently hardcoded to `none` until model-loading information is wired into the hand tracking flow. The hand wireframe is also HTML/SVG, not a 3D hand model.
 
 ## Known Limitations
 

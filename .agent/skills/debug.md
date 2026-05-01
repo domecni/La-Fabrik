@@ -58,19 +58,18 @@ if (debug.active) {
 r3f-perf is loaded only in debug mode to avoid dependency issues in production:
 
 ```tsx
-// src/components/debug/DebugPerf.tsx
 import { Suspense, lazy } from "react";
-import { Debug } from "@/utils/debug/Debug";
+import { useShowDebugPerf } from "@/hooks/debug/useShowDebugPerf";
 
 const Perf = lazy(() => import("r3f-perf").then((m) => ({ default: m.Perf })));
 
 export function DebugPerf() {
-  const debug = Debug.getInstance();
-  if (!debug.active) return null;
+  const showDebugPerf = useShowDebugPerf();
+  if (!showDebugPerf) return null;
 
   return (
     <Suspense fallback={null}>
-      <Perf position="top-left" />
+      <Perf position="top-right" />
     </Suspense>
   );
 }
@@ -90,5 +89,8 @@ Usage in Canvas:
 - All debug UI goes through `Debug.getInstance()` — never inline `if (isDev)` checks
 - r3f-perf is always lazy-imported, never a hard dependency in scene components
 - Debug folders should be organized by domain (Lighting, Player, Zone, Interaction)
+- Global debug controls include camera mode, scene mode, `R3F Perf`, and `Debug Overlay`
+- Interaction-specific controls such as interaction spheres belong in the `Interaction` folder
+- HTML debug panels should be grouped under `src/components/ui/debug/DebugOverlayLayout.tsx`
 - Debug panel must not affect production builds — it simply doesn't mount when `?debug` is absent
 - Clean up debug folders in `destroy()` when relevant

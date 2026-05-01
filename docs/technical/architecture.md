@@ -39,8 +39,12 @@ This document describes the code that exists today in the repository.
 - `src/utils/debug/Debug.ts` owns the `lil-gui` instance and debug controls.
 - `src/hooks/debug/useCameraMode.ts` and `src/hooks/debug/useSceneMode.ts` subscribe to debug state.
 - `src/components/debug/DebugPerf.tsx` lazily mounts `r3f-perf` in debug mode.
+- `src/components/ui/debug/DebugOverlayLayout.tsx` mounts the compact HTML debug overlay when enabled from `lil-gui`.
+- `src/components/ui/debug/GameStateDebugPanel.tsx` exposes current game state, main/sub-state switching, previous/next step controls, and reset.
+- `src/components/ui/debug/HandTrackingDebugPanel.tsx` shows hand tracking status, usage, model-loaded placeholder, hand count, and fist state while hand tracking is active.
 - `src/components/debug/scene/DebugHelpers.tsx` mounts debug helpers.
 - `src/components/debug/scene/DebugCameraControls.tsx` mounts the free debug camera.
+- `lil-gui` global debug controls include camera mode, scene mode, `R3F Perf`, and `Debug Overlay`; interaction-specific controls live in the `Interaction` folder.
 
 ## 3D Component Domains
 
