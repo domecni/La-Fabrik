@@ -27,6 +27,9 @@ import { useOctreeGraphNode } from "@/hooks/three/useOctreeGraphNode";
 import type { OctreeReadyHandler } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
+const ELECTRICIENNE_ANIMATED_MODEL_PATH =
+  "/models/electricienne_animated/model.gltf";
+
 interface TestMapProps {
   onOctreeReady: OctreeReadyHandler;
 }
@@ -134,9 +137,9 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
         <RepairGameZone />
       </Physics>
 
-      <ModelPreviewErrorBoundary modelPath="/models/elec/model.gltf">
+      <ModelPreviewErrorBoundary modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}>
         <AnimatedModel
-          modelPath="/models/elec/model.gltf"
+          modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}
           defaultAnimation="Idle"
           position={[0, 0, -5]}
           scale={1}

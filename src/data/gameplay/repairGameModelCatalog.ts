@@ -5,7 +5,10 @@ export interface ModelCatalogItem {
 
 export const REPAIR_GAME_MODEL_CATALOG: ModelCatalogItem[] = [
   { name: "Electricienne", path: "/models/elecsimple/model.gltf" },
-  { name: "Electricienne complete", path: "/models/elec/model.gltf" },
+  {
+    name: "Electricienne complete",
+    path: "/models/electricienne_animated/model.gltf",
+  },
   { name: "Eolienne", path: "/models/eolienne/model.gltf" },
   { name: "Fermier", path: "/models/fermier/model.gltf" },
   { name: "Galet", path: "/models/galet/model.gltf" },

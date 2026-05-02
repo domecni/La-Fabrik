@@ -21,11 +21,16 @@ export function HandTrackingDebugPanel(): React.JSX.Element | null {
   }
 
   const fist = hands.some((hand) => hand.isFist);
-  const modelLoaded = hands.some(
+  const hasLeftHand = hands.some(
     (hand) => hand.handedness.toLowerCase() === "left",
-  )
-    ? "gant_l"
-    : "none";
+  );
+  const hasRightHand = hands.some(
+    (hand) => hand.handedness.toLowerCase() === "right",
+  );
+  const modelLoaded =
+    [hasLeftHand ? "gant_l" : null, hasRightHand ? "gant_r" : null]
+      .filter(Boolean)
+      .join(", ") || "none";
 
   return (
     <section
