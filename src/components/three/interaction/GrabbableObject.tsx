@@ -191,7 +191,7 @@ export function GrabbableObject({
           : null;
 
         isHandHolding.current = Boolean(hit);
-        handHoldDistance.current = hit?.distance ?? null;
+        handHoldDistance.current = hit ? GRAB_HOLD_DISTANCE_DEFAULT : null;
         handHoldStartZ.current = hit ? fistHand.z : null;
         InteractionManager.getInstance().setHandHolding(isHandHolding.current);
       }
