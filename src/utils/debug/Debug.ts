@@ -53,6 +53,7 @@ export class Debug {
   private readonly controls: {
     cameraMode: CameraMode;
     showDebugOverlay: boolean;
+    showHandTrackingSvg: boolean;
     showInteractionSpheres: boolean;
     showPerf: boolean;
     sceneMode: SceneMode;
@@ -73,6 +74,7 @@ export class Debug {
     this.controls = {
       cameraMode: storedControls.cameraMode ?? "player",
       showDebugOverlay: true,
+      showHandTrackingSvg: false,
       showInteractionSpheres: false,
       showPerf: true,
       sceneMode: storedControls.sceneMode ?? "game",
@@ -114,6 +116,16 @@ export class Debug {
         .name("Debug Overlay")
         .onChange((value: boolean) => {
           this.controls.showDebugOverlay = value;
+          this.emit();
+        });
+
+      const handTrackingFolder = this.createFolder("Hand Tracking");
+
+      handTrackingFolder
+        ?.add(this.controls, "showHandTrackingSvg")
+        .name("Afficher SVG")
+        .onChange((value: boolean) => {
+          this.controls.showHandTrackingSvg = value;
           this.emit();
         });
     }
@@ -177,6 +189,15 @@ export class Debug {
 
   getShowInteractionSpheres(): boolean {
     return this.controls.showInteractionSpheres;
+  }
+
+  getShowHandTrackingSvg(): boolean {
+    return this.controls.showHandTrackingSvg;
+  }
+
+  setShowHandTrackingSvg(value: boolean): void {
+    this.controls.showHandTrackingSvg = value;
+    this.emit();
   }
 
   setShowInteractionSpheres(value: boolean): void {

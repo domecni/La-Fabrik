@@ -18,23 +18,22 @@ const GLOVE_CONFIGS: Record<
   {
     modelPath: string;
     rootNodeName: string;
-    scale: number;
   }
 > = {
   left: {
     modelPath: "/models/gant_l/model.gltf",
     rootNodeName: "Armature",
-    scale: 0.17,
   },
   right: {
     modelPath: "/models/gant_r/model.gltf",
     rootNodeName: "Hand_r",
-    scale: 0.04,
   },
 };
 
-const HAND_SPACE_DISTANCE = 2.4;
-const HAND_DEPTH_SCALE = 0.45;
+const GLOVE_MODEL_SCALE = 0.33;
+const HAND_SPACE_DISTANCE = 0.5;
+const HAND_DEPTH_SCALE = 0.5;
+const HAND_TRACKING_HIDE_DELAY_MS = 250;
 
 const FINGER_LANDMARK_CHAINS = [
   [0, 1, 2, 3, 4],
@@ -104,7 +103,7 @@ class HandTrackingGloveErrorBoundary extends Component<
       {
         modelPath: this.props.modelPath,
         scope: `HandTrackingGlove.${this.props.handedness}`,
-        scale: GLOVE_CONFIGS[this.props.handedness].scale,
+        scale: GLOVE_MODEL_SCALE,
       },
       error,
     );
@@ -252,8 +251,9 @@ function HandTrackingGloveModel({
   const modelPath = config.modelPath;
   const gltf = useLoggedGLTF(modelPath, {
     scope: `HandTrackingGlove.${handedness}`,
-    scale: config.scale,
+    scale: GLOVE_MODEL_SCALE,
   });
+  const lastTrackedAtRef = useRef<number | null>(null);
   const gloveScene = useMemo(() => {
     const rootNode = gltf.scene.getObjectByName(config.rootNodeName);
 
@@ -261,15 +261,14 @@ function HandTrackingGloveModel({
       throw new Error(`Missing glove root node ${config.rootNodeName}`);
     }
 
-    return clone(rootNode);
+    const clonedRootNode = clone(rootNode);
+    clonedRootNode.visible = false;
+
+    return clonedRootNode;
   }, [config.rootNodeName, gltf.scene]);
   const fingerPoseChains = useMemo(
     () => createFingerPoseChains(gloveScene),
     [gloveScene],
-  );
-
-  const hand = hands.find((candidate) =>
-    matchesHandedness(candidate.handedness, handedness),
   );
 
   useEffect(() => {
@@ -282,12 +281,23 @@ function HandTrackingGloveModel({
       matchesHandedness(candidate.handedness, handedness),
     );
 
-    if (!group || !trackedHand || trackedHand.landmarks.length < 21) {
-      if (group) group.visible = false;
-      resetFingerPose(fingerPoseChains);
+    if (!group) return;
+
+    if (!trackedHand || trackedHand.landmarks.length < 21) {
+      const lastTrackedAt = lastTrackedAtRef.current;
+      const shouldHide =
+        lastTrackedAt === null ||
+        performance.now() - lastTrackedAt > HAND_TRACKING_HIDE_DELAY_MS;
+
+      if (shouldHide) {
+        group.visible = false;
+        resetFingerPose(fingerPoseChains);
+      }
+
       return;
     }
 
+    lastTrackedAtRef.current = performance.now();
     group.visible = true;
 
     const wrist = trackedHand.landmarks[0];
@@ -335,13 +345,11 @@ function HandTrackingGloveModel({
     group.quaternion.slerp(_targetQuaternion, Math.min(1, delta * 18));
 
     const palmLength = _wristPosition.distanceTo(_middlePosition);
-    const scale = palmLength * config.scale;
+    const scale = palmLength * GLOVE_MODEL_SCALE;
     group.scale.setScalar(scale);
     group.updateMatrixWorld(true);
     applyFingerPose(fingerPoseChains, trackedHand.landmarks, camera);
   });
-
-  if (!hand) return null;
 
   return <primitive ref={groupRef} object={gloveScene} />;
 }

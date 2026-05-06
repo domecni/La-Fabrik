@@ -1,5 +1,6 @@
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { useHandTrackingGloveStatus } from "@/hooks/handTracking/useHandTrackingGloveStatus";
+import { useDebugStore } from "@/hooks/debug/useDebugStore";
 
 const HAND_CONNECTIONS: Array<[number, number]> = [
   [0, 1],
@@ -27,12 +28,19 @@ const HAND_CONNECTIONS: Array<[number, number]> = [
 
 export function HandTrackingVisualizer(): React.JSX.Element | null {
   const { hands, status } = useHandTrackingSnapshot();
+  const showHandTrackingSvg = useDebugStore((debug) =>
+    debug.getShowHandTrackingSvg(),
+  );
   const gloves = useHandTrackingGloveStatus((state) => state.gloves);
   const hasLoadedGlove = Object.values(gloves).some(
     (gloveStatus) => gloveStatus === "loaded",
   );
 
-  if (status === "idle" || hands.length === 0 || hasLoadedGlove) {
+  if (
+    status === "idle" ||
+    hands.length === 0 ||
+    (hasLoadedGlove && !showHandTrackingSvg)
+  ) {
     return null;
   }
 
