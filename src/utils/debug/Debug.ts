@@ -1,5 +1,6 @@
 import GUI from "lil-gui";
 import type { CameraMode, SceneMode } from "@/types/debug/debug";
+import type { HandTrackingSource } from "@/types/handTracking/handTracking";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
@@ -52,6 +53,7 @@ export class Debug {
   private readonly listeners = new Set<() => void>();
   private readonly controls: {
     cameraMode: CameraMode;
+    handTrackingSource: HandTrackingSource;
     showDebugOverlay: boolean;
     showHandTrackingSvg: boolean;
     showInteractionSpheres: boolean;
@@ -73,6 +75,7 @@ export class Debug {
 
     this.controls = {
       cameraMode: storedControls.cameraMode ?? "player",
+      handTrackingSource: "backend",
       showDebugOverlay: true,
       showHandTrackingSvg: false,
       showInteractionSpheres: false,
@@ -123,9 +126,20 @@ export class Debug {
 
       handTrackingFolder
         ?.add(this.controls, "showHandTrackingSvg")
-        .name("Afficher SVG")
+        .name("Show SVG")
         .onChange((value: boolean) => {
           this.controls.showHandTrackingSvg = value;
+          this.emit();
+        });
+
+      handTrackingFolder
+        ?.add(this.controls, "handTrackingSource", {
+          Backend: "backend",
+          "Browser JS": "browser",
+        })
+        .name("Source")
+        .onChange((value: HandTrackingSource) => {
+          this.controls.handTrackingSource = value;
           this.emit();
         });
     }
@@ -185,6 +199,10 @@ export class Debug {
 
   getShowDebugOverlay(): boolean {
     return this.active && this.controls.showDebugOverlay;
+  }
+
+  getHandTrackingSource(): HandTrackingSource {
+    return this.controls.handTrackingSource;
   }
 
   getShowInteractionSpheres(): boolean {
