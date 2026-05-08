@@ -1,4 +1,4 @@
-import { logger } from "@/utils/core/logger";
+import { logger } from "@/utils/core/Logger";
 
 interface PlaySoundOptions {
   playbackRate?: number;

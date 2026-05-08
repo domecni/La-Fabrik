@@ -62,7 +62,7 @@ Keep the player and map octree outside the Rapier provider until there is a deli
 - `src/components/three/models/` contains reusable model helpers such as `ExplodableModel`.
 - `src/components/three/interaction/` contains reusable interaction wrappers such as `InteractableObject`, `TriggerObject`, and `GrabbableObject`.
 - `src/components/three/handTracking/` contains R3F hand tracking debug models such as the glove overlays.
-- `src/components/three/gameplay/` contains the repair gameplay components: the reusable production `RepairGame` flow, the repair case, the debug repair game zone, and module slots.
+- `src/components/three/gameplay/` contains the reusable production `RepairGame` flow, repair case, repair steps, and repair prompt components.
 - `src/components/three/world/` contains reusable world/environment objects such as `SkyModel`.
 
 ## Editor System

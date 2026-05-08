@@ -1,15 +1,12 @@
 import type { ReactNode } from "react";
 import { Component } from "react";
 import { SimpleModel } from "@/components/three/models/SimpleModel";
-import type { Vector3Scale, Vector3Tuple } from "@/types/three/three";
+import type { ModelTransformProps } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
-interface RepairObjectModelProps {
+interface RepairObjectModelProps extends ModelTransformProps {
   label: string;
   modelPath: string;
-  position?: Vector3Tuple;
-  rotation?: Vector3Tuple;
-  scale?: Vector3Scale;
 }
 
 interface RepairObjectModelBoundaryProps extends RepairObjectModelProps {

@@ -90,7 +90,6 @@ export const FlyController = forwardRef<FlyControllerRef, FlyControllerProps>(
         cameraRef.current.position.add(direction);
       }
 
-      // Space moves up; Shift moves down.
       if (keys.current["Space"]) {
         cameraRef.current.position.y += verticalSpeed * delta;
       }

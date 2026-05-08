@@ -69,7 +69,7 @@ const HAND_HIT_OFFSETS: Array<[number, number]> = [
 ];
 
 function getHandCenterPoint(hand: HandTrackingHand): HandTrackingLandmark {
-  const landmarks = hand.landmarks ?? [];
+  const landmarks = hand.landmarks;
   if (landmarks.length === 0) {
     return { x: hand.x, y: hand.y, z: hand.z };
   }

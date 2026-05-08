@@ -145,7 +145,7 @@ Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il
 - \`src/components/three/models/\` contient les helpers de modèles réutilisables comme \`ExplodableModel\`.
 - \`src/components/three/interaction/\` contient les wrappers d'interaction réutilisables comme \`InteractableObject\`, \`TriggerObject\` et \`GrabbableObject\`.
 - \`src/components/three/handTracking/\` contient les modèles debug R3F liés au hand tracking, comme les gants.
-- \`src/components/three/gameplay/\` contient les composants de gameplay de réparation : le flow de production réutilisable \`RepairGame\`, la mallette de réparation, la zone debug repair et les slots de modules.
+- \`src/components/three/gameplay/\` contient les composants de gameplay de réparation : le flow de production réutilisable \`RepairGame\`, la mallette, les étapes de réparation et les prompts.
 - \`src/components/three/world/\` contient les objets world/environnement réutilisables comme \`SkyModel\`.
 
 ## Limites actuelles
@@ -406,7 +406,7 @@ Overlays actuels :
 
 ## Prochaines étapes
 
-La prochaine étape naturelle est de déplacer la validation de réparation depuis cette interaction locale vers des données de mission plus riches quand chaque mission aura des nodes de modules cassés, des assets de remplacement dédiés et des beats narratifs de complétion.
+Déplacer la validation de réparation dans les données de mission lorsque chaque mission aura ses propres nodes de modules cassés, assets de remplacement et événements de complétion.
 `;
 
 export const featuresFr = `# Fonctionnalités implémentées

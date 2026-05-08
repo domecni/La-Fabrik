@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Component, useRef } from "react";
 import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
-import { RepairGameZone } from "@/components/three/gameplay/RepairGameZone";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { AnimatedModel } from "@/components/three/models/AnimatedModel";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
@@ -133,8 +132,6 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
             />
           </mesh>
         </TriggerObject>
-
-        <RepairGameZone />
       </Physics>
 
       <ModelPreviewErrorBoundary modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}>

@@ -11,6 +11,8 @@ import {
   REPAIR_CASE_FLOAT_UP_SPEED,
   REPAIR_CASE_LID_NODE_NAME,
   REPAIR_CASE_OPEN_ROTATION_OFFSET_DEGREES,
+  REPAIR_CASE_POP_DURATION,
+  REPAIR_CASE_POP_Y_OFFSET,
   REPAIR_CASE_ROTATION_AMPLITUDE_DEGREES,
   REPAIR_CASE_ROTATION_RESET_SPEED,
 } from "@/data/gameplay/repairCaseConfig";
@@ -55,15 +57,29 @@ export function RepairCaseModel({
   const floatHeight = useRef(0);
   const animationActiveRef = useRef(false);
   const phase = useRef({ x: 0, y: 0, z: 0 });
+  const pop = useRef({ scale: 0.001, yOffset: REPAIR_CASE_POP_Y_OFFSET });
   const initialOpen = useRef(open);
   const openedRotationZ = useRef(0);
   const parsedScale = toVector3Scale(scale);
 
   useEffect(() => {
+    const popAnimation = pop.current;
+
     phase.current = {
       x: Math.random() * Math.PI * 2,
       y: Math.random() * Math.PI * 2,
       z: Math.random() * Math.PI * 2,
+    };
+
+    gsap.to(popAnimation, {
+      scale: 1,
+      yOffset: 0,
+      duration: REPAIR_CASE_POP_DURATION,
+      ease: "back.out(1.7)",
+    });
+
+    return () => {
+      gsap.killTweensOf(popAnimation);
     };
   }, []);
 
@@ -119,7 +135,12 @@ export function RepairCaseModel({
       floatSpeed,
       delta,
     );
-    group.position.y = position[1] + floatHeight.current;
+    group.position.y = position[1] + floatHeight.current + pop.current.yOffset;
+    group.scale.set(
+      parsedScale[0] * pop.current.scale,
+      parsedScale[1] * pop.current.scale,
+      parsedScale[2] * pop.current.scale,
+    );
 
     animationActiveRef.current = isNear;
 
@@ -158,12 +179,7 @@ export function RepairCaseModel({
   });
 
   return (
-    <group
-      ref={groupRef}
-      position={position}
-      rotation={rotation}
-      scale={parsedScale}
-    >
+    <group ref={groupRef} position={position} rotation={rotation} scale={0.001}>
       <primitive object={model} />
     </group>
   );

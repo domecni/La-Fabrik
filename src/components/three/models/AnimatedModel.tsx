@@ -7,15 +7,12 @@ import {
   type AnimatedModelContextValue,
 } from "@/components/three/models/useAnimatedModel";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
-import type { Vector3Tuple } from "@/types/three/three";
+import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 
-export interface AnimatedModelConfig {
+export interface AnimatedModelConfig extends ModelTransformProps {
   modelPath: string;
   animations?: string[];
   defaultAnimation?: string;
-  position?: Vector3Tuple;
-  rotation?: Vector3Tuple;
-  scale?: Vector3Tuple | number;
   fadeDuration?: number;
   speed?: number;
   autoPlay?: boolean;

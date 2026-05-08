@@ -37,9 +37,8 @@ Use `useClonedObject` when a GLTF scene is reused by a component instance. It me
 src/components/three/
 ├── gameplay/
 │   ├── RepairCaseModel.tsx
-│   ├── RepairCaseObject.tsx
-│   ├── RepairGameZone.tsx
-│   └── RepairModuleSlot.tsx
+│   ├── RepairGame.tsx
+│   └── RepairRepairingStep.tsx
 ├── interaction/
 │   ├── GrabbableObject.tsx
 │   ├── InteractableObject.tsx

@@ -181,4 +181,4 @@ Current overlays:
 
 ## Next Steps
 
-The next natural step is to move repair validation from this local scene interaction into richer mission data when each mission has distinct broken module nodes, replacement assets, and narrative completion beats.
+Move repair validation into mission data once each mission has distinct broken module nodes, replacement assets, and completion events.

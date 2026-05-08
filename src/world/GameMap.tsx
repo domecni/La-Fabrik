@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useOctreeGraphNode } from "@/hooks/three/useOctreeGraphNode";
-import { logger } from "@/utils/core/logger";
+import { logger } from "@/utils/core/Logger";
 import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 import type { MapNode } from "@/types/editor/editor";

@@ -19,6 +19,14 @@ function withDocsSuspense(
   );
 }
 
+function createDocsRoute(
+  Component: React.LazyExoticComponent<React.ComponentType>,
+): () => React.JSX.Element {
+  return function DocsRoute(): React.JSX.Element {
+    return withDocsSuspense(Component);
+  };
+}
+
 const LazyDocsLayout = lazyNamed(
   () => import("@/components/docs/DocsLayout"),
   "DocsLayout",
@@ -64,46 +72,18 @@ const LazyDocsAnimationPage = lazyNamed(
   "DocsAnimationPage",
 );
 
-export function DocsLayoutRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsLayout);
-}
-
-export function DocsReadmeRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsReadmePage);
-}
-
-export function DocsArchitectureRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsArchitecturePage);
-}
-
-export function DocsTargetArchitectureRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsTargetArchitecturePage);
-}
-
-export function DocsTechnicalEditorRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsTechnicalEditorPage);
-}
-
-export function DocsHandTrackingRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsHandTrackingPage);
-}
-
-export function DocsZustandRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsZustandPage);
-}
-
-export function DocsFeaturesRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsFeaturesPage);
-}
-
-export function DocsMainFeatureRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsMainFeaturePage);
-}
-
-export function DocsEditorRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsEditorPage);
-}
-
-export function DocsAnimationRoute(): React.JSX.Element {
-  return withDocsSuspense(LazyDocsAnimationPage);
-}
+export const DocsLayoutRoute = createDocsRoute(LazyDocsLayout);
+export const DocsReadmeRoute = createDocsRoute(LazyDocsReadmePage);
+export const DocsArchitectureRoute = createDocsRoute(LazyDocsArchitecturePage);
+export const DocsTargetArchitectureRoute = createDocsRoute(
+  LazyDocsTargetArchitecturePage,
+);
+export const DocsTechnicalEditorRoute = createDocsRoute(
+  LazyDocsTechnicalEditorPage,
+);
+export const DocsHandTrackingRoute = createDocsRoute(LazyDocsHandTrackingPage);
+export const DocsZustandRoute = createDocsRoute(LazyDocsZustandPage);
+export const DocsFeaturesRoute = createDocsRoute(LazyDocsFeaturesPage);
+export const DocsMainFeatureRoute = createDocsRoute(LazyDocsMainFeaturePage);
+export const DocsEditorRoute = createDocsRoute(LazyDocsEditorPage);
+export const DocsAnimationRoute = createDocsRoute(LazyDocsAnimationPage);
