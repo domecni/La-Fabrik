@@ -7,6 +7,7 @@ import {
 } from "@/data/player/playerConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
+import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { HandTrackingGlove } from "@/components/three/handTracking/HandTrackingGlove";
@@ -21,25 +22,28 @@ import { TestMap } from "@/world/debug/TestMap";
 export function World(): React.JSX.Element {
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
+  const { status, usageStatus } = useHandTrackingSnapshot();
   const [octree, setOctree] = useState<Octree | null>(null);
   const playerSpawnPosition =
     sceneMode === "game"
       ? PLAYER_SPAWN_POSITION_GAME
       : PLAYER_SPAWN_POSITION_PHYSICS;
+  const showHandTrackingGloves =
+    sceneMode === "physics" ||
+    (status !== "idle" && usageStatus !== "inactive");
 
   return (
     <>
       <Environment />
       <Lighting />
       <DebugHelpers />
-      {sceneMode === "physics" ? (
+      {showHandTrackingGloves ? (
         <>
           <HandTrackingGlove handedness="left" />
           <HandTrackingGlove handedness="right" />
         </>
       ) : null}
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
-
       {sceneMode === "game" ? (
         <>
           <GameMusic />
@@ -51,7 +55,6 @@ export function World(): React.JSX.Element {
       ) : (
         <TestMap onOctreeReady={setOctree} />
       )}
-
       {cameraMode !== "debug" ? (
         <Player octree={octree} spawnPosition={playerSpawnPosition} />
       ) : null}
