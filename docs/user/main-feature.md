@@ -63,6 +63,7 @@ The mission config now carries the mission-specific variations. `bike` repairs o
 - `src/data/gameplay/repairGameConfig.ts` stores repair flow timing constants.
 - `src/data/gameplay/repairMissions.ts` stores reusable repair mission config for `bike`, `pylone`, and `ferme`.
 - `src/managers/stores/useGameStore.ts` stores mission progression state and generic mission step helpers.
+- `src/types/gameplay/repairMission.ts` contains shared repair mission ids, mission steps, and guards used by the store, data config, debug UI, and gameplay components.
 
 ## Runtime Requirements
 

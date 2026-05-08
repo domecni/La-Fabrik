@@ -20,7 +20,7 @@ export function getCameraStreamWithTimeout(
       didTimeout = true;
       reject(
         new Error(
-          "Camera request timed out. Restart Arc or check camera permissions for localhost:5173.",
+          "Camera request timed out. Restart the browser or check camera permissions for localhost:5173.",
         ),
       );
     }, HAND_TRACKING_CAMERA_TIMEOUT_MS);

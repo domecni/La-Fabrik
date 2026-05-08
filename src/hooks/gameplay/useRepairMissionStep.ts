@@ -1,8 +1,8 @@
+import { useGameStore } from "@/managers/stores/useGameStore";
 import type {
   MissionStep,
   RepairMissionId,
-} from "@/managers/stores/useGameStore";
-import { useGameStore } from "@/managers/stores/useGameStore";
+} from "@/types/gameplay/repairMission";
 
 export function useRepairMissionStep(mission: RepairMissionId): MissionStep {
   return useGameStore((state) => state[mission].currentStep);

@@ -1,4 +1,4 @@
-import type { RepairMissionId } from "@/managers/stores/useGameStore";
+import type { RepairMissionId } from "@/types/gameplay/repairMission";
 import type { Vector3Scale, Vector3Tuple } from "@/types/three/three";
 
 export interface RepairMissionCaseConfig {

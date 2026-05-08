@@ -77,6 +77,7 @@ Keep the player and map octree outside the Rapier provider until there is a deli
 - `src/utils/editor/loadEditorScene.ts` handles editor-only folder upload parsing.
 - `src/utils/map/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
 - `src/types/editor/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
+- `src/types/gameplay/repairMission.ts` contains shared repair mission ids, mission steps, and guards used across store, config, debug UI, and gameplay components.
 
 ## Map Data
 

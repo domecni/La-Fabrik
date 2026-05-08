@@ -17,7 +17,8 @@ export async function createSceneDataFromFiles(
     throw new Error("Fichier map.json manquant à la racine du dossier");
   }
 
-  const mapNodes = parseMapNodes(JSON.parse(await mapFile.text()));
+  const mapPayload: unknown = JSON.parse(await mapFile.text());
+  const mapNodes = parseMapNodes(mapPayload);
   const models = new Map<string, string>();
 
   for (const [path, file] of fileMap.entries()) {

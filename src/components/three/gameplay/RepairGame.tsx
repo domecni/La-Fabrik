@@ -14,7 +14,7 @@ import { REPAIR_FRAGMENTATION_SEQUENCE_SECONDS } from "@/data/gameplay/repairGam
 import { REPAIR_MISSIONS } from "@/data/gameplay/repairMissions";
 import { useRepairFragmentationInput } from "@/hooks/gameplay/useRepairFragmentationInput";
 import { useRepairMissionStep } from "@/hooks/gameplay/useRepairMissionStep";
-import type { RepairMissionId } from "@/managers/stores/useGameStore";
+import type { RepairMissionId } from "@/types/gameplay/repairMission";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 import { toVector3Scale } from "@/utils/three/scale";

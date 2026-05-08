@@ -19,7 +19,7 @@ import type { Vector3Tuple } from "@/types/three/three";
 
 const INSTALL_TARGET_POSITION: Vector3Tuple = [0, 0.8, 0];
 const _placeholderPosition = new THREE.Vector3();
-const REPLACEMENT_START_OFFSETS: Vector3Tuple[] = [
+const FALLBACK_PLACEHOLDER_OFFSETS: Vector3Tuple[] = [
   [-1.15, 1, 0.25],
   [0, 1.05, 0.45],
   [1.15, 1, 0.25],
@@ -36,6 +36,18 @@ interface RepairRepairingStepProps {
   config: RepairMissionConfig;
   placeholders: readonly RepairCasePlaceholder[];
   onRepair: () => void;
+}
+
+interface RepairInstallTargetProps {
+  fillColor: string;
+  isReadyToInstall: boolean;
+  label: string;
+  ringColor: string;
+  onRepair: () => void;
+}
+
+interface RepairPlaceholderMarkersProps {
+  positions: readonly Vector3Tuple[];
 }
 
 export function RepairRepairingStep({
@@ -82,6 +94,13 @@ export function RepairRepairingStep({
     : hasWrongPartPlaced
       ? "#fecaca"
       : "#fed7aa";
+  const installLabel = isReadyToInstall
+    ? `Installer ${requiredReplacementLabel}`
+    : hasWrongPartPlaced
+      ? `Mauvaise piece`
+      : hasCorrectPartPlaced
+        ? `Ranger piece cassee`
+        : `Approcher ${requiredReplacementLabel}`;
 
   function handleReplacementPosition(
     partId: string,
@@ -126,48 +145,15 @@ export function RepairRepairingStep({
 
   return (
     <group>
-      <TriggerObject
-        position={INSTALL_TARGET_POSITION}
-        colliders="ball"
-        label={
-          isReadyToInstall
-            ? `Installer ${requiredReplacementLabel}`
-            : hasWrongPartPlaced
-              ? `Mauvaise piece`
-              : hasCorrectPartPlaced
-                ? `Ranger piece cassee`
-                : `Approcher ${requiredReplacementLabel}`
-        }
-        onTrigger={() => {
-          if (!isReadyToInstall) return;
+      <RepairInstallTarget
+        fillColor={installFillColor}
+        isReadyToInstall={isReadyToInstall}
+        label={installLabel}
+        ringColor={installColor}
+        onRepair={onRepair}
+      />
 
-          onRepair();
-        }}
-      >
-        <mesh>
-          <torusGeometry args={[0.95, 0.045, 12, 96]} />
-          <meshBasicMaterial color={installColor} transparent opacity={0.85} />
-        </mesh>
-        <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.15, 0.9, 96]} />
-          <meshBasicMaterial
-            color={installFillColor}
-            transparent
-            opacity={0.35}
-          />
-        </mesh>
-      </TriggerObject>
-
-      {placeholderPositions.map((position, index) => (
-        <mesh
-          key={`${position.join(":")}-${index}`}
-          position={position}
-          rotation={[Math.PI / 2, 0, 0]}
-        >
-          <torusGeometry args={[0.26, 0.018, 8, 48]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.55} />
-        </mesh>
-      ))}
+      <RepairPlaceholderMarkers positions={placeholderPositions} />
 
       {replacementParts.map((part, index) => {
         const placeholderPosition =
@@ -251,6 +237,55 @@ export function RepairRepairingStep({
   );
 }
 
+function RepairInstallTarget({
+  fillColor,
+  isReadyToInstall,
+  label,
+  ringColor,
+  onRepair,
+}: RepairInstallTargetProps): React.JSX.Element {
+  return (
+    <TriggerObject
+      position={INSTALL_TARGET_POSITION}
+      colliders="ball"
+      label={label}
+      onTrigger={() => {
+        if (!isReadyToInstall) return;
+
+        onRepair();
+      }}
+    >
+      <mesh>
+        <torusGeometry args={[0.95, 0.045, 12, 96]} />
+        <meshBasicMaterial color={ringColor} transparent opacity={0.85} />
+      </mesh>
+      <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.15, 0.9, 96]} />
+        <meshBasicMaterial color={fillColor} transparent opacity={0.35} />
+      </mesh>
+    </TriggerObject>
+  );
+}
+
+function RepairPlaceholderMarkers({
+  positions,
+}: RepairPlaceholderMarkersProps): React.JSX.Element {
+  return (
+    <>
+      {positions.map((position, index) => (
+        <mesh
+          key={`${position.join(":")}-${index}`}
+          position={position}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <torusGeometry args={[0.26, 0.018, 8, 48]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.55} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
 function getPlaceholderTargets(
   placeholders: readonly RepairCasePlaceholder[],
 ): readonly RepairCasePlaceholder[] {
@@ -258,7 +293,7 @@ function getPlaceholderTargets(
     return placeholders;
   }
 
-  return REPLACEMENT_START_OFFSETS.map(
+  return FALLBACK_PLACEHOLDER_OFFSETS.map(
     (offset, index): RepairCasePlaceholder => ({
       name: `placeholder_${index + 1}`,
       position: [

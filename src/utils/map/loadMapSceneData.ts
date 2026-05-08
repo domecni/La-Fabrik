@@ -13,7 +13,8 @@ export async function loadMapSceneData(): Promise<SceneData | null> {
     return null;
   }
 
-  const mapNodes = parseMapNodes(await response.json());
+  const mapPayload: unknown = await response.json();
+  const mapNodes = parseMapNodes(mapPayload);
   return createSceneData(mapNodes);
 }
 

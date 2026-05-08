@@ -1,9 +1,9 @@
 import { RotateCcw, StepBack, StepForward } from "lucide-react";
 import {
   type MainGameState,
-  type MissionStep,
   useGameStore,
 } from "@/managers/stores/useGameStore";
+import { isMissionStep, MISSION_STEPS } from "@/types/gameplay/repairMission";
 
 const MAIN_STATES: MainGameState[] = [
   "intro",
@@ -11,17 +11,6 @@ const MAIN_STATES: MainGameState[] = [
   "pylone",
   "ferme",
   "outro",
-];
-
-const MISSION_STEPS: MissionStep[] = [
-  "locked",
-  "waiting",
-  "inspected",
-  "fragmented",
-  "scanning",
-  "repairing",
-  "reassembling",
-  "done",
 ];
 
 function toPascalCase(value: string): string {
@@ -71,22 +60,27 @@ export function GameStateDebugPanel(): React.JSX.Element {
       return;
     }
 
+    if (mainState === "outro") {
+      setOutroState({ hasStarted: nextSubState === "started" });
+      return;
+    }
+
+    if (!isMissionStep(nextSubState)) return;
+
     if (mainState === "bike") {
-      setBikeState({ currentStep: nextSubState as MissionStep });
+      setBikeState({ currentStep: nextSubState });
       return;
     }
 
     if (mainState === "pylone") {
-      setPyloneState({ currentStep: nextSubState as MissionStep });
+      setPyloneState({ currentStep: nextSubState });
       return;
     }
 
     if (mainState === "ferme") {
-      setFermeState({ currentStep: nextSubState as MissionStep });
+      setFermeState({ currentStep: nextSubState });
       return;
     }
-
-    setOutroState({ hasStarted: nextSubState === "started" });
   }
 
   return (

@@ -3,6 +3,7 @@ import { Component } from "react";
 import { SimpleModel } from "@/components/three/models/SimpleModel";
 import type { ModelTransformProps } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
+import { toVector3Scale } from "@/utils/three/scale";
 
 interface RepairObjectModelProps extends ModelTransformProps {
   label: string;
@@ -15,6 +16,13 @@ interface RepairObjectModelBoundaryProps extends RepairObjectModelProps {
 
 interface RepairObjectModelBoundaryState {
   hasError: boolean;
+}
+
+interface RepairObjectFallbackProps {
+  label: string;
+  position?: ModelTransformProps["position"] | undefined;
+  rotation?: ModelTransformProps["rotation"] | undefined;
+  scale?: ModelTransformProps["scale"] | undefined;
 }
 
 class RepairObjectModelBoundary extends Component<
@@ -45,7 +53,14 @@ class RepairObjectModelBoundary extends Component<
 
   render(): ReactNode {
     if (this.state.hasError) {
-      return <RepairObjectFallback label={this.props.label} />;
+      return (
+        <RepairObjectFallback
+          label={this.props.label}
+          position={this.props.position}
+          rotation={this.props.rotation}
+          scale={this.props.scale}
+        />
+      );
     }
 
     return this.props.children;
@@ -77,9 +92,21 @@ export function RepairObjectModel({
   );
 }
 
-function RepairObjectFallback({ label }: { label: string }): React.JSX.Element {
+function RepairObjectFallback({
+  label,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+}: Pick<
+  RepairObjectFallbackProps,
+  "label" | "position" | "rotation" | "scale"
+>): React.JSX.Element {
   return (
-    <group>
+    <group
+      position={position}
+      rotation={rotation}
+      scale={toVector3Scale(scale)}
+    >
       <mesh castShadow receiveShadow>
         <boxGeometry args={[1.4, 1.4, 1.4]} />
         <meshStandardMaterial color="#facc15" roughness={0.6} wireframe />

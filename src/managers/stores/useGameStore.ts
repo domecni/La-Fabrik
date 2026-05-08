@@ -1,16 +1,12 @@
 import { create } from "zustand";
+import {
+  isRepairMissionId,
+  type MissionStep,
+  type RepairMissionId,
+} from "@/types/gameplay/repairMission";
 
 export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
-export type RepairMissionId = "bike" | "pylone" | "ferme";
-export type MissionStep =
-  | "locked"
-  | "waiting"
-  | "inspected"
-  | "fragmented"
-  | "scanning"
-  | "repairing"
-  | "reassembling"
-  | "done";
+export type { MissionStep, RepairMissionId };
 
 interface IntroState {
   dialogueAudio: string | null;
@@ -62,12 +58,6 @@ interface GameActions {
 
 type GameStore = GameState & GameActions;
 type GameStateUpdate = Partial<GameState>;
-
-export const REPAIR_MISSION_IDS = ["bike", "pylone", "ferme"] as const;
-
-function isRepairMissionId(value: MainGameState): value is RepairMissionId {
-  return REPAIR_MISSION_IDS.includes(value as RepairMissionId);
-}
 
 function getNextMissionStep(step: MissionStep): MissionStep {
   switch (step) {

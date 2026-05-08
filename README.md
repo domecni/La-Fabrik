@@ -101,7 +101,8 @@ la-fabrik/
     │   ├── editor/                         # Editor-only parsing utilities
     │   ├── map/                            # Map loading and validation
     │   └── three/                          # Three.js helpers
-    ├── App.tsx                             # Canvas bootstrap
+    ├── types/                              # Shared TypeScript domain types
+    ├── App.tsx                             # App bootstrap and route switch
     └── main.tsx
 ```
 

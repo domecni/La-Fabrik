@@ -137,7 +137,7 @@ For repair missions, it mounts the reusable `RepairGame` component with a missio
 <RepairGame mission="bike" position={[8, 0, -6]} />
 ```
 
-`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. This keeps the scene component small and avoids mission-specific branching inside the repair flow. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` state transitions.
+`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. Shared repair ids, mission steps, and runtime guards live in `src/types/gameplay/repairMission.ts` so static mission config does not depend on the Zustand store. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` state transitions.
 
 Mission-specific behavior stays in `src/data/gameplay/repairMissions.ts`: each mission can define its broken nodes, placeholder targets, scan duration, and reassembly duration without adding mission branches to `RepairGame`.
 

@@ -9,7 +9,7 @@ import {
 import { useBrowserHandTracking } from "@/hooks/handTracking/useBrowserHandTracking";
 import { useRemoteHandTracking } from "@/hooks/handTracking/useRemoteHandTracking";
 import { useGameStore } from "@/managers/stores/useGameStore";
-import type { MissionStep } from "@/managers/stores/useGameStore";
+import type { MissionStep } from "@/types/gameplay/repairMission";
 
 const REPAIR_HAND_TRACKING_STEPS = new Set<MissionStep>([
   "inspected",

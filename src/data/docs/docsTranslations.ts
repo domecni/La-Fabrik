@@ -361,7 +361,7 @@ Pour les missions de réparation, il monte le composant réutilisable \`RepairGa
 <RepairGame mission="bike" position={[8, 0, -6]} />
 \`\`\`
 
-\`RepairGame\` lit l'étape de mission active depuis le store et écrit les transitions via des actions génériques comme \`setMissionStep\` et \`completeMission\`. Cela garde le composant de scène petit et évite les branches spécifiques à chaque mission dans le flow de réparation. Le flow de réparation de production supporte actuellement les transitions \`waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission\`.
+\`RepairGame\` lit l'étape de mission active depuis le store et écrit les transitions via des actions génériques comme \`setMissionStep\` et \`completeMission\`. Les ids de mission, étapes de mission et guards partagés vivent dans \`src/types/gameplay/repairMission.ts\`, ce qui évite à la configuration statique des missions de dépendre du store Zustand. Le flow de réparation de production supporte actuellement les transitions \`waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission\`.
 
 La scène peut donc évoluer progressivement vers ce pattern :
 
