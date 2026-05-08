@@ -36,6 +36,7 @@ interface GrabbableObjectProps {
   colliders?: ColliderShape;
   label?: string;
   handControlled?: boolean;
+  onPositionChange?: (position: THREE.Vector3) => void;
 }
 
 const grabDebugParams = {
@@ -123,6 +124,7 @@ export function GrabbableObject({
   colliders = GRAB_DEFAULT_COLLIDERS,
   label = GRAB_DEFAULT_LABEL,
   handControlled = false,
+  onPositionChange,
 }: GrabbableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const { hands } = useHandTrackingSnapshot();
@@ -172,6 +174,7 @@ export function GrabbableObject({
 
     const t = rbRef.current.translation();
     _currentPos.set(t.x, t.y, t.z);
+    onPositionChange?.(_currentPos);
 
     if (fistHand) {
       const handCenter = getHandCenterPoint(fistHand);

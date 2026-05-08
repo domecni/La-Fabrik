@@ -16,8 +16,9 @@ The current user flow is:
 6. Press `E` or hold both fists closed for one second to move from `inspected` to `fragmented`.
 7. The mission object uses an exploded-model transition, then moves to `scanning`.
 8. The scan visual highlights the broken area and shows the `cassé.webm` prompt.
-9. In `repairing`, the case opens and a replacement part appears near the case.
-10. Press `E` on the green install target to move to `done` and show the reassembled object.
+9. In `repairing`, the case opens and a grabbable replacement part appears near the case.
+10. Move the replacement part close to the install target.
+11. Press `E` on the green install target to move to `done` and show the reassembled object.
 
 The older debug repair sandbox still exists in the physics test scene, but the production path now starts from the reusable `RepairGame` component.
 
@@ -33,7 +34,7 @@ When the player inspects the object, `RepairGame` writes `inspected` through the
 
 In `inspected`, `RepairGame` can also move to `fragmented`. The player can use the interaction key or hold both fists closed for one second. The hand-tracking path is state-based, so it does not depend on being inside a local object interaction radius.
 
-In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, a blue scan visual and the `cassé.webm` prompt are shown before the flow advances to `repairing`. In `repairing`, the case opens, a replacement part appears, and the player can press `E` on the install target to finish the repair and move to `done`.
+In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, a blue scan visual and the `cassé.webm` prompt are shown before the flow advances to `repairing`. In `repairing`, the case opens, a grabbable replacement part appears, and the install target only validates once that part is close enough.
 
 Repair module slots and model-selection behavior still exist in the debug prototype. They can be migrated into the reusable repair flow in later steps if the repair interaction needs more depth.
 
@@ -44,7 +45,7 @@ Repair module slots and model-selection behavior still exist in the debug protot
 - `src/components/three/gameplay/RepairGame.tsx` composes the reusable production repair flow.
 - `src/components/three/gameplay/RepairInspectionObject.tsx` handles the `waiting` inspection interaction.
 - `src/components/three/gameplay/RepairMissionCase.tsx` renders the mission repair case after inspection.
-- `src/components/three/gameplay/RepairRepairingStep.tsx` renders the replacement part and install trigger in `repairing`.
+- `src/components/three/gameplay/RepairRepairingStep.tsx` renders the grabbable replacement part, placement validation, and install trigger in `repairing`.
 - `src/components/three/gameplay/RepairPromptVideo.tsx` renders `.webm` prompts inside the 3D scene.
 - `src/components/three/gameplay/RepairScanVisual.tsx` renders the scan halo, scan line, and broken prompt.
 - `src/hooks/gameplay/useRepairFragmentationInput.ts` handles the `inspected -> fragmented` keyboard and hand-tracking input.
@@ -98,5 +99,5 @@ python -m backend.main
 - The reusable production `RepairGame` currently covers `waiting -> inspected -> fragmented -> scanning -> repairing -> done`.
 - Mission progression exists in Zustand, but the full repair mission flow is still being integrated.
 - There is no central `GameManager` in this branch.
-- Hand tracking is available for the repair-step input, but the install interaction currently uses the shared `E` trigger path.
+- Hand tracking is available for the two-fists input and the grabbable replacement part; final installation still uses the shared `E` trigger path.
 - The repair-game content is configured statically in `src/data/gameplay/`.

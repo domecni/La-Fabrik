@@ -406,7 +406,7 @@ Overlays actuels :
 
 ## Prochaines étapes
 
-La prochaine étape naturelle est de remplacer le trigger simple d'installation par des interactions de réparation plus profondes, comme choisir des pièces dans la mallette, les saisir et valider le bon remplacement sur un module cassé.
+La prochaine étape naturelle est d'étendre l'interaction de réparation avec une sélection de pièces depuis la mallette et une validation plus stricte du bon remplacement pour chaque module cassé.
 `;
 
 export const featuresFr = `# Fonctionnalités implémentées
@@ -442,7 +442,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 - \`RepairGame\` de production réutilisable monté pour les états de mission \`bike\`, \`pylone\` et \`ferme\`
 - Configuration de mission partagée via \`src/data/gameplay/repairMissions.ts\`
-- Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> done\`, prompts \`.webm\`, apparition/ouverture de la mallette, touche \`E\`, hold deux poings, transition de modèle explosé, visuels de scan, pièce de remplacement et trigger d'installation
+- Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> done\`, prompts \`.webm\`, apparition/ouverture de la mallette, touche \`E\`, hold deux poings, transition de modèle explosé, visuels de scan, placement d'une pièce de remplacement grabbable et validation d'installation
 
 ## Audio
 

@@ -181,4 +181,4 @@ Current overlays:
 
 ## Next Steps
 
-The next natural step is to replace the simple install trigger with deeper repair interactions, such as selecting parts from the case, grabbing them, and validating the right replacement on a broken module.
+The next natural step is to expand the repair interaction with case-based part selection and stricter validation of the correct replacement for each broken module.
