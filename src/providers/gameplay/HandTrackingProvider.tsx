@@ -14,6 +14,7 @@ import type { MissionStep } from "@/managers/stores/useGameStore";
 const REPAIR_HAND_TRACKING_STEPS = new Set<MissionStep>([
   "inspected",
   "repairing",
+  "reassembling",
   "done",
 ]);
 

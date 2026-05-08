@@ -9,6 +9,7 @@ export type MissionStep =
   | "fragmented"
   | "scanning"
   | "repairing"
+  | "reassembling"
   | "done";
 
 interface IntroState {
@@ -81,6 +82,8 @@ function getNextMissionStep(step: MissionStep): MissionStep {
     case "scanning":
       return "repairing";
     case "repairing":
+      return "reassembling";
+    case "reassembling":
     case "done":
       return "done";
   }
@@ -99,8 +102,10 @@ function getPreviousMissionStep(step: MissionStep): MissionStep {
       return "fragmented";
     case "repairing":
       return "scanning";
-    case "done":
+    case "reassembling":
       return "repairing";
+    case "done":
+      return "reassembling";
   }
 }
 

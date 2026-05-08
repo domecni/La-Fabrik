@@ -75,6 +75,7 @@ The mission steps currently use this sequence:
   "fragmented" |
   "scanning" |
   "repairing" |
+  "reassembling" |
   "done";
 ```
 
@@ -136,7 +137,7 @@ For repair missions, it mounts the reusable `RepairGame` component with a missio
 <RepairGame mission="bike" position={[8, 0, -6]} />
 ```
 
-`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. This keeps the scene component small and avoids mission-specific branching inside the repair flow. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> done -> next mission` state transitions.
+`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. This keeps the scene component small and avoids mission-specific branching inside the repair flow. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` state transitions.
 
 That means the scene can progressively move toward this pattern:
 

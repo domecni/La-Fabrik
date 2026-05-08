@@ -20,6 +20,7 @@ const MISSION_STEPS: MissionStep[] = [
   "fragmented",
   "scanning",
   "repairing",
+  "reassembling",
   "done",
 ];
 

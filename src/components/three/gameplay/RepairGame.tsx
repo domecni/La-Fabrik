@@ -5,6 +5,7 @@ import { RepairCompletionStep } from "@/components/three/gameplay/RepairCompleti
 import { RepairInspectionObject } from "@/components/three/gameplay/RepairInspectionObject";
 import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase";
 import { RepairRepairingStep } from "@/components/three/gameplay/RepairRepairingStep";
+import { RepairReassemblyStep } from "@/components/three/gameplay/RepairReassemblyStep";
 import {
   RepairScanSequence,
   type RepairScannedBrokenPart,
@@ -94,7 +95,13 @@ export function RepairGame({
           brokenParts={scannedBrokenParts}
           config={config}
           placeholders={casePlaceholders}
-          onRepair={() => setMissionStep(mission, "done")}
+          onRepair={() => setMissionStep(mission, "reassembling")}
+        />
+      ) : null}
+      {step === "reassembling" ? (
+        <RepairReassemblyStep
+          config={config}
+          onComplete={() => setMissionStep(mission, "done")}
         />
       ) : null}
       {step === "done" ? (
@@ -103,7 +110,7 @@ export function RepairGame({
           onComplete={() => completeMission(mission)}
         />
       ) : null}
-      {step !== "waiting" && step !== "done" ? (
+      {step !== "waiting" && step !== "done" && step !== "reassembling" ? (
         <RepairMissionCase
           config={config}
           onPlaceholdersChange={setCasePlaceholders}

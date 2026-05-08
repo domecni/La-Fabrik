@@ -33,7 +33,7 @@ This keeps hand tracking active while the player is inside an interaction zone, 
 The production repair activation conditions are:
 
 - active `mainState` is `bike`, `pylone`, or `ferme`
-- the active mission step is `inspected`, `repairing`, or `done`
+- the active mission step is `inspected`, `repairing`, `reassembling`, or `done`
 
 This keeps the webcam off during `waiting`, `fragmented`, and `scanning`, then enables hand input only when the repair flow is expected to use hands.
 
