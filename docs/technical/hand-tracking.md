@@ -37,6 +37,8 @@ The production repair activation conditions are:
 
 This keeps the webcam off during `waiting`, `fragmented`, and `scanning`, then enables hand input only when the repair flow is expected to use hands.
 
+In the current production repair flow, `inspected` uses a two-fists hold gesture to advance to `fragmented`. The hold must last one second and is independent from local object interaction distance once the mission is in the correct state.
+
 ## Backend
 
 The backend lives in `backend/` and exposes:

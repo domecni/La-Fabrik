@@ -13,6 +13,7 @@ The current user flow is:
 3. Aim at the object and press the interaction key when prompted.
 4. The mission step moves from `waiting` to `inspected`.
 5. The repair case appears near the mission object and can float when the player approaches it.
+6. Press `E` or hold both fists closed for one second to move from `inspected` to `fragmented`.
 
 The older debug repair sandbox still exists in the physics test scene, but the production path now starts from the reusable `RepairGame` component.
 
@@ -26,6 +27,8 @@ In `waiting`, the active mission renders its repair object and the `interagir.we
 
 When the player inspects the object, `RepairGame` writes `inspected` through the generic mission store action. The repair case then appears from the mission config. When the player is close enough, the existing case model floats upward and rotates gently to signal interactivity.
 
+In `inspected`, `RepairGame` can also move to `fragmented`. The player can use the interaction key or hold both fists closed for one second. The hand-tracking path is state-based, so it does not depend on being inside a local object interaction radius.
+
 Repair module slots and exploded-model behavior still exist in the debug prototype. They will be migrated into the reusable repair flow in later steps.
 
 ## Key Files
@@ -36,7 +39,9 @@ Repair module slots and exploded-model behavior still exist in the debug prototy
 - `src/components/three/gameplay/RepairInspectionObject.tsx` handles the `waiting` inspection interaction.
 - `src/components/three/gameplay/RepairMissionCase.tsx` renders the mission repair case after inspection.
 - `src/components/three/gameplay/RepairPromptVideo.tsx` renders `.webm` prompts inside the 3D scene.
+- `src/hooks/gameplay/useRepairFragmentationInput.ts` handles the `inspected -> fragmented` keyboard and hand-tracking input.
 - `src/hooks/gameplay/useRepairMissionStep.ts` reads the active mission step from the game store.
+- `src/hooks/handTracking/useBothFistsHold.ts` detects the reusable two-fists hold gesture.
 - `src/components/three/gameplay/RepairGameZone.tsx` composes the repair-game zone.
 - `src/components/three/gameplay/RepairCaseObject.tsx` connects the repair case to trigger interaction and audio.
 - `src/components/three/gameplay/RepairCaseModel.tsx` renders and animates the case model.
@@ -71,7 +76,7 @@ http://localhost:5173/?debug
 
 ## Related Hand Tracking
 
-Hand tracking is a separate debug interaction layer. It can move grabbable physics objects with webcam input, but it is not yet integrated into the repair-game mission flow.
+Hand tracking can move grabbable physics objects with webcam input in debug scenes. In the production repair flow, it is also used for the `inspected -> fragmented` transition through the two-fists hold gesture.
 
 For hand tracking, run the Python backend separately:
 
@@ -82,8 +87,8 @@ python -m backend.main
 
 ## Current Limitations
 
-- The reusable production `RepairGame` currently covers only `waiting -> inspected`.
+- The reusable production `RepairGame` currently covers `waiting -> inspected -> fragmented -> scanning -> repairing`; repair interactions and completion still need to be implemented.
 - Mission progression exists in Zustand, but the full repair mission flow is still being integrated.
 - There is no central `GameManager` in this branch.
-- Hand tracking is available as debug interaction input, not as final repair gameplay.
+- Hand tracking is available for repair-step input, but the later repair interactions are still being integrated.
 - The repair-game content is configured statically in `src/data/gameplay/`.
