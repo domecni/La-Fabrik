@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
+import gsap from "gsap";
 import * as THREE from "three";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import {
@@ -37,6 +38,10 @@ interface GrabbableObjectProps {
   label?: string;
   handControlled?: boolean;
   onPositionChange?: (position: THREE.Vector3) => void;
+  onSnap?: (position: THREE.Vector3) => void;
+  snapDuration?: number;
+  snapRadius?: number;
+  snapTargets?: readonly Vector3Tuple[];
 }
 
 const grabDebugParams = {
@@ -56,6 +61,7 @@ const _handDirection = new THREE.Vector3();
 const _handHitDirection = new THREE.Vector3();
 const _cameraPos = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
+const _snapPosition = new THREE.Vector3();
 const _handRaycaster = new THREE.Raycaster();
 
 const HAND_GRAB_SCREEN_RADIUS = 0.04;
@@ -125,6 +131,10 @@ export function GrabbableObject({
   label = GRAB_DEFAULT_LABEL,
   handControlled = false,
   onPositionChange,
+  onSnap,
+  snapDuration = 0.25,
+  snapRadius = 0,
+  snapTargets = [],
 }: GrabbableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const { hands } = useHandTrackingSnapshot();
@@ -134,6 +144,63 @@ export function GrabbableObject({
   const isHandHolding = useRef(false);
   const handHoldDistance = useRef<number | null>(null);
   const handHoldStartZ = useRef<number | null>(null);
+  const snapTween = useRef<gsap.core.Tween | null>(null);
+
+  useEffect(() => {
+    return () => {
+      snapTween.current?.kill();
+    };
+  }, []);
+
+  function snapToNearestTarget(): void {
+    const body = rbRef.current;
+    if (!body || snapTargets.length === 0 || snapRadius <= 0) return;
+
+    const translation = body.translation();
+    _currentPos.set(translation.x, translation.y, translation.z);
+
+    let nearestTarget: Vector3Tuple | null = null;
+    let nearestDistance = snapRadius;
+    snapTargets.forEach((target) => {
+      _snapPosition.set(target[0], target[1], target[2]);
+      const distance = _currentPos.distanceTo(_snapPosition);
+      if (distance <= nearestDistance) {
+        nearestDistance = distance;
+        nearestTarget = target;
+      }
+    });
+
+    if (!nearestTarget) return;
+
+    snapTween.current?.kill();
+    const animatedPosition = {
+      x: _currentPos.x,
+      y: _currentPos.y,
+      z: _currentPos.z,
+    };
+
+    body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    body.setAngvel(ZERO_ANGULAR_VELOCITY, true);
+    snapTween.current = gsap.to(animatedPosition, {
+      x: nearestTarget[0],
+      y: nearestTarget[1],
+      z: nearestTarget[2],
+      duration: snapDuration,
+      ease: "power2.out",
+      onUpdate: () => {
+        body.setTranslation(animatedPosition, true);
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      },
+      onComplete: () => {
+        _snapPosition.set(
+          animatedPosition.x,
+          animatedPosition.y,
+          animatedPosition.z,
+        );
+        onSnap?.(_snapPosition);
+      },
+    });
+  }
 
   useDebugFolder("GrabbableObject", (folder) => {
     folder
@@ -199,6 +266,9 @@ export function GrabbableObject({
         InteractionManager.getInstance().setHandHolding(isHandHolding.current);
       }
     } else {
+      if (isHandHolding.current) {
+        snapToNearestTarget();
+      }
       isHandHolding.current = false;
       handHoldDistance.current = null;
       handHoldStartZ.current = null;
@@ -258,6 +328,7 @@ export function GrabbableObject({
           }}
           onRelease={() => {
             isHolding.current = false;
+            snapToNearestTarget();
             if (
               !rbRef.current ||
               grabDebugParams.throwBoost === GRAB_THROW_BOOST_DEFAULT

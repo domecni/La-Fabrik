@@ -13,6 +13,7 @@ import {
   REPAIR_CASE_FLOAT_UP_SPEED,
   REPAIR_CASE_LID_NODE_NAME,
   REPAIR_CASE_OPEN_ROTATION_OFFSET_DEGREES,
+  REPAIR_CASE_PLACEHOLDER_NAME_PREFIX,
   REPAIR_CASE_POP_DURATION,
   REPAIR_CASE_POP_Y_OFFSET,
   REPAIR_CASE_ROTATION_AMPLITUDE_DEGREES,
@@ -20,13 +21,22 @@ import {
 } from "@/data/gameplay/repairCaseConfig";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
-import type { ModelTransformProps } from "@/types/three/three";
+import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 import { toVector3Scale } from "@/utils/three/scale";
+
+export interface RepairCasePlaceholder {
+  name: string;
+  position: Vector3Tuple;
+}
 
 interface RepairCaseModelProps extends ModelTransformProps {
   modelPath: string;
   open: boolean;
   exiting?: boolean;
+  floating?: boolean;
+  onPlaceholdersChange?:
+    | ((placeholders: readonly RepairCasePlaceholder[]) => void)
+    | undefined;
   onExitComplete?: (() => void) | undefined;
 }
 
@@ -44,6 +54,8 @@ export function RepairCaseModel({
   modelPath,
   open,
   exiting = false,
+  floating = true,
+  onPlaceholdersChange,
   onExitComplete,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
@@ -65,13 +77,21 @@ export function RepairCaseModel({
   const phase = useRef({ x: 0, y: 0, z: 0 });
   const pop = useRef({ scale: 0.001, yOffset: REPAIR_CASE_POP_Y_OFFSET });
   const onExitCompleteRef = useRef(onExitComplete);
+  const onPlaceholdersChangeRef = useRef(onPlaceholdersChange);
   const initialOpen = useRef(open);
   const openedRotationZ = useRef(0);
   const parsedScale = toVector3Scale(scale);
+  const placeholderSignature = useRef("__initial__");
+  const placeholderPosition = useRef(new THREE.Vector3());
+  const placeholderLocalPosition = useRef(new THREE.Vector3());
 
   useEffect(() => {
     onExitCompleteRef.current = onExitComplete;
   }, [onExitComplete]);
+
+  useEffect(() => {
+    onPlaceholdersChangeRef.current = onPlaceholdersChange;
+  }, [onPlaceholdersChange]);
 
   useEffect(() => {
     const popAnimation = pop.current;
@@ -153,6 +173,7 @@ export function RepairCaseModel({
 
     group.getWorldPosition(worldPosition.current);
     const isNear =
+      floating &&
       !exiting &&
       worldPosition.current.distanceTo(camera.position) <=
         REPAIR_CASE_FLOAT_ACTIVATION_DISTANCE;
@@ -173,6 +194,43 @@ export function RepairCaseModel({
       parsedScale[1] * pop.current.scale,
       parsedScale[2] * pop.current.scale,
     );
+
+    const placeholders: RepairCasePlaceholder[] = [];
+    model.traverse((child) => {
+      if (
+        !child.name
+          .toLowerCase()
+          .startsWith(REPAIR_CASE_PLACEHOLDER_NAME_PREFIX)
+      ) {
+        return;
+      }
+
+      child.getWorldPosition(placeholderPosition.current);
+      placeholderLocalPosition.current.copy(placeholderPosition.current);
+      group.parent?.worldToLocal(placeholderLocalPosition.current);
+      placeholders.push({
+        name: child.name,
+        position: [
+          placeholderLocalPosition.current.x,
+          placeholderLocalPosition.current.y,
+          placeholderLocalPosition.current.z,
+        ],
+      });
+    });
+    placeholders.sort((a, b) => a.name.localeCompare(b.name));
+
+    const nextSignature = placeholders
+      .map(
+        (placeholder) =>
+          `${placeholder.name}:${placeholder.position
+            .map((value) => value.toFixed(3))
+            .join(",")}`,
+      )
+      .join("|");
+    if (nextSignature !== placeholderSignature.current) {
+      placeholderSignature.current = nextSignature;
+      onPlaceholdersChangeRef.current?.(placeholders);
+    }
 
     animationActiveRef.current = isNear;
 

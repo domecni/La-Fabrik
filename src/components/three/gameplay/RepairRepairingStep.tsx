@@ -1,10 +1,15 @@
 import { useCallback, useState } from "react";
 import * as THREE from "three";
+import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
-import { REPAIR_CASE_FOCUS_POSITION } from "@/data/gameplay/repairCaseConfig";
+import {
+  REPAIR_CASE_FOCUS_POSITION,
+  REPAIR_CASE_PLACEHOLDER_SNAP_DURATION,
+  REPAIR_CASE_PLACEHOLDER_SNAP_RADIUS,
+} from "@/data/gameplay/repairCaseConfig";
 import type {
   RepairMissionConfig,
   RepairMissionPartConfig,
@@ -12,7 +17,7 @@ import type {
 import type { Vector3Tuple } from "@/types/three/three";
 
 const INSTALL_TARGET_POSITION: Vector3Tuple = [0, 0.8, 0];
-const INSTALL_TARGET_VECTOR = new THREE.Vector3(...INSTALL_TARGET_POSITION);
+const _placeholderPosition = new THREE.Vector3();
 const REPLACEMENT_START_OFFSETS: Vector3Tuple[] = [
   [-1.15, 1, 0.25],
   [0, 1.05, 0.45],
@@ -22,11 +27,13 @@ const REPAIR_INSTALL_RADIUS = 1.1;
 
 interface RepairRepairingStepProps {
   config: RepairMissionConfig;
+  placeholders: readonly RepairCasePlaceholder[];
   onRepair: () => void;
 }
 
 export function RepairRepairingStep({
   config,
+  placeholders,
   onRepair,
 }: RepairRepairingStepProps): React.JSX.Element {
   const [placedPartIds, setPlacedPartIds] = useState<Record<string, boolean>>(
@@ -38,6 +45,7 @@ export function RepairRepairingStep({
   );
   const requiredReplacementLabel =
     requiredReplacementPart?.label ?? config.label;
+  const placeholderPositions = getPlaceholderPositions(placeholders);
   const hasCorrectPartPlaced = Boolean(
     placedPartIds[config.requiredReplacementPartId],
   );
@@ -58,16 +66,23 @@ export function RepairRepairingStep({
 
   const handleReplacementPosition = useCallback(
     (partId: string, position: THREE.Vector3) => {
-      const isPlaced =
-        position.distanceTo(INSTALL_TARGET_VECTOR) <= REPAIR_INSTALL_RADIUS;
+      const isPlaced = isNearPlaceholder(position, placeholderPositions);
       setPlacedPartIds((current) => {
-        if (current[partId] === isPlaced) return current;
+        if (!current[partId] || isPlaced) return current;
 
-        return { ...current, [partId]: isPlaced };
+        return { ...current, [partId]: false };
       });
     },
-    [],
+    [placeholderPositions],
   );
+
+  const handleReplacementSnap = useCallback((partId: string) => {
+    setPlacedPartIds((current) => {
+      if (current[partId]) return current;
+
+      return { ...current, [partId]: true };
+    });
+  }, []);
 
   return (
     <group>
@@ -101,25 +116,38 @@ export function RepairRepairingStep({
         </mesh>
       </TriggerObject>
 
+      {placeholderPositions.map((position, index) => (
+        <mesh
+          key={`${position.join(":")}-${index}`}
+          position={position}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <torusGeometry args={[0.26, 0.018, 8, 48]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.55} />
+        </mesh>
+      ))}
+
       {replacementParts.map((part, index) => {
-        const offset =
-          REPLACEMENT_START_OFFSETS[index % REPLACEMENT_START_OFFSETS.length] ??
-          REPLACEMENT_START_OFFSETS[0]!;
+        const placeholderPosition =
+          placeholderPositions[index % placeholderPositions.length] ??
+          placeholderPositions[0]!;
 
         return (
           <GrabbableObject
             key={part.id}
-            position={[
-              REPAIR_CASE_FOCUS_POSITION[0] + offset[0],
-              REPAIR_CASE_FOCUS_POSITION[1] + offset[1],
-              REPAIR_CASE_FOCUS_POSITION[2] + offset[2],
-            ]}
+            position={placeholderPosition}
             colliders="ball"
             handControlled
             label={`Prendre ${part.label}`}
             onPositionChange={(position) => {
               handleReplacementPosition(part.id, position);
             }}
+            onSnap={() => {
+              handleReplacementSnap(part.id);
+            }}
+            snapDuration={REPAIR_CASE_PLACEHOLDER_SNAP_DURATION}
+            snapRadius={REPAIR_CASE_PLACEHOLDER_SNAP_RADIUS}
+            snapTargets={placeholderPositions}
           >
             <RepairObjectModel
               label={part.label}
@@ -132,6 +160,33 @@ export function RepairRepairingStep({
 
       <RepairPromptVideo src={config.interactUiPath} position={[0, 2.3, 0]} />
     </group>
+  );
+}
+
+function getPlaceholderPositions(
+  placeholders: readonly RepairCasePlaceholder[],
+): readonly Vector3Tuple[] {
+  if (placeholders.length > 0) {
+    return placeholders.map((placeholder) => placeholder.position);
+  }
+
+  return REPLACEMENT_START_OFFSETS.map(
+    (offset): Vector3Tuple => [
+      REPAIR_CASE_FOCUS_POSITION[0] + offset[0],
+      REPAIR_CASE_FOCUS_POSITION[1] + offset[1],
+      REPAIR_CASE_FOCUS_POSITION[2] + offset[2],
+    ],
+  );
+}
+
+function isNearPlaceholder(
+  position: THREE.Vector3,
+  placeholderPositions: readonly Vector3Tuple[],
+): boolean {
+  return placeholderPositions.some(
+    (placeholderPosition) =>
+      position.distanceTo(_placeholderPosition.set(...placeholderPosition)) <=
+      REPAIR_INSTALL_RADIUS,
   );
 }
 

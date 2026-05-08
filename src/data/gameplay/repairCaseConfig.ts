@@ -24,3 +24,6 @@ export const REPAIR_CASE_FOCUS_POSITION = [
   0, 1.05, 2.05,
 ] satisfies Vector3Tuple;
 export const REPAIR_CASE_FOCUS_SCALE = 2.25;
+export const REPAIR_CASE_PLACEHOLDER_NAME_PREFIX = "placeholder_";
+export const REPAIR_CASE_PLACEHOLDER_SNAP_RADIUS = 0.65;
+export const REPAIR_CASE_PLACEHOLDER_SNAP_DURATION = 0.25;

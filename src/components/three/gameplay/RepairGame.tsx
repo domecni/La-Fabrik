@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ExplodableModel } from "@/components/three/models/ExplodableModel";
+import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairCompletionStep } from "@/components/three/gameplay/RepairCompletionStep";
 import { RepairInspectionObject } from "@/components/three/gameplay/RepairInspectionObject";
 import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase";
@@ -33,6 +34,9 @@ export function RepairGame({
   const completeMission = useGameStore((state) => state.completeMission);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
   const step = useRepairMissionStep(mission);
+  const [casePlaceholders, setCasePlaceholders] = useState<
+    readonly RepairCasePlaceholder[]
+  >([]);
   const parsedScale = toVector3Scale(scale);
   const readyForFragmentation = step === "inspected";
 
@@ -79,6 +83,7 @@ export function RepairGame({
       {step === "repairing" ? (
         <RepairRepairingStep
           config={config}
+          placeholders={casePlaceholders}
           onRepair={() => setMissionStep(mission, "done")}
         />
       ) : null}
@@ -91,6 +96,7 @@ export function RepairGame({
       {step !== "waiting" && step !== "done" ? (
         <RepairMissionCase
           config={config}
+          onPlaceholdersChange={setCasePlaceholders}
           open={step === "repairing"}
           zoomed={step === "repairing"}
           showFragmentationPrompt={readyForFragmentation}

@@ -1,4 +1,7 @@
-import { RepairCaseModel } from "@/components/three/gameplay/RepairCaseModel";
+import {
+  RepairCaseModel,
+  type RepairCasePlaceholder,
+} from "@/components/three/gameplay/RepairCaseModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
 import {
   REPAIR_CASE_FOCUS_POSITION,
@@ -10,6 +13,9 @@ import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
 interface RepairMissionCaseProps {
   config: RepairMissionConfig;
   exiting?: boolean;
+  onPlaceholdersChange?:
+    | ((placeholders: readonly RepairCasePlaceholder[]) => void)
+    | undefined;
   onExitComplete?: (() => void) | undefined;
   open?: boolean;
   zoomed?: boolean;
@@ -19,6 +25,7 @@ interface RepairMissionCaseProps {
 export function RepairMissionCase({
   config,
   exiting = false,
+  onPlaceholdersChange,
   onExitComplete,
   open = false,
   zoomed = false,
@@ -35,7 +42,9 @@ export function RepairMissionCase({
         modelPath={REPAIR_CASE_MODEL_PATH}
         exiting={exiting}
         onExitComplete={onExitComplete}
+        onPlaceholdersChange={onPlaceholdersChange}
         open={open}
+        floating={!zoomed}
         position={casePosition}
         rotation={config.case.rotation}
         scale={caseScale}
