@@ -31,7 +31,7 @@ This document lists features that are implemented in the current codebase.
 
 - Reusable production `RepairGame` mounted for `bike`, `pylone`, and `ferme` mission states
 - Repair mission config shared through `src/data/gameplay/repairMissions.ts`
-- Repair-game flow supports `waiting -> inspected -> fragmented -> scanning -> repairing -> done -> next mission` with `.webm` prompts, repair case spawn/opening, `E`, two-fists hold input, exploded model transition, scan visuals, multiple grabbable replacement choices, correct-part install validation, and mission completion
+- Repair-game flow supports `waiting -> inspected -> fragmented -> scanning -> repairing -> done -> next mission` with `.webm` prompts, repair case spawn/opening/exit, `E`, two-fists hold input, exploded model transition, scan visuals, multiple grabbable replacement choices, correct-part install validation, and mission completion
 
 ## Audio
 

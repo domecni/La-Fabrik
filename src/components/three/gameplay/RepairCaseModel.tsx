@@ -8,6 +8,8 @@ import {
   REPAIR_CASE_FLOAT_ACTIVATION_DISTANCE,
   REPAIR_CASE_FLOAT_DOWN_SPEED,
   REPAIR_CASE_FLOAT_HEIGHT,
+  REPAIR_CASE_EXIT_DURATION,
+  REPAIR_CASE_EXIT_Y_OFFSET,
   REPAIR_CASE_FLOAT_UP_SPEED,
   REPAIR_CASE_LID_NODE_NAME,
   REPAIR_CASE_OPEN_ROTATION_OFFSET_DEGREES,
@@ -24,6 +26,8 @@ import { toVector3Scale } from "@/utils/three/scale";
 interface RepairCaseModelProps extends ModelTransformProps {
   modelPath: string;
   open: boolean;
+  exiting?: boolean;
+  onExitComplete?: (() => void) | undefined;
 }
 
 const CASE_CLOSED_ROTATION_OFFSET_Z = THREE.MathUtils.degToRad(
@@ -39,6 +43,8 @@ const ROTATION_AMPLITUDE = THREE.MathUtils.degToRad(
 export function RepairCaseModel({
   modelPath,
   open,
+  exiting = false,
+  onExitComplete,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
@@ -58,9 +64,14 @@ export function RepairCaseModel({
   const animationActiveRef = useRef(false);
   const phase = useRef({ x: 0, y: 0, z: 0 });
   const pop = useRef({ scale: 0.001, yOffset: REPAIR_CASE_POP_Y_OFFSET });
+  const onExitCompleteRef = useRef(onExitComplete);
   const initialOpen = useRef(open);
   const openedRotationZ = useRef(0);
   const parsedScale = toVector3Scale(scale);
+
+  useEffect(() => {
+    onExitCompleteRef.current = onExitComplete;
+  }, [onExitComplete]);
 
   useEffect(() => {
     const popAnimation = pop.current;
@@ -82,6 +93,26 @@ export function RepairCaseModel({
       gsap.killTweensOf(popAnimation);
     };
   }, []);
+
+  useEffect(() => {
+    if (!exiting) return undefined;
+
+    const popAnimation = pop.current;
+    gsap.to(popAnimation, {
+      scale: 0.001,
+      yOffset: REPAIR_CASE_EXIT_Y_OFFSET,
+      duration: REPAIR_CASE_EXIT_DURATION,
+      ease: "back.in(1.4)",
+      overwrite: true,
+      onComplete: () => {
+        onExitCompleteRef.current?.();
+      },
+    });
+
+    return () => {
+      gsap.killTweensOf(popAnimation);
+    };
+  }, [exiting]);
 
   useEffect(() => {
     const lid = model.getObjectByName(REPAIR_CASE_LID_NODE_NAME);
@@ -122,8 +153,9 @@ export function RepairCaseModel({
 
     group.getWorldPosition(worldPosition.current);
     const isNear =
+      !exiting &&
       worldPosition.current.distanceTo(camera.position) <=
-      REPAIR_CASE_FLOAT_ACTIVATION_DISTANCE;
+        REPAIR_CASE_FLOAT_ACTIVATION_DISTANCE;
     const targetHeight = isNear ? REPAIR_CASE_FLOAT_HEIGHT : 0;
     const floatSpeed = isNear
       ? REPAIR_CASE_FLOAT_UP_SPEED

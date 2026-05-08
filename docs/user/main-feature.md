@@ -19,7 +19,7 @@ The current user flow is:
 9. In `repairing`, the case opens and several grabbable replacement parts appear near the case.
 10. Move the correct replacement part close to the install target.
 11. Press `E` on the green install target to move to `done` and show the reassembled object. Wrong parts turn the target red and cannot finish the repair.
-12. Press `E` on the completion target to call `completeMission` and move to the next mission, or to `outro` after `ferme`.
+12. Press `E` on the completion target. The repair case closes, returns to the ground, disappears, then `completeMission` moves to the next mission or to `outro` after `ferme`.
 
 ## Why It Matters
 
@@ -33,12 +33,12 @@ When the player inspects the object, `RepairGame` writes `inspected` through the
 
 In `inspected`, `RepairGame` can also move to `fragmented`. The player can use the interaction key or hold both fists closed for one second. The hand-tracking path is state-based, so it does not depend on being inside a local object interaction radius.
 
-In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, a blue scan visual and the `cassé.webm` prompt are shown before the flow advances to `repairing`. In `repairing`, the case opens, several grabbable replacement parts appear, and the install target only validates the configured correct part for the active mission. In `done`, the repaired object remains visible with a completion target that advances the global mission progression.
+In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, a blue scan visual and the `cassé.webm` prompt are shown before the flow advances to `repairing`. In `repairing`, the case opens, several grabbable replacement parts appear, and the install target only validates the configured correct part for the active mission. In `done`, the repaired object remains visible with a completion target that plays the case exit animation before advancing the global mission progression.
 
 ## Key Files
 
 - `src/world/GameStageContent.tsx` mounts production `RepairGame` instances for `bike`, `pylone`, and `ferme`.
-- `src/components/three/gameplay/RepairCompletionStep.tsx` renders the final repaired object, completion target, and mission UI prompt.
+- `src/components/three/gameplay/RepairCompletionStep.tsx` renders the final repaired object, completion target, case exit animation, and mission UI prompt.
 - `src/components/three/gameplay/RepairGame.tsx` composes the reusable production repair flow.
 - `src/components/three/gameplay/RepairInspectionObject.tsx` handles the `waiting` inspection interaction.
 - `src/components/three/gameplay/RepairMissionCase.tsx` renders the mission repair case after inspection.
