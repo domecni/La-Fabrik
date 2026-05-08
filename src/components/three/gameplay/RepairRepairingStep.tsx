@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import * as THREE from "three";
 import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
+import type { RepairScannedBrokenPart } from "@/components/three/gameplay/RepairScanSequence";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import {
@@ -23,15 +24,22 @@ const REPLACEMENT_START_OFFSETS: Vector3Tuple[] = [
   [0, 1.05, 0.45],
   [1.15, 1, 0.25],
 ];
+const BROKEN_PART_START_OFFSETS: Vector3Tuple[] = [
+  [-1.35, 0.55, -0.85],
+  [0, 0.6, -1],
+  [1.35, 0.55, -0.85],
+];
 const REPAIR_INSTALL_RADIUS = 1.1;
 
 interface RepairRepairingStepProps {
+  brokenParts: readonly RepairScannedBrokenPart[];
   config: RepairMissionConfig;
   placeholders: readonly RepairCasePlaceholder[];
   onRepair: () => void;
 }
 
 export function RepairRepairingStep({
+  brokenParts,
   config,
   placeholders,
   onRepair,
@@ -39,50 +47,82 @@ export function RepairRepairingStep({
   const [placedPartIds, setPlacedPartIds] = useState<Record<string, boolean>>(
     {},
   );
+  const [depositedBrokenPartIds, setDepositedBrokenPartIds] = useState<
+    Record<string, boolean>
+  >({});
   const replacementParts = getReplacementParts(config);
+  const brokenPartsToDeposit = getBrokenPartsToDeposit(config, brokenParts);
   const requiredReplacementPart = replacementParts.find(
     (part) => part.id === config.requiredReplacementPartId,
   );
   const requiredReplacementLabel =
     requiredReplacementPart?.label ?? config.label;
-  const placeholderPositions = getPlaceholderPositions(placeholders);
+  const placeholderTargets = getPlaceholderTargets(placeholders);
+  const placeholderPositions = placeholderTargets.map(
+    (target) => target.position,
+  );
   const hasCorrectPartPlaced = Boolean(
     placedPartIds[config.requiredReplacementPartId],
+  );
+  const hasDepositedBrokenParts = brokenPartsToDeposit.every(
+    (part) => depositedBrokenPartIds[part.id],
   );
   const hasWrongPartPlaced = replacementParts.some(
     (part) =>
       part.id !== config.requiredReplacementPartId && placedPartIds[part.id],
   );
-  const installColor = hasCorrectPartPlaced
+  const isReadyToInstall = hasCorrectPartPlaced && hasDepositedBrokenParts;
+  const installColor = isReadyToInstall
     ? "#22c55e"
     : hasWrongPartPlaced
       ? "#ef4444"
       : "#f97316";
-  const installFillColor = hasCorrectPartPlaced
+  const installFillColor = isReadyToInstall
     ? "#86efac"
     : hasWrongPartPlaced
       ? "#fecaca"
       : "#fed7aa";
 
-  const handleReplacementPosition = useCallback(
-    (partId: string, position: THREE.Vector3) => {
-      const isPlaced = isNearPlaceholder(position, placeholderPositions);
-      setPlacedPartIds((current) => {
-        if (!current[partId] || isPlaced) return current;
+  function handleReplacementPosition(
+    partId: string,
+    position: THREE.Vector3,
+  ): void {
+    const isPlaced = isNearPlaceholder(position, placeholderPositions);
+    setPlacedPartIds((current) => {
+      if (!current[partId] || isPlaced) return current;
 
-        return { ...current, [partId]: false };
-      });
-    },
-    [placeholderPositions],
-  );
+      return { ...current, [partId]: false };
+    });
+  }
 
-  const handleReplacementSnap = useCallback((partId: string) => {
+  function handleReplacementSnap(partId: string): void {
     setPlacedPartIds((current) => {
       if (current[partId]) return current;
 
       return { ...current, [partId]: true };
     });
-  }, []);
+  }
+
+  function handleBrokenPartPosition(
+    partId: string,
+    position: THREE.Vector3,
+    targets: readonly Vector3Tuple[],
+  ): void {
+    const isDeposited = isNearPlaceholder(position, targets);
+    setDepositedBrokenPartIds((current) => {
+      if (!current[partId] || isDeposited) return current;
+
+      return { ...current, [partId]: false };
+    });
+  }
+
+  function handleBrokenPartSnap(partId: string): void {
+    setDepositedBrokenPartIds((current) => {
+      if (current[partId]) return current;
+
+      return { ...current, [partId]: true };
+    });
+  }
 
   return (
     <group>
@@ -90,14 +130,16 @@ export function RepairRepairingStep({
         position={INSTALL_TARGET_POSITION}
         colliders="ball"
         label={
-          hasCorrectPartPlaced
+          isReadyToInstall
             ? `Installer ${requiredReplacementLabel}`
             : hasWrongPartPlaced
               ? `Mauvaise piece`
-              : `Approcher ${requiredReplacementLabel}`
+              : hasCorrectPartPlaced
+                ? `Ranger piece cassee`
+                : `Approcher ${requiredReplacementLabel}`
         }
         onTrigger={() => {
-          if (!hasCorrectPartPlaced) return;
+          if (!isReadyToInstall) return;
 
           onRepair();
         }}
@@ -158,25 +200,91 @@ export function RepairRepairingStep({
         );
       })}
 
+      {brokenPartsToDeposit.map((part, index) => {
+        const startOffset =
+          BROKEN_PART_START_OFFSETS[index % BROKEN_PART_START_OFFSETS.length] ??
+          BROKEN_PART_START_OFFSETS[0]!;
+        const startPosition: Vector3Tuple = [
+          REPAIR_CASE_FOCUS_POSITION[0] + startOffset[0],
+          REPAIR_CASE_FOCUS_POSITION[1] + startOffset[1],
+          REPAIR_CASE_FOCUS_POSITION[2] + startOffset[2],
+        ];
+        const targetPositions = getBrokenPartTargetPositions(
+          part,
+          placeholderTargets,
+        );
+
+        return (
+          <GrabbableObject
+            key={part.id}
+            position={startPosition}
+            colliders="ball"
+            handControlled
+            label={`Ranger ${part.label}`}
+            onPositionChange={(position) => {
+              handleBrokenPartPosition(part.id, position, targetPositions);
+            }}
+            onSnap={() => {
+              handleBrokenPartSnap(part.id);
+            }}
+            snapDuration={REPAIR_CASE_PLACEHOLDER_SNAP_DURATION}
+            snapRadius={REPAIR_CASE_PLACEHOLDER_SNAP_RADIUS}
+            snapTargets={targetPositions}
+          >
+            <group>
+              <RepairObjectModel
+                label={part.label}
+                modelPath={part.modelPath}
+                scale={0.24}
+              />
+              <mesh position={[0, 0.42, 0]}>
+                <sphereGeometry args={[0.11, 16, 16]} />
+                <meshBasicMaterial color="#ef4444" transparent opacity={0.85} />
+              </mesh>
+            </group>
+          </GrabbableObject>
+        );
+      })}
+
       <RepairPromptVideo src={config.interactUiPath} position={[0, 2.3, 0]} />
     </group>
   );
 }
 
-function getPlaceholderPositions(
+function getPlaceholderTargets(
   placeholders: readonly RepairCasePlaceholder[],
-): readonly Vector3Tuple[] {
+): readonly RepairCasePlaceholder[] {
   if (placeholders.length > 0) {
-    return placeholders.map((placeholder) => placeholder.position);
+    return placeholders;
   }
 
   return REPLACEMENT_START_OFFSETS.map(
-    (offset): Vector3Tuple => [
-      REPAIR_CASE_FOCUS_POSITION[0] + offset[0],
-      REPAIR_CASE_FOCUS_POSITION[1] + offset[1],
-      REPAIR_CASE_FOCUS_POSITION[2] + offset[2],
-    ],
+    (offset, index): RepairCasePlaceholder => ({
+      name: `fallback_${index + 1}`,
+      position: [
+        REPAIR_CASE_FOCUS_POSITION[0] + offset[0],
+        REPAIR_CASE_FOCUS_POSITION[1] + offset[1],
+        REPAIR_CASE_FOCUS_POSITION[2] + offset[2],
+      ],
+    }),
   );
+}
+
+function getBrokenPartTargetPositions(
+  part: RepairScannedBrokenPart,
+  placeholderTargets: readonly RepairCasePlaceholder[],
+): readonly Vector3Tuple[] {
+  if (!part.placeholderName) {
+    return placeholderTargets.map((placeholder) => placeholder.position);
+  }
+
+  const matchingPlaceholder = placeholderTargets.find(
+    (placeholder) => placeholder.name === part.placeholderName,
+  );
+
+  return matchingPlaceholder
+    ? [matchingPlaceholder.position]
+    : placeholderTargets.map((placeholder) => placeholder.position);
 }
 
 function isNearPlaceholder(
@@ -202,4 +310,18 @@ function getReplacementParts(
       modelPath: config.modelPath,
     },
   ];
+}
+
+function getBrokenPartsToDeposit(
+  config: RepairMissionConfig,
+  brokenParts: readonly RepairScannedBrokenPart[],
+): readonly RepairScannedBrokenPart[] {
+  if (brokenParts.length > 0) return brokenParts;
+
+  return config.brokenParts.map((part) => ({
+    id: part.id,
+    label: part.label,
+    modelPath: part.modelPath ?? config.modelPath,
+    ...(part.placeholderName ? { placeholderName: part.placeholderName } : {}),
+  }));
 }

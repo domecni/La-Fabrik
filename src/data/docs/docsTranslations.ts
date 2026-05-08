@@ -442,7 +442,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 - \`RepairGame\` de production réutilisable monté pour les états de mission \`bike\`, \`pylone\` et \`ferme\`
 - Configuration de mission partagée via \`src/data/gameplay/repairMissions.ts\`
-- Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> done -> next mission\`, prompts \`.webm\`, apparition/ouverture/sortie de la mallette, vue focalisée de la mallette, traverse des placeholders de mallette, placement avec snap vers placeholder, touche \`E\`, hold deux poings, transition de modèle explosé, scan visuel par pièce, marqueur rouge persistant et vidéo UI centrée sur les pièces cassées, plusieurs choix de pièces grabbables, validation de la bonne pièce et complétion de mission
+- Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> done -> next mission\`, prompts \`.webm\`, apparition/ouverture/sortie de la mallette, vue focalisée de la mallette, traverse des placeholders de mallette, placement avec snap vers placeholder, dépôt des pièces cassées, touche \`E\`, hold deux poings, transition de modèle explosé, scan visuel par pièce, marqueur rouge persistant et vidéo UI centrée sur les pièces cassées, plusieurs choix de pièces grabbables, validation de la bonne pièce et complétion de mission
 
 ## Audio
 

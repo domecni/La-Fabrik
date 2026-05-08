@@ -11,6 +11,7 @@ export interface RepairMissionPartConfig {
   id: string;
   label: string;
   nodeName?: string;
+  placeholderName?: string;
   modelPath?: string;
 }
 

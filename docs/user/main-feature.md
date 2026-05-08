@@ -18,8 +18,9 @@ The current user flow is:
 8. The scan visual moves across the fragmented model one part at a time and keeps a red marker plus the `cassé.webm` prompt centered on any configured broken part once it has been found.
 9. In `repairing`, the case opens in a larger focused view and several grabbable replacement parts appear on the case placeholders.
 10. Move the correct replacement part close to a placeholder. When released near a placeholder, it snaps into place with a short animation.
-11. Press `E` on the green install target to move to `done` and show the reassembled object. Wrong parts turn the target red and cannot finish the repair.
-12. Press `E` on the completion target. The repair case closes, returns to the ground, disappears, then `completeMission` moves to the next mission or to `outro` after `ferme`.
+11. Move each scanned broken part into a compatible placeholder so the damaged parts are stored in the case.
+12. Press `E` on the green install target to move to `done` and show the reassembled object. Wrong parts turn the target red and cannot finish the repair.
+13. Press `E` on the completion target. The repair case closes, returns to the ground, disappears, then `completeMission` moves to the next mission or to `outro` after `ferme`.
 
 ## Why It Matters
 
@@ -33,7 +34,7 @@ When the player inspects the object, `RepairGame` writes `inspected` through the
 
 In `inspected`, `RepairGame` can also move to `fragmented`. The player can use the interaction key or hold both fists closed for one second. The hand-tracking path is state-based, so it does not depend on being inside a local object interaction radius.
 
-In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, the exploded model remains visible, a blue scan visual moves from part to part, and a red halo/wire marker plus the configured broken UI video stay attached to configured broken parts after the scanner reaches them. The scan can match a specific `nodeName` when mission data provides one, otherwise it falls back to the first scanned parts as placeholder broken parts. In `repairing`, the case opens in a larger focused transform, `RepairCaseModel` traverses the case GLTF for empty nodes named `placeholder_*`, several grabbable replacement parts appear on those placeholder positions, and releasing a part near a placeholder snaps it into place with a short GSAP animation. If the current case asset has no placeholder nodes, the flow keeps using fallback focus positions. The install target only validates the configured correct part for the active mission. In `done`, the repaired object remains visible with a completion target that plays the case exit animation before advancing the global mission progression.
+In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, the exploded model remains visible, a blue scan visual moves from part to part, and a red halo/wire marker plus the configured broken UI video stay attached to configured broken parts after the scanner reaches them. The scan can match a specific `nodeName` when mission data provides one, otherwise it falls back to the first scanned parts as placeholder broken parts. In `repairing`, the case opens in a larger focused transform, `RepairCaseModel` traverses the case GLTF for empty nodes named `placeholder_*`, several grabbable replacement parts appear on those placeholder positions, and releasing a part near a placeholder snaps it into place with a short GSAP animation. Scanned broken parts are also rendered as grabbable objects and must be deposited into a compatible placeholder before the final install target validates. If `brokenParts[].placeholderName` is configured, that broken part snaps only to the matching placeholder; otherwise it can use any available placeholder. If the current case asset has no placeholder nodes, the flow keeps using fallback focus positions. The install target only validates when the configured correct replacement part is placed and all scanned broken parts have been deposited. In `done`, the repaired object remains visible with a completion target that plays the case exit animation before advancing the global mission progression.
 
 ## Key Files
 
@@ -44,7 +45,7 @@ In `fragmented`, the repair object is rendered with `ExplodableModel`, then auto
 - `src/components/three/gameplay/RepairBrokenPartPrompt.tsx` centers the configured broken UI video on detected broken parts during scanning.
 - `src/components/three/gameplay/RepairInspectionObject.tsx` handles the `waiting` inspection interaction.
 - `src/components/three/gameplay/RepairMissionCase.tsx` renders the mission repair case after inspection.
-- `src/components/three/gameplay/RepairRepairingStep.tsx` renders grabbable replacement choices, placeholder placement markers, snap placement behavior, correct-part placement validation, and the install trigger in `repairing`.
+- `src/components/three/gameplay/RepairRepairingStep.tsx` renders grabbable replacement choices, grabbable scanned broken parts, placeholder placement markers, snap placement behavior, correct-part and broken-part placement validation, and the install trigger in `repairing`.
 - `src/components/three/gameplay/RepairPromptVideo.tsx` renders `.webm` prompts inside the 3D scene.
 - `src/components/three/gameplay/RepairScanSequence.tsx` keeps the exploded model visible and advances the scan from part to part.
 - `src/components/three/gameplay/RepairScanVisual.tsx` renders the scan halo and scan line around the active part.

@@ -13,7 +13,14 @@ import type { ExplodedPart } from "@/utils/three/ExplodedModel";
 
 interface RepairScanSequenceProps {
   config: RepairMissionConfig;
-  onComplete: () => void;
+  onComplete: (brokenParts: readonly RepairScannedBrokenPart[]) => void;
+}
+
+export interface RepairScannedBrokenPart {
+  id: string;
+  label: string;
+  modelPath: string;
+  placeholderName?: string;
 }
 
 export function RepairScanSequence({
@@ -35,7 +42,7 @@ export function RepairScanSequence({
       setActivePartIndex((currentIndex) => {
         const nextIndex = currentIndex + 1;
         if (nextIndex >= parts.length) {
-          onComplete();
+          onComplete(getScannedBrokenParts(parts, config));
           return currentIndex;
         }
 
@@ -46,7 +53,7 @@ export function RepairScanSequence({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activePartIndex, onComplete, parts.length]);
+  }, [activePartIndex, config, onComplete, parts]);
 
   return (
     <group>
@@ -72,6 +79,26 @@ export function RepairScanSequence({
       })}
     </group>
   );
+}
+
+function getScannedBrokenParts(
+  parts: readonly ExplodedPart[],
+  config: RepairMissionConfig,
+): readonly RepairScannedBrokenPart[] {
+  const brokenPartIndexes = getBrokenPartIndexes(parts, config.brokenParts);
+
+  return brokenPartIndexes.map((_, index) => {
+    const configuredPart = config.brokenParts[index] ?? config.brokenParts[0];
+
+    return {
+      id: configuredPart?.id ?? `${config.id}-broken-part-${index}`,
+      label: configuredPart?.label ?? `${config.label} broken part`,
+      modelPath: configuredPart?.modelPath ?? config.modelPath,
+      ...(configuredPart?.placeholderName
+        ? { placeholderName: configuredPart.placeholderName }
+        : {}),
+    };
+  });
 }
 
 function getBrokenPartIndexes(

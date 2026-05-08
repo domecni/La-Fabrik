@@ -5,7 +5,10 @@ import { RepairCompletionStep } from "@/components/three/gameplay/RepairCompleti
 import { RepairInspectionObject } from "@/components/three/gameplay/RepairInspectionObject";
 import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase";
 import { RepairRepairingStep } from "@/components/three/gameplay/RepairRepairingStep";
-import { RepairScanSequence } from "@/components/three/gameplay/RepairScanSequence";
+import {
+  RepairScanSequence,
+  type RepairScannedBrokenPart,
+} from "@/components/three/gameplay/RepairScanSequence";
 import { REPAIR_FRAGMENTATION_SEQUENCE_SECONDS } from "@/data/gameplay/repairGameConfig";
 import { REPAIR_MISSIONS } from "@/data/gameplay/repairMissions";
 import { useRepairFragmentationInput } from "@/hooks/gameplay/useRepairFragmentationInput";
@@ -36,6 +39,9 @@ export function RepairGame({
   const step = useRepairMissionStep(mission);
   const [casePlaceholders, setCasePlaceholders] = useState<
     readonly RepairCasePlaceholder[]
+  >([]);
+  const [scannedBrokenParts, setScannedBrokenParts] = useState<
+    readonly RepairScannedBrokenPart[]
   >([]);
   const parsedScale = toVector3Scale(scale);
   const readyForFragmentation = step === "inspected";
@@ -77,11 +83,15 @@ export function RepairGame({
       {step === "scanning" ? (
         <RepairScanSequence
           config={config}
-          onComplete={() => setMissionStep(mission, "repairing")}
+          onComplete={(brokenParts) => {
+            setScannedBrokenParts(brokenParts);
+            setMissionStep(mission, "repairing");
+          }}
         />
       ) : null}
       {step === "repairing" ? (
         <RepairRepairingStep
+          brokenParts={scannedBrokenParts}
           config={config}
           placeholders={casePlaceholders}
           onRepair={() => setMissionStep(mission, "done")}
