@@ -321,6 +321,18 @@ setMainState("bike");
 
 Les setters directs sont pratiques pour les panneaux debug, mais le gameplay de production devrait préférer les actions métier comme \`advanceGameState\`, \`completeBike\` ou \`completePylone\`.
 
+Le gameplay de mission qui peut cibler \`bike\`, \`pylone\` ou \`ferme\` doit préférer les actions génériques de mission :
+
+\`\`\`ts
+const setMissionStep = useGameStore((state) => state.setMissionStep);
+const completeMission = useGameStore((state) => state.completeMission);
+
+setMissionStep("bike", "inspected");
+completeMission("bike");
+\`\`\`
+
+Cela évite aux composants gameplay réutilisables, comme les flows de réparation, de dupliquer des branches spécifiques à chaque mission avec \`setBikeState\`, \`setPyloneState\` et \`setFermeState\`.
+
 ## Intégration avec le World
 
 \`src/world/GameStageContent.tsx\` s'abonne à \`mainState\` et monte le contenu spécifique au state courant.
