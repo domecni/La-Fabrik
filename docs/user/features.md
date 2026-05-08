@@ -7,6 +7,7 @@ This document lists features that are implemented in the current codebase.
 - Fullscreen React Three Fiber scene
 - Main map scene loaded from `public/map.json` and matching `public/models/{name}/model.glb` or `model.gltf` assets
 - Debug physics test scene selectable from the debug panel
+- Rapier physics context available for production stage gameplay objects
 - Ambient and directional lighting
 - Environment background setup
 
@@ -23,6 +24,7 @@ This document lists features that are implemented in the current codebase.
 - Focus detection by distance and raycast
 - Trigger interactions activated with `E`
 - Grab interactions activated with the primary mouse button
+- Physics-backed gameplay objects can be mounted inside stage content without replacing player octree collision
 - Interaction prompt shown for trigger interactions
 
 ## Audio

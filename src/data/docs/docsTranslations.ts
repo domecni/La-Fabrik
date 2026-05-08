@@ -98,9 +98,19 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
   - soit la carte principale, soit la scène de test physique debug
   - le rig joueur quand le mode caméra actif est \`player\`
 - \`src/world/GameMap.tsx\` charge les modèles de carte disponibles et construit l'octree de collision.
+- \`src/world/GameStageContent.tsx\` est enveloppé dans le contexte Rapier \`Physics\` dans la scène de jeu de production afin que les objets gameplay de stage puissent utiliser la physique sans migrer la carte ou le joueur vers Rapier.
 - \`src/world/debug/TestMap.tsx\` fournit une carte orientée debug pour les interactions et la physique.
 - \`src/world/player/Player.tsx\` monte la caméra et le contrôleur.
 - \`src/world/player/PlayerController.tsx\` gère le mouvement pointer lock, le saut et les inputs d'interaction.
+
+## Frontières physiques
+
+Le projet utilise actuellement deux couches de collision avec des responsabilités séparées :
+
+- \`GameMap\` construit une octree utilisée par le contrôleur joueur pour les collisions avec la carte.
+- \`GameStageContent\` est enveloppé dans Rapier \`Physics\` pour les objets gameplay comme les triggers de réparation, les mallettes, les objets saisissables et les futurs objets spécifiques aux missions.
+
+Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il n'existe pas de plan de migration volontaire. Cela évite de mélanger les règles de déplacement joueur avec la physique d'objets avant que les systèmes gameplay en aient besoin.
 
 ## Modèle d'interaction
 
@@ -392,6 +402,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Scène React Three Fiber plein écran
 - Carte principale chargée depuis \`public/models/{name}/model.glb\`, avec fallback vers \`model.gltf\`
 - Scène de test physique debug sélectionnable depuis le panneau debug
+- Contexte physique Rapier disponible pour les objets gameplay de stage en production
 - Éclairage ambiant et directionnel
 - Configuration de l'environnement de fond
 
@@ -408,6 +419,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Détection de focus par distance et raycast
 - Interactions trigger activées avec \`E\`
 - Interactions grab activées avec le bouton principal de la souris
+- Les objets gameplay avec physique peuvent être montés dans le contenu de stage sans remplacer la collision octree du joueur
 - Prompt d'interaction affiché pour les interactions trigger
 
 ## Audio

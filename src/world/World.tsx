@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Physics } from "@react-three/rapier";
 import type { Octree } from "three/addons/math/Octree.js";
 import {
   PLAYER_SPAWN_POSITION_GAME,
@@ -43,7 +44,9 @@ export function World(): React.JSX.Element {
         <>
           <GameMusic />
           <GameMap onOctreeReady={setOctree} />
-          <GameStageContent />
+          <Physics>
+            <GameStageContent />
+          </Physics>
         </>
       ) : (
         <TestMap onOctreeReady={setOctree} />
