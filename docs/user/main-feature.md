@@ -86,6 +86,8 @@ Debug URL for state switching and inspection:
 http://localhost:5173/?debug
 ```
 
+The debug physics scene keeps the existing grab, trigger, and animated model tests, and also exposes separate `Bike`, `Pylone`, and `Farm` repair playground zones. Use the debug game-state panel to switch `mainState`; the matching repair zone mounts the same reusable `RepairGame` flow with that mission's model, broken parts, replacement parts, prompts, and timings.
+
 ## Related Hand Tracking
 
 Hand tracking can move grabbable physics objects with webcam input in debug scenes. In the production repair flow, it is also used for the `inspected -> fragmented` transition through the two-fists hold gesture.

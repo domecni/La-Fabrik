@@ -99,7 +99,7 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
   - le rig joueur quand le mode caméra actif est \`player\`
 - \`src/world/GameMap.tsx\` charge les modèles de carte disponibles et construit l'octree de collision.
 - \`src/world/GameStageContent.tsx\` est enveloppé dans le contexte Rapier \`Physics\` dans la scène de jeu de production afin que les objets gameplay de stage puissent utiliser la physique sans migrer la carte ou le joueur vers Rapier. Il monte maintenant des instances réutilisables de \`RepairGame\` pour les états de mission \`bike\`, \`pylone\` et \`ferme\`.
-- \`src/world/debug/TestMap.tsx\` fournit une carte orientée debug pour les interactions et la physique.
+- \`src/world/debug/TestMap.tsx\` fournit une carte orientée debug pour les interactions et la physique, avec les objets existants de grab, trigger et preview de modèle, plus des zones playground de réparation séparées \`Bike\`, \`Pylone\` et \`Farm\`.
 - \`src/world/player/Player.tsx\` monte la caméra et le contrôleur.
 - \`src/world/player/PlayerController.tsx\` gère le mouvement pointer lock, le saut et les inputs d'interaction.
 
@@ -109,6 +109,7 @@ Le projet utilise actuellement deux couches de collision avec des responsabilit�
 
 - \`GameMap\` construit une octree utilisée par le contrôleur joueur pour les collisions avec la carte.
 - \`GameStageContent\` est enveloppé dans Rapier \`Physics\` pour les objets gameplay comme les triggers de réparation, les mallettes, les objets saisissables et les futurs objets spécifiques aux missions.
+- \`TestMap\` possède son propre playground Rapier \`Physics\` afin de peaufiner le gameplay de réparation par state de mission sans dépendre du placement de la carte de production.
 
 Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il n'existe pas de plan de migration volontaire. Cela évite de mélanger les règles de déplacement joueur avec la physique d'objets avant que les systèmes gameplay en aient besoin.
 
@@ -417,7 +418,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 - Scène React Three Fiber plein écran
 - Carte principale chargée depuis \`public/models/{name}/model.glb\`, avec fallback vers \`model.gltf\`
-- Scène de test physique debug sélectionnable depuis le panneau debug
+- Scène de test physique debug sélectionnable depuis le panneau debug, avec tests grab/trigger, preview de modèle animé et zones playground de réparation séparées pour \`bike\`, \`pylone\` et \`ferme\`
 - Contexte physique Rapier disponible pour les objets gameplay de stage en production
 - Éclairage ambiant et directionnel
 - Configuration de l'environnement de fond
@@ -441,6 +442,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 ## Gameplay de réparation
 
 - \`RepairGame\` de production réutilisable monté pour les états de mission \`bike\`, \`pylone\` et \`ferme\`
+- Le playground physics debug monte le même \`RepairGame\` réutilisable dans des zones \`Bike\`, \`Pylone\` et \`Farm\`, afin de peaufiner chaque state avec un placement isolé avant déplacement vers la carte de production
 - Configuration de mission partagée via \`src/data/gameplay/repairMissions.ts\`, avec nodes cassés, placeholders cibles, timing de scan et timing de réassemblage propres à chaque mission
 - Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission\`, prompts \`.webm\`, apparition/ouverture/sortie de la mallette, vue focalisée de la mallette, traverse des placeholders de mallette, placement avec snap vers placeholder, dépôt des pièces cassées, touche \`E\`, hold deux poings, transition de modèle explosé, réassemblage inverse avec particules, scan visuel par pièce, marqueur rouge persistant et vidéo UI centrée sur les pièces cassées, plusieurs choix de pièces grabbables, validation de la bonne pièce et complétion de mission
 

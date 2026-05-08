@@ -16,7 +16,7 @@ This document describes the code that exists today in the repository.
   - the player rig when the active camera mode is `player`
 - `src/world/GameMap.tsx` loads map nodes from `public/map.json`, resolves available models, and builds the collision octree.
 - `src/world/GameStageContent.tsx` is wrapped in Rapier `Physics` in the production game scene so stage gameplay objects can use physics without moving the map or player to Rapier. It now mounts reusable `RepairGame` instances for `bike`, `pylone`, and `ferme` mission states.
-- `src/world/debug/TestMap.tsx` provides a debug-oriented interaction and physics map.
+- `src/world/debug/TestMap.tsx` provides a debug-oriented interaction and physics map with the existing grab/trigger/model-preview objects plus separate `Bike`, `Pylone`, and `Farm` repair playground zones.
 - `src/world/player/Player.tsx` mounts the camera and controller.
 - `src/world/player/PlayerController.tsx` owns pointer lock movement, jump handling, and interaction input.
 
@@ -26,6 +26,7 @@ The project currently uses two collision layers with separate responsibilities:
 
 - `GameMap` builds an octree used by the player controller for map collision.
 - `GameStageContent` is wrapped in Rapier `Physics` for gameplay objects such as repair triggers, cases, grabbables, and future mission-specific objects.
+- `TestMap` owns its own Rapier `Physics` playground so repair gameplay can be tuned per mission state without depending on the production map layout.
 
 Keep the player and map octree outside the Rapier provider until there is a deliberate migration plan. This avoids mixing player movement rules with object physics before the gameplay systems need it.
 
