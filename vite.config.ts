@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { ServerResponse } from "node:http";
 import type { Plugin } from "vite";
 import { parseMapNodes } from "./src/utils/map/mapNodeValidation";
+import { parseSrt } from "./src/utils/subtitles/parseSrt";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -105,6 +106,11 @@ const saveSrtPlugin = (): Plugin => ({
           return;
         }
 
+        if (!isValidSrtContent(data.content)) {
+          sendJson(res, 400, { error: "Invalid SRT content" });
+          return;
+        }
+
         const subtitlesRoot = path.resolve(
           __dirname,
           "public/sounds/dialogue/subtitles",
@@ -149,6 +155,26 @@ function isSrtPayload(data: unknown): data is SrtPayload {
     SRT_LANGUAGES.has(payload.language) &&
     typeof payload.content === "string"
   );
+}
+
+function isValidSrtContent(content: string): boolean {
+  const blocks = content
+    .replace(/^\uFEFF/, "")
+    .replace(/\r/g, "")
+    .trim()
+    .split(/\n{2,}/)
+    .filter(Boolean);
+  const cues = parseSrt(content);
+
+  if (blocks.length === 0 || cues.length !== blocks.length) return false;
+
+  const cueIndexes = new Set<number>();
+  for (const cue of cues) {
+    if (cueIndexes.has(cue.index)) return false;
+    cueIndexes.add(cue.index);
+  }
+
+  return true;
 }
 
 export default defineConfig({
