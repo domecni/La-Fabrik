@@ -24,6 +24,7 @@ import {
   PLAYER_XZ_DAMPING_FACTOR,
 } from "@/data/player/playerConfig";
 import { InteractionManager } from "@/managers/InteractionManager";
+import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import type { Vector3Tuple } from "@/types/three/three";
 
 type Keys = {
@@ -108,6 +109,8 @@ export function PlayerController({
     const interaction = InteractionManager.getInstance();
 
     const handleKeyDown = (event: KeyboardEvent): void => {
+      if (useSettingsStore.getState().isSettingsMenuOpen) return;
+
       if (setMovementKey(keys.current, event.key, true)) {
         event.preventDefault();
         return;
@@ -128,12 +131,15 @@ export function PlayerController({
     };
 
     const handleKeyUp = (event: KeyboardEvent): void => {
+      if (useSettingsStore.getState().isSettingsMenuOpen) return;
+
       if (setMovementKey(keys.current, event.key, false)) {
         event.preventDefault();
       }
     };
 
     const handleMouseDown = (event: MouseEvent): void => {
+      if (useSettingsStore.getState().isSettingsMenuOpen) return;
       if (event.button !== PRIMARY_INTERACT_MOUSE_BUTTON) return;
       if (interaction.getState().focused?.kind === "grab") {
         interaction.pressInteract();
@@ -141,6 +147,7 @@ export function PlayerController({
     };
 
     const handleMouseUp = (event: MouseEvent): void => {
+      if (useSettingsStore.getState().isSettingsMenuOpen) return;
       if (event.button !== PRIMARY_INTERACT_MOUSE_BUTTON) return;
       if (interaction.getState().holding) {
         interaction.releaseInteract();
@@ -162,6 +169,13 @@ export function PlayerController({
   }, []);
 
   useFrame((_, delta) => {
+    if (useSettingsStore.getState().isSettingsMenuOpen) {
+      keys.current = { ...DEFAULT_KEYS };
+      velocity.current.set(0, 0, 0);
+      wantsJump.current = false;
+      return;
+    }
+
     const dt = Math.min(delta, PLAYER_MAX_DELTA);
 
     camera.getWorldDirection(_forward);
