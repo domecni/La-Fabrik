@@ -54,7 +54,11 @@ export class AudioManager {
     return this._categoryVolumes[category];
   }
 
-  playSound(path: string, volume = 1, options: PlaySoundOptions = {}): void {
+  playSound(
+    path: string,
+    volume = 1,
+    options: PlaySoundOptions = {},
+  ): HTMLAudioElement {
     const audio = this._acquireAudio(path);
     const category = options.category ?? AudioManager.DEFAULT_SOUND_CATEGORY;
     audio.volume = this._getEffectiveVolume(category, volume);
@@ -75,6 +79,8 @@ export class AudioManager {
         error: AudioManager._toLogValue(error),
       });
     });
+
+    return audio;
   }
 
   playMusic(path: string, volume = 1): void {

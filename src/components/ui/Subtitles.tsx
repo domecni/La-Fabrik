@@ -1,6 +1,8 @@
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
+import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
+import type { DialogueSpeaker } from "@/types/dialogues/dialogues";
 
-export type SubtitleSpeaker = "Narrateur" | "Fermier" | "Leonie";
+export type SubtitleSpeaker = DialogueSpeaker;
 
 interface SubtitlesProps {
   speaker?: SubtitleSpeaker | null;
@@ -12,18 +14,20 @@ export function Subtitles({
   text = null,
 }: SubtitlesProps): React.JSX.Element | null {
   const subtitlesEnabled = useSettingsStore((state) => state.subtitlesEnabled);
-  const content = text?.trim();
+  const activeSubtitle = useSubtitleStore((state) => state.activeSubtitle);
+  const subtitleSpeaker = speaker ?? activeSubtitle?.speaker ?? null;
+  const content = (text ?? activeSubtitle?.text)?.trim();
 
   if (!subtitlesEnabled || !content) return null;
 
   return (
     <div className="subtitles" aria-live="polite">
       <p>
-        {speaker ? (
+        {subtitleSpeaker ? (
           <span
-            className={`subtitles__speaker subtitles__speaker--${speaker.toLowerCase()}`}
+            className={`subtitles__speaker subtitles__speaker--${subtitleSpeaker.toLowerCase()}`}
           >
-            {speaker}:
+            {subtitleSpeaker}:
           </span>
         ) : null}
         {content}
