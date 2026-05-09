@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw, Save } from "lucide-react";
 import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
 import type {
@@ -19,6 +19,11 @@ interface SrtDiagnostic {
   cueCount: number;
   expectedCueCount: number;
   errors: string[];
+}
+
+interface TextRange {
+  start: number;
+  end: number;
 }
 
 const SRT_VOICES: SrtVoiceOption[] = [
@@ -164,6 +169,23 @@ function getExpectedDialogues(
     .sort((a, b) => a.subtitleCueIndex - b.subtitleCueIndex);
 }
 
+function findCueBlockRange(
+  content: string,
+  cueIndex: number,
+): TextRange | null {
+  const normalizedContent = content.replace(/\r/g, "");
+  const cuePattern = new RegExp(`(^|\\n)${cueIndex}\\n`, "m");
+  const match = normalizedContent.match(cuePattern);
+
+  if (!match || match.index === undefined) return null;
+
+  const start = match.index + (match[1] ? 1 : 0);
+  const nextBlockIndex = normalizedContent.indexOf("\n\n", start);
+  const end = nextBlockIndex === -1 ? normalizedContent.length : nextBlockIndex;
+
+  return { start, end };
+}
+
 function downloadSrtFile(
   voice: DialogueVoiceId,
   language: SubtitleLanguage,
@@ -198,6 +220,7 @@ async function saveSrtFile(
 }
 
 export function EditorSrtPanel(): React.JSX.Element {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [voice, setVoice] = useState<DialogueVoiceId>("narrateur");
   const [language, setLanguage] = useState<SubtitleLanguage>("fr");
   const [content, setContent] = useState("");
@@ -238,6 +261,19 @@ export function EditorSrtPanel(): React.JSX.Element {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function handleJumpToCue(cueIndex: number): void {
+    const range = findCueBlockRange(content, cueIndex);
+
+    if (!range || !textareaRef.current) {
+      setStatus(`Cue ${cueIndex} introuvable dans le SRT.`);
+      return;
+    }
+
+    textareaRef.current.focus();
+    textareaRef.current.setSelectionRange(range.start, range.end);
+    setStatus(`Cue ${cueIndex} selectionnee dans le SRT.`);
   }
 
   useEffect(() => {
@@ -353,11 +389,19 @@ export function EditorSrtPanel(): React.JSX.Element {
               controls
               src={selectedDialogue.audio}
             />
+            <button
+              className="editor-srt-jump-button"
+              type="button"
+              onClick={() => handleJumpToCue(selectedDialogue.subtitleCueIndex)}
+            >
+              Aller a la cue {selectedDialogue.subtitleCueIndex}
+            </button>
           </div>
         )}
       </div>
 
       <textarea
+        ref={textareaRef}
         className="editor-srt-textarea"
         value={content}
         spellCheck={false}

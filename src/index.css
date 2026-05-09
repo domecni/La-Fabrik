@@ -1506,6 +1506,23 @@ canvas {
   height: 34px;
 }
 
+.editor-srt-jump-button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  background: #151515;
+  color: #f2f2f2;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.editor-srt-jump-button:hover {
+  border-color: #ffffff;
+  background: #202020;
+}
+
 .editor-srt-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
