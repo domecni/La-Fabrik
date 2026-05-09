@@ -1,0 +1,24 @@
+import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
+
+export type DialogueVoiceId = "narrateur" | "fermier" | "leonie";
+export type DialogueSpeaker = "Narrateur" | "Fermier" | "Leonie";
+
+export interface DialogueVoice {
+  id: DialogueVoiceId;
+  speaker: DialogueSpeaker;
+  subtitles: Partial<Record<SubtitleLanguage, string>>;
+}
+
+export interface DialogueDefinition {
+  id: string;
+  voice: DialogueVoiceId;
+  audio: string;
+  subtitleCueIndex: number;
+  timecode?: number;
+}
+
+export interface DialogueManifest {
+  version: 1;
+  voices: DialogueVoice[];
+  dialogues: DialogueDefinition[];
+}
