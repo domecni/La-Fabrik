@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Download, RefreshCw, Save } from "lucide-react";
 import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
 import type {
+  DialogueDefinition,
   DialogueManifest,
   DialogueSpeaker,
   DialogueVoiceId,
@@ -144,15 +145,23 @@ function getExpectedCueIndexes(
   manifest: DialogueManifest | null,
   voice: DialogueVoiceId,
 ): number[] {
-  if (!manifest) return [];
-
-  return manifest.dialogues
-    .filter((dialogue) => dialogue.voice === voice)
+  return getExpectedDialogues(manifest, voice)
     .map((dialogue) => dialogue.subtitleCueIndex)
     .filter(
       (cueIndex, index, cueIndexes) => cueIndexes.indexOf(cueIndex) === index,
     )
     .sort((a, b) => a - b);
+}
+
+function getExpectedDialogues(
+  manifest: DialogueManifest | null,
+  voice: DialogueVoiceId,
+): DialogueDefinition[] {
+  if (!manifest) return [];
+
+  return [...manifest.dialogues]
+    .filter((dialogue) => dialogue.voice === voice)
+    .sort((a, b) => a.subtitleCueIndex - b.subtitleCueIndex);
 }
 
 function downloadSrtFile(
@@ -197,6 +206,7 @@ export function EditorSrtPanel(): React.JSX.Element {
   const [manifest, setManifest] = useState<DialogueManifest | null>(null);
   const selectedVoice =
     SRT_VOICES.find((item) => item.id === voice) ?? DEFAULT_SRT_VOICE;
+  const expectedDialogues = getExpectedDialogues(manifest, voice);
   const expectedCueIndexes = getExpectedCueIndexes(manifest, voice);
   const diagnostic = getSrtDiagnostic(content, expectedCueIndexes);
   const isSrtValid = diagnostic.errors.length === 0;
@@ -204,6 +214,11 @@ export function EditorSrtPanel(): React.JSX.Element {
     selectedVoice.label,
     expectedCueIndexes,
   );
+  const [selectedDialogueId, setSelectedDialogueId] = useState("");
+  const selectedDialogue =
+    expectedDialogues.find((dialogue) => dialogue.id === selectedDialogueId) ??
+    expectedDialogues[0] ??
+    null;
 
   async function handleSave(): Promise<void> {
     if (!isSrtValid) {
@@ -308,6 +323,38 @@ export function EditorSrtPanel(): React.JSX.Element {
             ))}
           </select>
         </label>
+      </div>
+
+      <div className="editor-srt-preview">
+        <label>
+          Dialogue audio
+          <select
+            value={selectedDialogue?.id ?? ""}
+            onChange={(event) => setSelectedDialogueId(event.target.value)}
+            disabled={expectedDialogues.length === 0}
+          >
+            {expectedDialogues.length === 0 && (
+              <option value="">Aucun dialogue</option>
+            )}
+            {expectedDialogues.map((dialogue) => (
+              <option key={dialogue.id} value={dialogue.id}>
+                Cue {dialogue.subtitleCueIndex} - {dialogue.id}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {selectedDialogue && (
+          <div className="editor-srt-audio-card">
+            <span>Cue {selectedDialogue.subtitleCueIndex}</span>
+            <strong>{selectedDialogue.id}</strong>
+            <audio
+              key={selectedDialogue.audio}
+              controls
+              src={selectedDialogue.audio}
+            />
+          </div>
+        )}
       </div>
 
       <textarea
