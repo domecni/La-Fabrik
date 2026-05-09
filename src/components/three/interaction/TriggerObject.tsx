@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RigidBody } from "@react-three/rapier";
+import type { RapierRigidBody } from "@react-three/rapier";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
@@ -59,14 +60,21 @@ export function TriggerObject({
   onTrigger,
 }: TriggerObjectProps): React.JSX.Element {
   const [spawned, setSpawned] = useState<SpawnedModel[]>([]);
+  const rbRef = useRef<RapierRigidBody>(null);
 
   return (
     <>
-      <RigidBody type="fixed" colliders={colliders} position={position}>
+      <RigidBody
+        ref={rbRef}
+        type="fixed"
+        colliders={colliders}
+        position={position}
+      >
         <InteractableObject
           kind="trigger"
           label={label}
           position={position}
+          bodyRef={rbRef}
           onPress={() => {
             if (soundPath) {
               AudioManager.getInstance().playSound(soundPath, soundVolume);

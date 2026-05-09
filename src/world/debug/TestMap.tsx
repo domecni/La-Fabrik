@@ -142,9 +142,11 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
         </TriggerObject>
 
         {TEST_SCENE_REPAIR_ZONES.map((zone) => (
-          <group key={zone.mission} position={zone.position}>
-            <RepairPlaygroundZoneMarker color={zone.color} />
-            <RepairGame mission={zone.mission} position={[0, 0, 0]} />
+          <group key={zone.mission}>
+            <group position={zone.position}>
+              <RepairPlaygroundZoneMarker color={zone.color} />
+            </group>
+            <RepairGame mission={zone.mission} position={zone.position} />
           </group>
         ))}
       </Physics>

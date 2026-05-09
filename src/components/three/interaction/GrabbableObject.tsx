@@ -62,6 +62,7 @@ const _handHitDirection = new THREE.Vector3();
 const _cameraPos = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
 const _snapPosition = new THREE.Vector3();
+const _snapTargetWorldPosition = new THREE.Vector3();
 const _handRaycaster = new THREE.Raycaster();
 
 const HAND_GRAB_SCREEN_RADIUS = 0.04;
@@ -138,6 +139,7 @@ export function GrabbableObject({
 }: GrabbableObjectProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const { hands } = useHandTrackingSnapshot();
+  const spaceRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
   const rbRef = useRef<RapierRigidBody>(null);
   const isHolding = useRef(false);
@@ -160,17 +162,24 @@ export function GrabbableObject({
     _currentPos.set(translation.x, translation.y, translation.z);
 
     let nearestTarget: Vector3Tuple | null = null;
+    let nearestTargetWorld: Vector3Tuple | null = null;
     let nearestDistance = snapRadius;
     snapTargets.forEach((target) => {
-      _snapPosition.set(target[0], target[1], target[2]);
-      const distance = _currentPos.distanceTo(_snapPosition);
+      _snapTargetWorldPosition.set(target[0], target[1], target[2]);
+      spaceRef.current?.localToWorld(_snapTargetWorldPosition);
+      const distance = _currentPos.distanceTo(_snapTargetWorldPosition);
       if (distance <= nearestDistance) {
         nearestDistance = distance;
         nearestTarget = target;
+        nearestTargetWorld = [
+          _snapTargetWorldPosition.x,
+          _snapTargetWorldPosition.y,
+          _snapTargetWorldPosition.z,
+        ];
       }
     });
 
-    if (!nearestTarget) return;
+    if (!nearestTarget || !nearestTargetWorld) return;
 
     snapTween.current?.kill();
     const animatedPosition = {
@@ -182,9 +191,9 @@ export function GrabbableObject({
     body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     body.setAngvel(ZERO_ANGULAR_VELOCITY, true);
     snapTween.current = gsap.to(animatedPosition, {
-      x: nearestTarget[0],
-      y: nearestTarget[1],
-      z: nearestTarget[2],
+      x: nearestTargetWorld[0],
+      y: nearestTargetWorld[1],
+      z: nearestTargetWorld[2],
       duration: snapDuration,
       ease: "power2.out",
       onUpdate: () => {
@@ -311,43 +320,45 @@ export function GrabbableObject({
   });
 
   return (
-    <RigidBody
-      ref={rbRef}
-      type="dynamic"
-      colliders={colliders}
-      position={position}
-    >
-      <group ref={groupRef}>
-        <InteractableObject
-          kind="grab"
-          label={label}
-          position={position}
-          bodyRef={rbRef}
-          onPress={() => {
-            isHolding.current = true;
-          }}
-          onRelease={() => {
-            isHolding.current = false;
-            snapToNearestTarget();
-            if (
-              !rbRef.current ||
-              grabDebugParams.throwBoost === GRAB_THROW_BOOST_DEFAULT
-            )
-              return;
-            const v = rbRef.current.linvel();
-            rbRef.current.setLinvel(
-              {
-                x: v.x * grabDebugParams.throwBoost,
-                y: v.y * grabDebugParams.throwBoost,
-                z: v.z * grabDebugParams.throwBoost,
-              },
-              true,
-            );
-          }}
-        >
-          {children}
-        </InteractableObject>
-      </group>
-    </RigidBody>
+    <group ref={spaceRef}>
+      <RigidBody
+        ref={rbRef}
+        type="dynamic"
+        colliders={colliders}
+        position={position}
+      >
+        <group ref={groupRef}>
+          <InteractableObject
+            kind="grab"
+            label={label}
+            position={position}
+            bodyRef={rbRef}
+            onPress={() => {
+              isHolding.current = true;
+            }}
+            onRelease={() => {
+              isHolding.current = false;
+              snapToNearestTarget();
+              if (
+                !rbRef.current ||
+                grabDebugParams.throwBoost === GRAB_THROW_BOOST_DEFAULT
+              )
+                return;
+              const v = rbRef.current.linvel();
+              rbRef.current.setLinvel(
+                {
+                  x: v.x * grabDebugParams.throwBoost,
+                  y: v.y * grabDebugParams.throwBoost,
+                  z: v.z * grabDebugParams.throwBoost,
+                },
+                true,
+              );
+            }}
+          >
+            {children}
+          </InteractableObject>
+        </group>
+      </RigidBody>
+    </group>
   );
 }

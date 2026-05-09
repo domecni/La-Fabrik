@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as THREE from "three";
 import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
@@ -56,6 +56,8 @@ export function RepairRepairingStep({
   placeholders,
   onRepair,
 }: RepairRepairingStepProps): React.JSX.Element {
+  const groupRef = useRef<THREE.Group>(null);
+  const localPosition = useRef(new THREE.Vector3());
   const [placedPartIds, setPlacedPartIds] = useState<Record<string, boolean>>(
     {},
   );
@@ -97,16 +99,19 @@ export function RepairRepairingStep({
   const installLabel = isReadyToInstall
     ? `Installer ${requiredReplacementLabel}`
     : hasWrongPartPlaced
-      ? `Mauvaise piece`
+      ? `Mauvaise pièce`
       : hasCorrectPartPlaced
-        ? `Ranger piece cassee`
+        ? `Ranger pièce cassée`
         : `Approcher ${requiredReplacementLabel}`;
 
   function handleReplacementPosition(
     partId: string,
     position: THREE.Vector3,
   ): void {
-    const isPlaced = isNearPlaceholder(position, placeholderPositions);
+    const isPlaced = isNearPlaceholder(
+      getStepLocalPosition(position, groupRef.current, localPosition.current),
+      placeholderPositions,
+    );
     setPlacedPartIds((current) => {
       if (!current[partId] || isPlaced) return current;
 
@@ -127,7 +132,10 @@ export function RepairRepairingStep({
     position: THREE.Vector3,
     targets: readonly Vector3Tuple[],
   ): void {
-    const isDeposited = isNearPlaceholder(position, targets);
+    const isDeposited = isNearPlaceholder(
+      getStepLocalPosition(position, groupRef.current, localPosition.current),
+      targets,
+    );
     setDepositedBrokenPartIds((current) => {
       if (!current[partId] || isDeposited) return current;
 
@@ -144,7 +152,7 @@ export function RepairRepairingStep({
   }
 
   return (
-    <group>
+    <group ref={groupRef}>
       <RepairInstallTarget
         fillColor={installFillColor}
         isReadyToInstall={isReadyToInstall}
@@ -331,6 +339,17 @@ function isNearPlaceholder(
       position.distanceTo(_placeholderPosition.set(...placeholderPosition)) <=
       REPAIR_INSTALL_RADIUS,
   );
+}
+
+function getStepLocalPosition(
+  worldPosition: THREE.Vector3,
+  group: THREE.Group | null,
+  target: THREE.Vector3,
+): THREE.Vector3 {
+  target.copy(worldPosition);
+  group?.worldToLocal(target);
+
+  return target;
 }
 
 function getReplacementParts(

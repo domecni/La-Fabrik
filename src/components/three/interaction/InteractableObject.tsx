@@ -148,6 +148,8 @@ export function InteractableObject(
     if (bodyRef?.current) {
       const t = bodyRef.current.translation();
       _objectPos.set(t.x, t.y, t.z);
+    } else if (group) {
+      group.getWorldPosition(_objectPos);
     } else {
       _objectPos.set(...position);
     }

@@ -81,6 +81,7 @@ export function RepairCaseModel({
   const initialOpen = useRef(open);
   const openedRotationZ = useRef(0);
   const parsedScale = toVector3Scale(scale);
+  const placeholderNodes = useRef<THREE.Object3D[]>([]);
   const placeholderSignature = useRef("__initial__");
   const placeholderPosition = useRef(new THREE.Vector3());
   const placeholderLocalPosition = useRef(new THREE.Vector3());
@@ -138,6 +139,15 @@ export function RepairCaseModel({
     const lid = model.getObjectByName(REPAIR_CASE_LID_NODE_NAME);
     lidRef.current = lid ?? null;
     openedRotationZ.current = lid?.rotation.z ?? 0;
+    placeholderNodes.current = [];
+
+    model.traverse((child) => {
+      if (
+        child.name.toLowerCase().startsWith(REPAIR_CASE_PLACEHOLDER_NAME_PREFIX)
+      ) {
+        placeholderNodes.current.push(child);
+      }
+    });
 
     if (lid) {
       lid.rotation.z =
@@ -195,41 +205,35 @@ export function RepairCaseModel({
       parsedScale[2] * pop.current.scale,
     );
 
-    const placeholders: RepairCasePlaceholder[] = [];
-    model.traverse((child) => {
-      if (
-        !child.name
-          .toLowerCase()
-          .startsWith(REPAIR_CASE_PLACEHOLDER_NAME_PREFIX)
-      ) {
-        return;
-      }
-
-      child.getWorldPosition(placeholderPosition.current);
-      placeholderLocalPosition.current.copy(placeholderPosition.current);
-      group.parent?.worldToLocal(placeholderLocalPosition.current);
-      placeholders.push({
-        name: child.name,
-        position: [
-          placeholderLocalPosition.current.x,
-          placeholderLocalPosition.current.y,
-          placeholderLocalPosition.current.z,
-        ],
+    if (placeholderNodes.current.length > 0) {
+      const placeholders: RepairCasePlaceholder[] = [];
+      placeholderNodes.current.forEach((child) => {
+        child.getWorldPosition(placeholderPosition.current);
+        placeholderLocalPosition.current.copy(placeholderPosition.current);
+        group.parent?.worldToLocal(placeholderLocalPosition.current);
+        placeholders.push({
+          name: child.name,
+          position: [
+            placeholderLocalPosition.current.x,
+            placeholderLocalPosition.current.y,
+            placeholderLocalPosition.current.z,
+          ],
+        });
       });
-    });
-    placeholders.sort((a, b) => a.name.localeCompare(b.name));
+      placeholders.sort((a, b) => a.name.localeCompare(b.name));
 
-    const nextSignature = placeholders
-      .map(
-        (placeholder) =>
-          `${placeholder.name}:${placeholder.position
-            .map((value) => value.toFixed(3))
-            .join(",")}`,
-      )
-      .join("|");
-    if (nextSignature !== placeholderSignature.current) {
-      placeholderSignature.current = nextSignature;
-      onPlaceholdersChangeRef.current?.(placeholders);
+      const nextSignature = placeholders
+        .map(
+          (placeholder) =>
+            `${placeholder.name}:${placeholder.position
+              .map((value) => value.toFixed(3))
+              .join(",")}`,
+        )
+        .join("|");
+      if (nextSignature !== placeholderSignature.current) {
+        placeholderSignature.current = nextSignature;
+        onPlaceholdersChangeRef.current?.(placeholders);
+      }
     }
 
     animationActiveRef.current = isNear;
