@@ -67,15 +67,19 @@ function createSrtTemplate(
 }
 
 function formatSrtTime(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = Math.floor(totalSeconds % 60);
+  const safeSeconds = Math.max(0, totalSeconds);
+  const totalMilliseconds = Math.round(safeSeconds * 1000);
+  const milliseconds = totalMilliseconds % 1000;
+  const totalWholeSeconds = Math.floor(totalMilliseconds / 1000);
+  const hours = Math.floor(totalWholeSeconds / 3600);
+  const minutes = Math.floor((totalWholeSeconds % 3600) / 60);
+  const seconds = totalWholeSeconds % 60;
 
-  return `${padTime(hours)}:${padTime(minutes)}:${padTime(seconds)},000`;
+  return `${padTime(hours)}:${padTime(minutes)}:${padTime(seconds)},${padMilliseconds(milliseconds)}`;
 }
 
 function formatPreviewTime(totalSeconds: number): string {
-  return `${Math.floor(totalSeconds)}.${Math.floor((totalSeconds % 1) * 10)}s`;
+  return `${Math.max(0, totalSeconds).toFixed(1)}s`;
 }
 
 function parseSrtTime(value: string): number | null {
@@ -95,6 +99,10 @@ function parseSrtTime(value: string): number | null {
 
 function padTime(value: number): string {
   return value.toString().padStart(2, "0");
+}
+
+function padMilliseconds(value: number): string {
+  return value.toString().padStart(3, "0");
 }
 
 function getSrtDiagnostic(
