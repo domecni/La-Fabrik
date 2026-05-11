@@ -33,7 +33,7 @@ This document lists features that are implemented in the current codebase.
 - Reusable production `RepairGame` mounted for `bike`, `pylone`, and `ferme` mission states
 - Debug physics playground mounts the same reusable `RepairGame` in `Bike`, `Pylone`, and `Farm` zones so each state can be tuned with isolated positioning before moving placement into the production map
 - Repair mission config shared through `src/data/gameplay/repairMissions.ts`, including per-mission broken nodes, placeholder targets, scan timing, and reassembly timing
-- Repair-game flow supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` with `.webm` prompts, repair case spawn/opening/exit, focused repair-case view, case placeholder traversal, snap-to-placeholder placement, broken-part deposit, `E`, two-fists hold input, exploded and inverse reassembly transitions, completion particles, per-part scan visuals, persistent red broken-part markers, centered broken-part UI videos, multiple grabbable replacement choices, correct-part install validation, and mission completion
+- Repair-game flow supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` with `.webm` prompts, repair case spawn/opening/exit, focused repair-case view, repair-case trigger interaction, case placeholder traversal, snap-to-placeholder placement, broken-part deposit feedback, `E`, two-fists hold input, exploded and inverse reassembly transitions, completion particles, per-part scan visuals, persistent red broken-part markers, centered broken-part UI videos, multiple grabbable replacement choices, correct-part install validation feedback, and mission completion
 
 ## Audio
 
@@ -45,6 +45,7 @@ This document lists features that are implemented in the current codebase.
 - `?debug` query param enables the debug panel
 - `lil-gui` controls for camera mode, scene mode, `R3F Perf`, `Debug Overlay`, and interaction tuning
 - Compact debug overlay for game state controls and hand tracking status
+- Debug game-state mission switching unlocks locked repair missions at `waiting` for faster testing
 - Debug scene helpers
 - Free debug camera
 - `r3f-perf` overlay

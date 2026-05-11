@@ -13,7 +13,7 @@ The current user flow is:
 3. Aim at the object and press the interaction key when prompted.
 4. The mission step moves from `waiting` to `inspected`.
 5. The repair case appears near the mission object and can float when the player approaches it.
-6. Press `E` or hold both fists closed for one second to move from `inspected` to `fragmented`.
+6. Aim at the repair case and press `E`, or hold both fists closed for one second, to move from `inspected` to `fragmented`.
 7. The mission object uses an exploded-model transition, then moves to `scanning`.
 8. The scan visual moves across the fragmented model one part at a time and keeps a red marker plus the `cassé.webm` prompt centered on any configured broken part once it has been found.
 9. In `repairing`, the case opens in a larger focused view and several grabbable replacement parts appear on the case placeholders.
@@ -33,9 +33,9 @@ In `waiting`, the active mission renders its repair object and the `interagir.we
 
 When the player inspects the object, `RepairGame` writes `inspected` through the generic mission store action. The repair case then appears from the mission config with a small pop animation. When the player is close enough, the existing case model floats upward and rotates gently to signal interactivity.
 
-In `inspected`, `RepairGame` can also move to `fragmented`. The player can use the interaction key or hold both fists closed for one second. The hand-tracking path is state-based, so it does not depend on being inside a local object interaction radius.
+In `inspected`, `RepairGame` can also move to `fragmented`. Keyboard input goes through the shared focus/raycast interaction system on the repair case, so the player must be close enough and aim at the case before pressing `E`. The hand-tracking path still uses a two-fists hold gesture and is state-based, so it does not depend on being inside a local object interaction radius.
 
-In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, the exploded model remains visible, a blue scan visual moves from part to part, and a red halo/wire marker plus the configured broken UI video stay attached to configured broken parts after the scanner reaches them. The scan can match a specific `nodeName` when mission data provides one, otherwise it falls back to the first scanned parts as placeholder broken parts. In `repairing`, the case opens in a larger focused transform, `RepairCaseModel` traverses the case GLTF for empty nodes named `placeholder_*`, several grabbable replacement parts appear on those placeholder positions, and releasing a part near a placeholder snaps it into place with a short GSAP animation. Scanned broken parts are also rendered as grabbable objects and must be deposited into a compatible placeholder before the final install target validates. If `brokenParts[].placeholderName` is configured, that broken part snaps only to the matching placeholder; otherwise it can use any available placeholder. If the current case asset has no placeholder nodes, the flow keeps using fallback focus positions. The install target only validates when the configured correct replacement part is placed and all scanned broken parts have been deposited. In `reassembling`, the exploded model animates back into its assembled position with green completion particles before the flow moves to `done`. In `done`, the repaired object remains visible with a completion target that plays the case exit animation before advancing the global mission progression.
+In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, the exploded model remains visible, a blue scan visual moves from part to part, and a red halo/wire marker plus the configured broken UI video stay attached to configured broken parts after the scanner reaches them. The scan can match a specific `nodeName` when mission data provides one, otherwise it falls back to the first scanned parts as placeholder broken parts. In `repairing`, the case opens in a larger focused transform, `RepairCaseModel` traverses the case GLTF for empty nodes named `placeholder_*`, several grabbable replacement parts appear on those placeholder positions, and releasing a part near a placeholder snaps it into place with a short GSAP animation. Scanned broken parts are also rendered as grabbable objects and must be deposited into a compatible placeholder before the final install target validates. If `brokenParts[].placeholderName` is configured, that broken part snaps only to the matching placeholder; otherwise it can use any available placeholder. If the current case asset has no placeholder nodes, the flow keeps using fallback focus positions. Replacement parts show green or red placement feedback after snapping, broken parts show stored feedback after deposit, and the install target gives a short blocked feedback if the player tries to validate too early. The install target only validates when the configured correct replacement part is placed and all scanned broken parts have been deposited. In `reassembling`, the exploded model animates back into its assembled position with green completion particles before the flow moves to `done`. In `done`, the repaired object remains visible with a completion target; validating closes the repair case first, then plays the case exit animation before advancing the global mission progression.
 
 The mission config now carries the mission-specific variations. `bike` repairs one cooling core, `pylone` scans and stores both the lamp relay and a damaged panel with slower scan/reassembly timing, and `ferme` scans and stores an irrigation pump plus humidity sensor with faster scan/reassembly timing.
 
@@ -54,7 +54,7 @@ The mission config now carries the mission-specific variations. `bike` repairs o
 - `src/components/three/gameplay/RepairPromptVideo.tsx` renders `.webm` prompts inside the 3D scene.
 - `src/components/three/gameplay/RepairScanSequence.tsx` keeps the exploded model visible and advances the scan from part to part.
 - `src/components/three/gameplay/RepairScanVisual.tsx` renders the scan halo and scan line around the active part.
-- `src/hooks/gameplay/useRepairFragmentationInput.ts` handles the `inspected -> fragmented` keyboard and hand-tracking input.
+- `src/hooks/gameplay/useRepairFragmentationInput.ts` handles the `inspected -> fragmented` two-fists input and can optionally bind keyboard input for non-trigger flows.
 - `src/hooks/gameplay/useRepairMissionStep.ts` reads the active mission step from the game store.
 - `src/hooks/handTracking/useBothFistsHold.ts` detects the reusable two-fists hold gesture.
 - `src/components/three/gameplay/RepairCaseModel.tsx` renders and animates the case model, and exposes `placeholder_*` transforms when the GLTF provides them.
@@ -86,7 +86,7 @@ Debug URL for state switching and inspection:
 http://localhost:5173/?debug
 ```
 
-The debug physics scene keeps the existing grab, trigger, and animated model tests, and also exposes separate `Bike`, `Pylone`, and `Farm` repair playground zones. Use the debug game-state panel to switch `mainState`; the matching repair zone mounts the same reusable `RepairGame` flow with that mission's model, broken parts, replacement parts, prompts, and timings.
+The debug physics scene keeps the existing grab, trigger, and animated model tests, and also exposes separate `Bike`, `Pylone`, and `Farm` repair playground zones. Use the debug game-state panel to switch `mainState`; selecting a locked repair mission in that panel opens it at `waiting`, and the matching repair zone mounts the same reusable `RepairGame` flow with that mission's model, broken parts, replacement parts, prompts, and timings.
 
 ## Related Hand Tracking
 
@@ -104,5 +104,5 @@ python -m backend.main
 - The reusable production `RepairGame` currently covers `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission`.
 - Mission progression is wired through Zustand using `completeMission` at the end of each repair.
 - There is no central `GameManager` in this branch.
-- Hand tracking is available for the two-fists input and grabbable replacement parts; final installation still uses the shared `E` trigger path.
+- Hand tracking is available for the two-fists input and grabbable repair parts; case interaction and final installation still use the shared `E` trigger path.
 - The repair-game content is configured statically in `src/data/gameplay/`.
