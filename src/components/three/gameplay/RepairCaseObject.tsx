@@ -10,6 +10,8 @@ import { AudioManager } from "@/managers/AudioManager";
 import type { Vector3Tuple } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
+const REPAIR_CASE_PAN_RANGE = 20;
+
 interface RepairCaseErrorBoundaryProps {
   children: ReactNode;
 }
@@ -63,6 +65,8 @@ export function RepairCaseObject({
   open,
   onInspect,
 }: RepairCaseObjectProps): React.JSX.Element {
+  const pan = Math.max(-1, Math.min(1, position[0] / REPAIR_CASE_PAN_RANGE));
+
   return (
     <TriggerObject
       position={position}
@@ -72,6 +76,7 @@ export function RepairCaseObject({
         if (open) return;
         AudioManager.getInstance().playSound(REPAIR_CASE_OPEN_SOUND_PATH, 1, {
           category: "sfx",
+          pan,
         });
         onInspect();
       }}
