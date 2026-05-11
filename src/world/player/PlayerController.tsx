@@ -23,9 +23,8 @@ import {
   PLAYER_WALK_SPEED,
   PLAYER_XZ_DAMPING_FACTOR,
 } from "@/data/player/playerConfig";
+import { useRepairMovementLocked } from "@/hooks/gameplay/useRepairMovementLocked";
 import { InteractionManager } from "@/managers/InteractionManager";
-import { useGameStore } from "@/managers/stores/useGameStore";
-import type { MissionStep } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 
 type Keys = {
@@ -73,32 +72,6 @@ function setMovementKey(keys: Keys, key: string, pressed: boolean): boolean {
     default:
       return false;
   }
-}
-
-function isRepairMovementLocked(step: MissionStep): boolean {
-  return (
-    step === "inspected" ||
-    step === "fragmented" ||
-    step === "scanning" ||
-    step === "repairing" ||
-    step === "reassembling"
-  );
-}
-
-function useRepairMovementLocked(): boolean {
-  return useGameStore((state) => {
-    switch (state.mainState) {
-      case "bike":
-        return isRepairMovementLocked(state.bike.currentStep);
-      case "pylone":
-        return isRepairMovementLocked(state.pylone.currentStep);
-      case "ferme":
-        return isRepairMovementLocked(state.ferme.currentStep);
-      case "intro":
-      case "outro":
-        return false;
-    }
-  });
 }
 
 export function PlayerController({
