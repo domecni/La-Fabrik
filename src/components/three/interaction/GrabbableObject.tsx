@@ -25,10 +25,7 @@ import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { InteractionManager } from "@/managers/InteractionManager";
-import type {
-  HandTrackingHand,
-  HandTrackingLandmark,
-} from "@/types/handTracking/handTracking";
+import type { HandTrackingHand } from "@/types/handTracking/handTracking";
 import type { ColliderShape, Vector3Tuple } from "@/types/three/three";
 
 interface GrabbableObjectProps {
@@ -42,6 +39,11 @@ interface GrabbableObjectProps {
   snapDuration?: number;
   snapRadius?: number;
   snapTargets?: readonly Vector3Tuple[];
+}
+
+interface HandScreenPoint {
+  x: number;
+  y: number;
 }
 
 const grabDebugParams = {
@@ -74,10 +76,10 @@ const HAND_HIT_OFFSETS: Array<[number, number]> = [
   [0, -HAND_GRAB_SCREEN_RADIUS],
 ];
 
-function getHandCenterPoint(hand: HandTrackingHand): HandTrackingLandmark {
+function getHandCenterPoint(hand: HandTrackingHand): HandScreenPoint {
   const landmarks = hand.landmarks;
   if (landmarks.length === 0) {
-    return { x: hand.x, y: hand.y, z: hand.z };
+    return { x: hand.x, y: hand.y };
   }
 
   let minX = landmarks[0]!.x;
@@ -95,7 +97,6 @@ function getHandCenterPoint(hand: HandTrackingHand): HandTrackingLandmark {
   return {
     x: (minX + maxX) / 2,
     y: (minY + maxY) / 2,
-    z: hand.z,
   };
 }
 
@@ -103,7 +104,7 @@ function getHandHit(
   group: THREE.Group | null,
   camera: THREE.Camera,
   cameraPos: THREE.Vector3,
-  handCenter: HandTrackingLandmark,
+  handCenter: HandScreenPoint,
 ): THREE.Intersection | null {
   if (!group) return null;
 

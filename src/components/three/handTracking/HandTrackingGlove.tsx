@@ -32,7 +32,6 @@ const GLOVE_CONFIGS: Record<
 
 const GLOVE_MODEL_SCALE = 0.33;
 const HAND_SPACE_DISTANCE = 0.5;
-const HAND_DEPTH_SCALE = 0.5;
 const HAND_TRACKING_HIDE_DELAY_MS = 250;
 
 const FINGER_LANDMARK_CHAINS = [
@@ -126,12 +125,7 @@ function landmarkToWorldPoint(
   target.unproject(camera);
 
   _direction.copy(target).sub(_cameraPosition).normalize();
-  target
-    .copy(_cameraPosition)
-    .addScaledVector(
-      _direction,
-      HAND_SPACE_DISTANCE - landmark.z * HAND_DEPTH_SCALE,
-    );
+  target.copy(_cameraPosition).addScaledVector(_direction, HAND_SPACE_DISTANCE);
 
   return target;
 }
