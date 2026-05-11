@@ -49,7 +49,8 @@ la-fabrik/
 └── src/
     ├── world/                              # Persistent 3D world composition
     │   ├── World.tsx                       # Active scene composition
-    │   ├── GameMap.tsx                     # Map loading and octree collision
+    │   ├── GameMap.tsx                     # Map loading and progressive rendering
+    │   ├── GameMapCollision.tsx            # Collision-only octree source
     │   ├── Lighting.tsx                    # Ambient, directional, point lights
     │   ├── Environment.tsx                 # Scene background / sky model
     │   ├── GameMusic.tsx                   # Game scene music lifecycle
@@ -101,7 +102,8 @@ la-fabrik/
     │   ├── editor/                         # Editor-only parsing utilities
     │   ├── map/                            # Map loading and validation
     │   └── three/                          # Three.js helpers
-    ├── App.tsx                             # Canvas bootstrap
+    ├── types/                              # Shared TypeScript domain types
+    ├── App.tsx                             # App bootstrap and route switch
     └── main.tsx
 ```
 

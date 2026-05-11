@@ -98,9 +98,20 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
   - soit la carte principale, soit la scène de test physique debug
   - le rig joueur quand le mode caméra actif est \`player\`
 - \`src/world/GameMap.tsx\` charge les modèles de carte disponibles et construit l'octree de collision.
-- \`src/world/debug/TestMap.tsx\` fournit une carte orientée debug pour les interactions et la physique.
+- \`src/world/GameStageContent.tsx\` est enveloppé dans le contexte Rapier \`Physics\` dans la scène de jeu de production afin que les objets gameplay de stage puissent utiliser la physique sans migrer la carte ou le joueur vers Rapier. Il monte maintenant des instances réutilisables de \`RepairGame\` pour les états de mission \`bike\`, \`pylone\` et \`ferme\`.
+- \`src/world/debug/TestMap.tsx\` fournit une carte orientée debug pour les interactions et la physique, avec les objets existants de grab, trigger et preview de modèle, plus des zones playground de réparation séparées \`Bike\`, \`Pylone\` et \`Farm\`.
 - \`src/world/player/Player.tsx\` monte la caméra et le contrôleur.
-- \`src/world/player/PlayerController.tsx\` gère le mouvement pointer lock, le saut et les inputs d'interaction.
+- \`src/world/player/PlayerController.tsx\` gère le mouvement pointer lock, le saut, le verrouillage de déplacement pendant les étapes repair et les inputs d'interaction.
+
+## Frontières physiques
+
+Le projet utilise actuellement deux couches de collision avec des responsabilités séparées :
+
+- \`GameMap\` construit une octree utilisée par le contrôleur joueur pour les collisions avec la carte.
+- \`GameStageContent\` est enveloppé dans Rapier \`Physics\` pour les objets gameplay comme les triggers de réparation, les mallettes, les objets saisissables et les futurs objets spécifiques aux missions.
+- \`TestMap\` possède son propre playground Rapier \`Physics\` afin de peaufiner le gameplay de réparation par state de mission sans dépendre du placement de la carte de production.
+
+Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il n'existe pas de plan de migration volontaire. Cela évite de mélanger les règles de déplacement joueur avec la physique d'objets avant que les systèmes gameplay en aient besoin.
 
 ## Modèle d'interaction
 
@@ -166,13 +177,21 @@ Ce document décrit le code réellement présent aujourd'hui dans le dépôt.
 - \`src/components/debug/scene/DebugCameraControls.tsx\` monte la caméra libre debug.
 - Les contrôles globaux \`lil-gui\` incluent camera mode, scene mode, \`R3F Perf\` et \`Debug Overlay\`; les contrôles d'interaction vivent dans le dossier \`Interaction\`.
 
+## Domaines de composants 3D
+
+- \`src/components/three/models/\` contient les helpers de modèles réutilisables comme \`ExplodableModel\`.
+- \`src/components/three/interaction/\` contient les wrappers d'interaction réutilisables comme \`InteractableObject\`, \`TriggerObject\` et \`GrabbableObject\`.
+- \`src/components/three/handTracking/\` contient les modèles debug R3F liés au hand tracking, comme les gants.
+- \`src/components/three/gameplay/\` contient les composants de gameplay de réparation : le flow de production réutilisable \`RepairGame\`, la mallette, les étapes de réparation et les prompts.
+- \`src/components/three/world/\` contient les objets world/environnement réutilisables comme \`SkyModel\`.
+
 ## Limites actuelles
 
 - Le dépôt est encore un prototype, pas le runtime complet du jeu.
 - \`src/world/debug/TestMap.tsx\` fait encore partie de la composition active.
 - Il n'existe pas encore d'orchestrateur gameplay central comme \`GameManager\`.
-- Les systèmes de missions et zones ne sont pas implémentés.
-- Les branches de dialogue et l'orchestration gameplay restent limitées.
+- L'état de mission existe dans Zustand et le flow de réparation est implémenté comme prototype pour les missions de réparation actuelles.
+- Les cinématiques et dialogues existent comme systèmes prototype pilotés par timecode; les branches de dialogue et l'orchestration gameplay globale restent limitées.
 - Le joueur utilise une collision octree et des règles simples, pas une pile physique gameplay complète.
 `;
 
@@ -319,7 +338,7 @@ Le store expose :
 Les étapes de mission utilisent actuellement cette séquence :
 
 \`\`\`ts
-"locked" | "waiting" | "inspected" | "fragmented" | "scanning" | "repairing" | "done"
+"locked" | "waiting" | "inspected" | "fragmented" | "scanning" | "repairing" | "reassembling" | "done"
 \`\`\`
 
 ## Lire le state dans un composant
@@ -358,9 +377,29 @@ setMainState("bike");
 
 Les setters directs sont pratiques pour les panneaux debug, mais le gameplay de production devrait préférer les actions métier comme \`advanceGameState\`, \`completeBike\` ou \`completePylone\`.
 
+Le gameplay de mission qui peut cibler \`bike\`, \`pylone\` ou \`ferme\` doit préférer les actions génériques de mission :
+
+\`\`\`ts
+const setMissionStep = useGameStore((state) => state.setMissionStep);
+const completeMission = useGameStore((state) => state.completeMission);
+
+setMissionStep("bike", "inspected");
+completeMission("bike");
+\`\`\`
+
+Cela évite aux composants gameplay réutilisables, comme les flows de réparation, de dupliquer des branches spécifiques à chaque mission avec \`setBikeState\`, \`setPyloneState\` et \`setFermeState\`.
+
 ## Intégration avec le World
 
 \`src/world/GameStageContent.tsx\` s'abonne à \`mainState\` et monte le contenu spécifique au state courant.
+
+Pour les missions de réparation, il monte le composant réutilisable \`RepairGame\` avec un id de mission :
+
+\`\`\`tsx
+<RepairGame mission="bike" position={[8, 0, -6]} />
+\`\`\`
+
+\`RepairGame\` lit l'étape de mission active depuis le store et écrit les transitions via des actions génériques comme \`setMissionStep\` et \`completeMission\`. Les ids de mission, étapes de mission et guards partagés vivent dans \`src/types/gameplay/repairMission.ts\`, ce qui évite à la configuration statique des missions de dépendre du store Zustand. Le flow de réparation de production supporte actuellement les transitions \`waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission\`.
 
 La scène peut donc évoluer progressivement vers ce pattern :
 
@@ -391,6 +430,7 @@ Overlays actuels :
 - \`GameStateDebugPanel\` : panneau de progression debug pour consulter/changer le main state, le sub state, avancer/reculer et reset le store
 - \`Crosshair\` : aide de visée joueur
 - \`InteractPrompt\` : prompt d'interaction
+- \`RepairMovementLockIndicator\` : indicateur joueur affiché quand les étapes repair désactivent temporairement le déplacement
 
 \`src/pages/page.tsx\` doit rester fin et monter seulement le canvas et \`GameUI\`.
 
@@ -405,7 +445,7 @@ Overlays actuels :
 
 ## Prochaines étapes
 
-La prochaine étape naturelle est de remplacer les ancres temporaires de \`GameStageContent\` par de vrais composants de phase, par exemple \`IntroContent\`, \`BikeContent\`, \`PyloneContent\`, \`FermeContent\` et \`OutroContent\`.
+Déplacer la validation de réparation dans les données de mission lorsque chaque mission aura ses propres nodes de modules cassés, assets de remplacement et événements de complétion.
 `;
 
 export const featuresFr = `# Fonctionnalités implémentées
@@ -416,7 +456,8 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 - Scène React Three Fiber plein écran
 - Carte principale chargée depuis \`public/models/{name}/model.glb\`, avec fallback vers \`model.gltf\`
-- Scène de test physique debug sélectionnable depuis le panneau debug
+- Scène de test physique debug sélectionnable depuis le panneau debug, avec tests grab/trigger, preview de modèle animé et zones playground de réparation séparées pour \`bike\`, \`pylone\` et \`ferme\`
+- Contexte physique Rapier disponible pour les objets gameplay de stage en production
 - Éclairage ambiant et directionnel
 - Configuration de l'environnement de fond
 
@@ -426,6 +467,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Orientation souris avec pointer lock
 - Déplacement avec \`ZQSD\`
 - Saut
+- Verrouillage du déplacement pendant les étapes repair actives, avec indicateur à l'écran tout en gardant les interactions trigger disponibles
 - Collision basée sur une octree contre la carte chargée
 
 ## Interactions
@@ -433,7 +475,15 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Détection de focus par distance et raycast
 - Interactions trigger activées avec \`E\`
 - Interactions grab activées avec le bouton principal de la souris
+- Les objets gameplay avec physique peuvent être montés dans le contenu de stage sans remplacer la collision octree du joueur
 - Prompt d'interaction affiché pour les interactions trigger
+
+## Gameplay de réparation
+
+- \`RepairGame\` de production réutilisable monté pour les états de mission \`bike\`, \`pylone\` et \`ferme\`
+- Le playground physics debug monte le même \`RepairGame\` réutilisable dans des zones \`Bike\`, \`Pylone\` et \`Farm\`, afin de peaufiner chaque state avec un placement isolé avant déplacement vers la carte de production
+- Configuration de mission partagée via \`src/data/gameplay/repairMissions.ts\`, avec nodes cassés, placeholders cibles, timing de scan et timing de réassemblage propres à chaque mission
+- Flow repair-game avec \`waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission\`, prompts \`.webm\`, apparition/ouverture/sortie de la mallette, vue focalisée de la mallette, indicateur de verrouillage de déplacement pendant la réparation active, interaction trigger sur la mallette, traverse des placeholders de mallette, placement avec snap vers placeholder, feedback de dépôt des pièces cassées, touche \`E\`, hold deux poings, transition de modèle explosé, réassemblage inverse avec particules, scan visuel par pièce, marqueur rouge persistant et vidéo UI centrée sur les pièces cassées, plusieurs choix de pièces grabbables, feedback de validation de la bonne pièce et complétion de mission
 
 ## Audio
 
@@ -474,6 +524,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Le paramètre \`?debug\` active le panneau debug
 - Contrôles \`lil-gui\` pour le mode caméra, le mode scène, \`R3F Perf\`, \`Debug Overlay\` et le tuning d'interaction
 - Overlay debug compact pour les contrôles de game state et le statut hand tracking
+- Le changement de mission dans le panneau game-state debug déverrouille les missions repair encore \`locked\` à \`waiting\` pour accélérer les tests
 - Helpers de scène debug
 - Caméra libre debug
 - Overlay \`r3f-perf\`
@@ -497,7 +548,7 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 ## Pas encore implémenté
 
-- système de missions
+- système de missions complet
 - système de zones
 - branches de dialogues gameplay au-delà des déclencheurs prototype actuels
 - flow de chargement

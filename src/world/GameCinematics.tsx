@@ -9,7 +9,7 @@ import type {
   CinematicManifest,
 } from "@/types/cinematics/cinematics";
 import type { DialogueManifest } from "@/types/dialogues/dialogues";
-import { logger } from "@/utils/core/logger";
+import { logger } from "@/utils/core/Logger";
 import { loadCinematicManifest } from "@/utils/cinematics/loadCinematicManifest";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import { queueDialogueById } from "@/utils/dialogues/playDialogue";

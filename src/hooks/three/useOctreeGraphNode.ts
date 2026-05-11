@@ -20,7 +20,7 @@ export function useOctreeGraphNode(
     if (!enabled) return;
 
     const graphNode = graphNodeRef.current;
-    if (octreeBuilt.current || !graphNode) return;
+    if (!enabled || octreeBuilt.current || !graphNode) return;
     octreeBuilt.current = true;
 
     graphNode.updateMatrixWorld(true);

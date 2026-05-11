@@ -1,12 +1,9 @@
 import { useMemo } from "react";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
-import type { Vector3Tuple } from "@/types/three/three";
+import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 
-export interface SimpleModelConfig {
+export interface SimpleModelConfig extends ModelTransformProps {
   modelPath: string;
-  position?: Vector3Tuple;
-  rotation?: Vector3Tuple;
-  scale?: Vector3Tuple | number;
   castShadow?: boolean;
   receiveShadow?: boolean;
 }

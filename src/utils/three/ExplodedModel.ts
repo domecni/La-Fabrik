@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-interface ExplodedPart {
+export interface ExplodedPart {
   object: THREE.Object3D;
   originalPosition: THREE.Vector3;
   targetPosition: THREE.Vector3;
@@ -29,6 +29,10 @@ export class ExplodedModel {
 
   setSplit(split: boolean): void {
     this.targetProgress = split ? 1 : 0;
+  }
+
+  getParts(): readonly ExplodedPart[] {
+    return this.parts;
   }
 
   update(delta: number): void {

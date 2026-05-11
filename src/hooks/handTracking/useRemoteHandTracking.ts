@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  HAND_TRACKING_CAMERA_TIMEOUT_MS,
   HAND_TRACKING_FRAME_HEIGHT,
   HAND_TRACKING_FRAME_WIDTH,
   HAND_TRACKING_JPEG_QUALITY,
@@ -8,6 +7,10 @@ import {
   HAND_TRACKING_TARGET_FPS,
   getHandTrackingWsUrl,
 } from "@/data/handTrackingConfig";
+import {
+  INITIAL_HAND_TRACKING_SNAPSHOT,
+  getCameraStreamWithTimeout,
+} from "@/lib/handTracking/handTrackingSession";
 import type {
   HandTrackingFrameMessage,
   HandTrackingHand,
@@ -19,14 +22,6 @@ interface UseRemoteHandTrackingOptions {
   enabled: boolean;
   websocketUrl?: string;
 }
-
-const INITIAL_SNAPSHOT: HandTrackingSnapshot = {
-  hands: [],
-  status: "idle",
-  usageStatus: "inactive",
-  serverStatus: null,
-  error: null,
-};
 
 function getBase64Payload(dataUrl: string): string {
   return dataUrl.slice(dataUrl.indexOf(",") + 1);
@@ -84,38 +79,13 @@ function isHandTrackingServerMessage(
   );
 }
 
-function getCameraStreamWithTimeout(
-  constraints: MediaStreamConstraints,
-): Promise<MediaStream> {
-  let didTimeout = false;
-  const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
-
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    window.setTimeout(() => {
-      didTimeout = true;
-      reject(
-        new Error(
-          "Camera request timed out. Restart Arc or check camera permissions for localhost:5173.",
-        ),
-      );
-    }, HAND_TRACKING_CAMERA_TIMEOUT_MS);
-  });
-
-  streamPromise.then((stream) => {
-    if (didTimeout) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-  });
-
-  return Promise.race([streamPromise, timeoutPromise]);
-}
-
 export function useRemoteHandTracking({
   enabled,
   websocketUrl = getHandTrackingWsUrl(),
 }: UseRemoteHandTrackingOptions): HandTrackingSnapshot {
-  const [snapshot, setSnapshot] =
-    useState<HandTrackingSnapshot>(INITIAL_SNAPSHOT);
+  const [snapshot, setSnapshot] = useState<HandTrackingSnapshot>(
+    INITIAL_HAND_TRACKING_SNAPSHOT,
+  );
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);

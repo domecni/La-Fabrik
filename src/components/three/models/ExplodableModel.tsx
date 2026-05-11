@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { ExplodedModel } from "@/utils/three/ExplodedModel";
+import type { ExplodedPart } from "@/utils/three/ExplodedModel";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 import { toVector3Scale } from "@/utils/three/scale";
@@ -12,6 +13,8 @@ interface ModelErrorBoundaryProps {
   children: ReactNode;
   modelPath: string;
   position?: Vector3Tuple | undefined;
+  rotation?: Vector3Tuple | undefined;
+  scale?: ModelTransformProps["scale"] | undefined;
 }
 
 interface ModelErrorBoundaryState {
@@ -37,6 +40,8 @@ class ModelErrorBoundary extends Component<
         modelPath: this.props.modelPath,
         scope: "ExplodableModel",
         position: this.props.position,
+        rotation: this.props.rotation,
+        scale: this.props.scale,
       },
       error,
     );
@@ -44,7 +49,13 @@ class ModelErrorBoundary extends Component<
 
   render(): ReactNode {
     if (this.state.hasError) {
-      return <MissingModelFallback position={this.props.position} />;
+      return (
+        <MissingModelFallback
+          position={this.props.position}
+          rotation={this.props.rotation}
+          scale={this.props.scale}
+        />
+      );
     }
 
     return this.props.children;
@@ -55,6 +66,7 @@ interface ExplodableModelInnerProps extends ModelTransformProps {
   modelPath: string;
   split: boolean;
   splitDistance?: number;
+  onPartsReady?: (parts: readonly ExplodedPart[]) => void;
 }
 
 export function ExplodableModel(
@@ -65,6 +77,8 @@ export function ExplodableModel(
       key={props.modelPath}
       modelPath={props.modelPath}
       position={props.position}
+      rotation={props.rotation}
+      scale={props.scale}
     >
       <ExplodableModelInner {...props} />
     </ModelErrorBoundary>
@@ -78,6 +92,7 @@ function ExplodableModelInner({
   rotation = [0, 0, 0],
   scale = 1,
   splitDistance = 1.2,
+  onPartsReady,
 }: ExplodableModelInnerProps): React.JSX.Element {
   const { scene } = useLoggedGLTF(modelPath, {
     scope: "ExplodableModel",
@@ -96,6 +111,10 @@ function ExplodableModelInner({
     explodedModel.setSplit(split);
   }, [explodedModel, split]);
 
+  useEffect(() => {
+    onPartsReady?.(explodedModel.getParts());
+  }, [explodedModel, onPartsReady]);
+
   useFrame((_, delta) => {
     explodedModel.update(delta);
   });
@@ -109,11 +128,15 @@ function ExplodableModelInner({
 
 function MissingModelFallback({
   position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
 }: {
   position?: Vector3Tuple | undefined;
+  rotation?: Vector3Tuple | undefined;
+  scale?: ModelTransformProps["scale"] | undefined;
 }): React.JSX.Element {
   return (
-    <mesh position={position}>
+    <mesh position={position} rotation={rotation} scale={toVector3Scale(scale)}>
       <boxGeometry args={[0.7, 0.7, 0.7]} />
       <meshStandardMaterial color="#7f1d1d" wireframe />
     </mesh>

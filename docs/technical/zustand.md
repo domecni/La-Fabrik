@@ -75,6 +75,7 @@ The mission steps currently use this sequence:
   "fragmented" |
   "scanning" |
   "repairing" |
+  "reassembling" |
   "done";
 ```
 
@@ -114,9 +115,31 @@ setMainState("bike");
 
 Direct setters are useful for debug panels, but production gameplay should prefer business actions such as `advanceGameState`, `completeBike`, or `completePylone`.
 
+Mission gameplay that can target `bike`, `pylone`, or `ferme` should prefer the generic mission actions:
+
+```ts
+const setMissionStep = useGameStore((state) => state.setMissionStep);
+const completeMission = useGameStore((state) => state.completeMission);
+
+setMissionStep("bike", "inspected");
+completeMission("bike");
+```
+
+This keeps reusable gameplay components such as repair flows from duplicating mission-specific branches like `setBikeState`, `setPyloneState`, and `setFermeState`.
+
 ## World Integration
 
 `src/world/GameStageContent.tsx` subscribes to `mainState` and mounts stage-specific content.
+
+For repair missions, it mounts the reusable `RepairGame` component with a mission id:
+
+```tsx
+<RepairGame mission="bike" position={[8, 0, -6]} />
+```
+
+`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. Shared repair ids, mission steps, and runtime guards live in `src/types/gameplay/repairMission.ts` so static mission config does not depend on the Zustand store. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` state transitions.
+
+Mission-specific behavior stays in `src/data/gameplay/repairMissions.ts`: each mission can define its broken nodes, placeholder targets, scan duration, and reassembly duration without adding mission branches to `RepairGame`.
 
 That means the scene can progressively move toward this pattern:
 
@@ -147,6 +170,7 @@ Current overlays:
 - `GameStateDebugPanel`: compact debug UI for viewing and switching main/sub states, stepping backward or forward, and resetting the store
 - `Crosshair`: player aiming helper
 - `InteractPrompt`: interaction prompt
+- `RepairMovementLockIndicator`: player-facing indicator shown while repair steps temporarily disable movement
 
 `src/pages/page.tsx` should stay thin and mount only the canvas and `GameUI`.
 
@@ -161,4 +185,4 @@ Current overlays:
 
 ## Next Steps
 
-The next natural step is to replace the temporary stage anchors in `GameStageContent` with real stage components, for example `IntroContent`, `BikeContent`, `PyloneContent`, `FermeContent`, and `OutroContent`.
+Move repair validation into mission data once each mission has distinct broken module nodes, replacement assets, and completion events.

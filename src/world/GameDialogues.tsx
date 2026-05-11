@@ -6,7 +6,7 @@ import {
   clearQueuedDialogues,
   queueDialogueById,
 } from "@/utils/dialogues/playDialogue";
-import { logger } from "@/utils/core/logger";
+import { logger } from "@/utils/core/Logger";
 
 export function GameDialogues(): null {
   const [manifest, setManifest] = useState<DialogueManifest | null>(null);

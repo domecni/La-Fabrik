@@ -47,7 +47,7 @@ export function HandTrackingVisualizer(): React.JSX.Element | null {
   return (
     <svg className="hand-tracking-visualizer" aria-hidden="true">
       {hands.map((hand, handIndex) => {
-        const landmarks = hand.landmarks ?? [];
+        const landmarks = hand.landmarks;
         if (landmarks.length === 0) return null;
 
         const color = hand.isFist ? "#facc15" : "#38bdf8";

@@ -4,9 +4,9 @@ This document describes the hand tracking system that exists in the current code
 
 ## Purpose
 
-Hand tracking is a debug-stage interaction system used to test direct 3D object manipulation with a webcam. It allows a user to close their fist to grab a nearby object and move it in 3D space without relying on the center crosshair.
+Hand tracking started as a debug-stage interaction system used to test direct 3D object manipulation with a webcam. It allows a user to close their fist to grab a nearby object and move it in 3D space without relying on the center crosshair.
 
-The feature is scoped to the debug physics scene rather than production gameplay input.
+It is now also available to the production repair flow when a mission reaches a hand-driven step.
 
 ## Runtime Flow
 
@@ -16,19 +16,28 @@ The feature is scoped to the debug physics scene rather than production gameplay
 4. The backend returns hand data including landmarks, handedness, score, center point, and `isFist`.
 5. React stores the latest snapshot in the hand tracking provider.
 6. `GrabbableObject` reads that snapshot each frame and uses fist state plus raycasting to grab objects.
-7. `HandTrackingGlove` reads the same snapshot and places the rigged `gant_l` and `gant_r` models on the detected hands in the debug physics scene.
+7. `HandTrackingGlove` reads the same snapshot and places the rigged `gant_l` and `gant_r` models on the detected hands when hand tracking is active.
 
 ## Activation Rules
 
 Hand tracking is intentionally gated so the webcam and backend are not used all the time.
 
-The current activation conditions are:
+The debug activation conditions are:
 
 - debug mode is active with `?debug`
 - scene mode is `physics`
 - the player is near an interaction, is holding an object, or is hand-holding an object
 
 This keeps hand tracking active while the player is inside an interaction zone, even if the camera is not aimed directly at the object.
+
+The production repair activation conditions are:
+
+- active `mainState` is `bike`, `pylone`, or `ferme`
+- the active mission step is `inspected`, `repairing`, `reassembling`, or `done`
+
+This keeps the webcam off during `waiting`, `fragmented`, and `scanning`, then enables hand input only when the repair flow is expected to use hands.
+
+In the current production repair flow, `inspected` uses a two-fists hold gesture to advance to `fragmented`. The hold must last one second and is independent from local object interaction distance once the mission is in the correct state. Keyboard input for the same transition is handled separately by the repair case trigger, so pressing `E` requires the case to be focused through the shared interaction system.
 
 ## Backend
 
@@ -121,7 +130,7 @@ The glove models are intentionally smaller than the raw SVG overlay so they do n
 
 ## Known Limitations
 
-- The feature is debug-only and focused on the physics test scene.
+- Production usage is currently limited to repair mission steps that explicitly need hands.
 - MediaPipe depth is relative and can be noisy.
 - The virtual hit zone is an approximation based on multiple raycasts, not a real 3D collider.
 - There is no smoothing layer for hand position or depth yet.

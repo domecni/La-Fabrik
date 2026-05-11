@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RigidBody } from "@react-three/rapier";
+import type { RapierRigidBody } from "@react-three/rapier";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
+import { INTERACTION_RADIUS } from "@/data/interaction/interactionConfig";
 import {
   TRIGGER_DEFAULT_COLLIDERS,
   TRIGGER_DEFAULT_LABEL,
@@ -22,6 +24,7 @@ interface TriggerObjectProps {
   children: React.ReactNode;
   colliders?: ColliderShape;
   label?: string;
+  radius?: number;
   soundPath?: string;
   soundVolume?: number;
   spawnModel?: string;
@@ -52,6 +55,7 @@ export function TriggerObject({
   children,
   colliders = TRIGGER_DEFAULT_COLLIDERS,
   label = TRIGGER_DEFAULT_LABEL,
+  radius = INTERACTION_RADIUS,
   soundPath,
   soundVolume = TRIGGER_DEFAULT_SOUND_VOLUME,
   spawnModel,
@@ -59,14 +63,22 @@ export function TriggerObject({
   onTrigger,
 }: TriggerObjectProps): React.JSX.Element {
   const [spawned, setSpawned] = useState<SpawnedModel[]>([]);
+  const rbRef = useRef<RapierRigidBody>(null);
 
   return (
     <>
-      <RigidBody type="fixed" colliders={colliders} position={position}>
+      <RigidBody
+        ref={rbRef}
+        type="fixed"
+        colliders={colliders}
+        position={position}
+      >
         <InteractableObject
           kind="trigger"
           label={label}
           position={position}
+          radius={radius}
+          bodyRef={rbRef}
           onPress={() => {
             if (soundPath) {
               AudioManager.getInstance().playSound(soundPath, soundVolume, {

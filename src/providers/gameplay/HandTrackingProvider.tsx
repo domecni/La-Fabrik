@@ -8,6 +8,15 @@ import {
 } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { useBrowserHandTracking } from "@/hooks/handTracking/useBrowserHandTracking";
 import { useRemoteHandTracking } from "@/hooks/handTracking/useRemoteHandTracking";
+import { useGameStore } from "@/managers/stores/useGameStore";
+import type { MissionStep } from "@/types/gameplay/repairMission";
+
+const REPAIR_HAND_TRACKING_STEPS = new Set<MissionStep>([
+  "inspected",
+  "repairing",
+  "reassembling",
+  "done",
+]);
 
 export function HandTrackingProvider({
   children,
@@ -18,8 +27,23 @@ export function HandTrackingProvider({
   const handTrackingSource = useDebugStore((debug) =>
     debug.getHandTrackingSource(),
   );
+  const repairNeedsHands = useGameStore((state) => {
+    switch (state.mainState) {
+      case "bike":
+        return REPAIR_HAND_TRACKING_STEPS.has(state.bike.currentStep);
+      case "pylone":
+        return REPAIR_HAND_TRACKING_STEPS.has(state.pylone.currentStep);
+      case "ferme":
+        return REPAIR_HAND_TRACKING_STEPS.has(state.ferme.currentStep);
+      case "intro":
+      case "outro":
+        return false;
+    }
+  });
   const { nearby, holding, handHolding } = useInteraction();
-  const enabled = sceneMode === "physics" && (nearby || holding || handHolding);
+  const enabled =
+    repairNeedsHands ||
+    (sceneMode === "physics" && (nearby || holding || handHolding));
   const backendSnapshot = useRemoteHandTracking({
     enabled: enabled && handTrackingSource === "backend",
   });

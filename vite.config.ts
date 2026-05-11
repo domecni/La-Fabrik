@@ -56,7 +56,7 @@ const saveMapPlugin = (): Plugin => ({
       }
 
       try {
-        const data = JSON.parse(Buffer.concat(chunks).toString());
+        const data: unknown = JSON.parse(Buffer.concat(chunks).toString());
         try {
           parseMapNodes(data);
         } catch {

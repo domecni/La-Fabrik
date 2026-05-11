@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Component, useRef } from "react";
 import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
-import { RepairGameZone } from "@/components/three/gameplay/RepairGameZone";
+import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { AnimatedModel } from "@/components/three/models/AnimatedModel";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
@@ -15,6 +15,9 @@ import {
   TEST_SCENE_GRABBABLE_METALNESS,
   TEST_SCENE_GRABBABLE_POSITION,
   TEST_SCENE_GRABBABLE_ROUGHNESS,
+  TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS,
+  TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS,
+  TEST_SCENE_REPAIR_ZONES,
   TEST_SCENE_TRIGGER_COLOR,
   TEST_SCENE_TRIGGER_METALNESS,
   TEST_SCENE_TRIGGER_POSITION,
@@ -41,6 +44,10 @@ interface ModelPreviewErrorBoundaryProps {
 
 interface ModelPreviewErrorBoundaryState {
   hasError: boolean;
+}
+
+interface RepairPlaygroundZoneMarkerProps {
+  color: string;
 }
 
 class ModelPreviewErrorBoundary extends Component<
@@ -134,7 +141,14 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
           </mesh>
         </TriggerObject>
 
-        <RepairGameZone />
+        {TEST_SCENE_REPAIR_ZONES.map((zone) => (
+          <group key={zone.mission}>
+            <group position={zone.position}>
+              <RepairPlaygroundZoneMarker color={zone.color} />
+            </group>
+            <RepairGame mission={zone.mission} position={zone.position} />
+          </group>
+        ))}
       </Physics>
 
       <ModelPreviewErrorBoundary modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}>
@@ -146,5 +160,33 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
         />
       </ModelPreviewErrorBoundary>
     </>
+  );
+}
+
+function RepairPlaygroundZoneMarker({
+  color,
+}: RepairPlaygroundZoneMarkerProps): React.JSX.Element {
+  return (
+    <group>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry
+          args={[
+            TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS,
+            TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS,
+            12,
+            96,
+          ]}
+        />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+      <mesh position={[0, 0.08, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.2, TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS, 96]} />
+        <meshBasicMaterial color={color} transparent opacity={0.12} />
+      </mesh>
+    </group>
   );
 }

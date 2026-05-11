@@ -1,6 +1,7 @@
 import GUI from "lil-gui";
 import type { CameraMode, SceneMode } from "@/types/debug/debug";
 import type { HandTrackingSource } from "@/types/handTracking/handTracking";
+import { EventEmitter } from "@/utils/core/EventEmitter";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
@@ -8,6 +9,10 @@ const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
 interface StoredDebugControls {
   cameraMode: CameraMode;
   sceneMode: SceneMode;
+}
+
+interface DebugEvents {
+  change: void;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -48,9 +53,9 @@ export class Debug {
 
   public readonly active: boolean;
   private readonly gui: GUI | null;
+  private readonly events = new EventEmitter<DebugEvents>();
   private readonly folders = new Map<string, GUI>();
   private readonly folderRefCounts = new Map<string, number>();
-  private readonly listeners = new Set<() => void>();
   private readonly controls: {
     cameraMode: CameraMode;
     handTrackingSource: HandTrackingSource;
@@ -182,11 +187,7 @@ export class Debug {
   }
 
   subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
-
-    return () => {
-      this.listeners.delete(listener);
-    };
+    return this.events.on("change", listener);
   }
 
   getCameraMode(): CameraMode {
@@ -228,7 +229,7 @@ export class Debug {
   }
 
   private emit(): void {
-    this.listeners.forEach((listener) => listener());
+    this.events.emit("change", undefined);
   }
 
   private saveAndEmit(): void {

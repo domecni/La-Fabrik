@@ -1,14 +1,12 @@
 import { create } from "zustand";
+import {
+  isRepairMissionId,
+  type MissionStep,
+  type RepairMissionId,
+} from "@/types/gameplay/repairMission";
 
 export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
-export type MissionStep =
-  | "locked"
-  | "waiting"
-  | "inspected"
-  | "fragmented"
-  | "scanning"
-  | "repairing"
-  | "done";
+export type { MissionStep, RepairMissionId };
 
 interface IntroState {
   dialogueAudio: string | null;
@@ -48,10 +46,12 @@ interface GameActions {
   setPyloneState: (pylone: Partial<GameState["pylone"]>) => void;
   setFermeState: (ferme: Partial<GameState["ferme"]>) => void;
   setOutroState: (outro: Partial<GameState["outro"]>) => void;
+  setMissionStep: (mission: RepairMissionId, step: MissionStep) => void;
   completeIntro: () => void;
   completeBike: () => void;
   completePylone: () => void;
   completeFerme: () => void;
+  completeMission: (mission: RepairMissionId) => void;
   startOutro: () => void;
   advanceGameState: () => void;
   rewindGameState: () => void;
@@ -74,6 +74,8 @@ function getNextMissionStep(step: MissionStep): MissionStep {
     case "scanning":
       return "repairing";
     case "repairing":
+      return "reassembling";
+    case "reassembling":
     case "done":
       return "done";
   }
@@ -92,8 +94,10 @@ function getPreviousMissionStep(step: MissionStep): MissionStep {
       return "fragmented";
     case "repairing":
       return "scanning";
-    case "done":
+    case "reassembling":
       return "repairing";
+    case "done":
+      return "reassembling";
   }
 }
 
@@ -157,6 +161,56 @@ function completeFermeState(state: GameState): GameStateUpdate {
   };
 }
 
+function setMissionStepState(
+  state: GameState,
+  mission: RepairMissionId,
+  step: MissionStep,
+): GameStateUpdate {
+  return {
+    [mission]: {
+      ...state[mission],
+      currentStep: step,
+    },
+  };
+}
+
+function completeMissionState(
+  state: GameState,
+  mission: RepairMissionId,
+): GameStateUpdate {
+  switch (mission) {
+    case "bike":
+      return completeBikeState(state);
+    case "pylone":
+      return completePyloneState(state);
+    case "ferme":
+      return completeFermeState(state);
+  }
+}
+
+function advanceRepairMissionState(
+  state: GameState,
+  mission: RepairMissionId,
+): GameStateUpdate {
+  const nextStep = getNextMissionStep(state[mission].currentStep);
+  if (nextStep === "done") {
+    return completeMissionState(state, mission);
+  }
+
+  return setMissionStepState(state, mission, nextStep);
+}
+
+function rewindRepairMissionState(
+  state: GameState,
+  mission: RepairMissionId,
+): GameStateUpdate {
+  return setMissionStepState(
+    state,
+    mission,
+    getPreviousMissionStep(state[mission].currentStep),
+  );
+}
+
 function startOutroState(state: GameState): GameStateUpdate {
   return {
     mainState: "outro",
@@ -177,17 +231,17 @@ function createInitialGameState(): GameState {
       isBikeUnlocked: false,
     },
     bike: {
-      currentStep: "waiting",
+      currentStep: "locked",
       dialogueAudio: null,
       isRepaired: false,
     },
     pylone: {
-      currentStep: "waiting",
+      currentStep: "locked",
       dialogueAudio: null,
       isPowered: false,
     },
     ferme: {
-      currentStep: "waiting",
+      currentStep: "locked",
       dialogueAudio: null,
       irrigationFixed: false,
     },
@@ -212,10 +266,14 @@ export const useGameStore = create<GameStore>()((set) => ({
     set((state) => ({ ferme: { ...state.ferme, ...ferme } })),
   setOutroState: (outro) =>
     set((state) => ({ outro: { ...state.outro, ...outro } })),
+  setMissionStep: (mission, step) =>
+    set((state) => setMissionStepState(state, mission, step)),
   completeIntro: () => set(completeIntroState),
-  completeBike: () => set(completeBikeState),
-  completePylone: () => set(completePyloneState),
-  completeFerme: () => set(completeFermeState),
+  completeBike: () => set((state) => completeMissionState(state, "bike")),
+  completePylone: () => set((state) => completeMissionState(state, "pylone")),
+  completeFerme: () => set((state) => completeMissionState(state, "ferme")),
+  completeMission: (mission) =>
+    set((state) => completeMissionState(state, mission)),
   startOutro: () => set(startOutroState),
   advanceGameState: () =>
     set((state) => {
@@ -223,31 +281,8 @@ export const useGameStore = create<GameStore>()((set) => ({
         return completeIntroState(state);
       }
 
-      if (state.mainState === "bike") {
-        const nextStep = getNextMissionStep(state.bike.currentStep);
-        if (nextStep === "done") {
-          return completeBikeState(state);
-        }
-
-        return { bike: { ...state.bike, currentStep: nextStep } };
-      }
-
-      if (state.mainState === "pylone") {
-        const nextStep = getNextMissionStep(state.pylone.currentStep);
-        if (nextStep === "done") {
-          return completePyloneState(state);
-        }
-
-        return { pylone: { ...state.pylone, currentStep: nextStep } };
-      }
-
-      if (state.mainState === "ferme") {
-        const nextStep = getNextMissionStep(state.ferme.currentStep);
-        if (nextStep === "done") {
-          return completeFermeState(state);
-        }
-
-        return { ferme: { ...state.ferme, currentStep: nextStep } };
+      if (isRepairMissionId(state.mainState)) {
+        return advanceRepairMissionState(state, state.mainState);
       }
 
       return startOutroState(state);
@@ -258,31 +293,8 @@ export const useGameStore = create<GameStore>()((set) => ({
         return { intro: { ...state.intro, hasCompleted: false } };
       }
 
-      if (state.mainState === "bike") {
-        return {
-          bike: {
-            ...state.bike,
-            currentStep: getPreviousMissionStep(state.bike.currentStep),
-          },
-        };
-      }
-
-      if (state.mainState === "pylone") {
-        return {
-          pylone: {
-            ...state.pylone,
-            currentStep: getPreviousMissionStep(state.pylone.currentStep),
-          },
-        };
-      }
-
-      if (state.mainState === "ferme") {
-        return {
-          ferme: {
-            ...state.ferme,
-            currentStep: getPreviousMissionStep(state.ferme.currentStep),
-          },
-        };
+      if (isRepairMissionId(state.mainState)) {
+        return rewindRepairMissionState(state, state.mainState);
       }
 
       return { outro: { ...state.outro, hasStarted: false } };

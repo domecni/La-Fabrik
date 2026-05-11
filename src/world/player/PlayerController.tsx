@@ -23,6 +23,7 @@ import {
   PLAYER_WALK_SPEED,
   PLAYER_XZ_DAMPING_FACTOR,
 } from "@/data/player/playerConfig";
+import { useRepairMovementLocked } from "@/hooks/gameplay/useRepairMovementLocked";
 import { InteractionManager } from "@/managers/InteractionManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
@@ -87,6 +88,8 @@ export function PlayerController({
   spawnPosition,
 }: PlayerControllerProps): null {
   const camera = useThree((state) => state.camera);
+  const movementLocked = useRepairMovementLocked();
+  const movementLockedRef = useRef(movementLocked);
   const keys = useRef<Keys>({ ...DEFAULT_KEYS });
   const velocity = useRef(new THREE.Vector3());
   const onFloor = useRef(false);
@@ -114,17 +117,37 @@ export function PlayerController({
   }, [camera, spawnPosition]);
 
   useEffect(() => {
+    movementLockedRef.current = movementLocked;
+
+    if (!movementLocked) return;
+
+    keys.current = { ...DEFAULT_KEYS };
+    wantsJump.current = false;
+    velocity.current.setX(0);
+    velocity.current.setZ(0);
+  }, [movementLocked]);
+
+  useEffect(() => {
     const interaction = InteractionManager.getInstance();
 
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (isPlayerInputLocked()) return;
 
       if (setMovementKey(keys.current, event.key, true)) {
+        if (movementLockedRef.current) {
+          keys.current = { ...DEFAULT_KEYS };
+        }
         event.preventDefault();
         return;
       }
 
       if (event.key === JUMP_KEY) {
+        if (movementLockedRef.current) {
+          wantsJump.current = false;
+          event.preventDefault();
+          return;
+        }
+
         wantsJump.current = true;
         event.preventDefault();
         return;
@@ -194,10 +217,12 @@ export function PlayerController({
     }
 
     _wishDir.set(0, 0, 0);
-    if (keys.current.forward) _wishDir.add(_forward);
-    if (keys.current.backward) _wishDir.sub(_forward);
-    if (keys.current.left) _wishDir.sub(_right);
-    if (keys.current.right) _wishDir.add(_right);
+    if (!movementLocked) {
+      if (keys.current.forward) _wishDir.add(_forward);
+      if (keys.current.backward) _wishDir.sub(_forward);
+      if (keys.current.left) _wishDir.sub(_right);
+      if (keys.current.right) _wishDir.add(_right);
+    }
     if (_wishDir.lengthSq() > 0) _wishDir.normalize();
 
     const accel = onFloor.current

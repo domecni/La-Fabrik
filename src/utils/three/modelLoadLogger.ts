@@ -1,12 +1,12 @@
-import { logger } from "@/utils/core/logger";
-import type { Vector3Tuple } from "@/types/three/three";
+import { logger } from "@/utils/core/Logger";
+import type { Vector3Scale, Vector3Tuple } from "@/types/three/three";
 
 export interface ModelLoadLogContext {
   modelPath: string;
   scope: string;
   position?: Vector3Tuple | undefined;
   rotation?: Vector3Tuple | undefined;
-  scale?: Vector3Tuple | number | undefined;
+  scale?: Vector3Scale | undefined;
 }
 
 interface LoadedModelInfo {

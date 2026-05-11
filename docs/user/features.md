@@ -6,7 +6,9 @@ This document lists features that are implemented in the current codebase.
 
 - Fullscreen React Three Fiber scene
 - Main map scene loaded from `public/map.json` and matching `public/models/{name}/model.glb` or `model.gltf` assets
-- Debug physics test scene selectable from the debug panel
+- Minimal fullscreen scene loading overlay for 3D scenes, with a global progress bar used by the production map, debug physics scene, and editor scene
+- Debug physics test scene selectable from the debug panel, including grab/trigger tests, an animated model preview, and separate repair playground zones for `bike`, `pylone`, and `ferme`
+- Rapier physics context available for production stage gameplay objects
 - Ambient and directional lighting
 - Environment background setup
 
@@ -16,14 +18,23 @@ This document lists features that are implemented in the current codebase.
 - Pointer lock mouse look
 - Movement with `ZQSD`
 - Jumping
-- Octree-based collision against the loaded map
+- Movement lock during active repair steps, with an on-screen indicator while keeping trigger interactions available
+- Octree-based collision against dedicated map collision nodes, currently scoped to `terrain`
 
 ## Interactions
 
 - Focus detection by distance and raycast
 - Trigger interactions activated with `E`
 - Grab interactions activated with the primary mouse button
+- Physics-backed gameplay objects can be mounted inside stage content without replacing player octree collision
 - Interaction prompt shown for trigger interactions
+
+## Repair Gameplay
+
+- Reusable production `RepairGame` mounted for `bike`, `pylone`, and `ferme` mission states
+- Debug physics playground mounts the same reusable `RepairGame` in `Bike`, `Pylone`, and `Farm` zones so each state can be tuned with isolated positioning before moving placement into the production map
+- Repair mission config shared through `src/data/gameplay/repairMissions.ts`, including per-mission broken nodes, placeholder targets, scan timing, and reassembly timing
+- Repair-game flow supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` with `.webm` prompts, repair case spawn/opening/exit, focused repair-case view, movement lock indicator during active repair, repair-case trigger interaction, case placeholder traversal, snap-to-placeholder placement, broken-part deposit feedback, `E`, two-fists hold input, exploded and inverse reassembly transitions, completion particles, per-part scan visuals, persistent red broken-part markers, centered broken-part UI videos, multiple grabbable replacement choices, correct-part install validation feedback, and mission completion
 
 ## Audio
 
@@ -64,6 +75,7 @@ This document lists features that are implemented in the current codebase.
 - `?debug` query param enables the debug panel
 - `lil-gui` controls for camera mode, scene mode, `R3F Perf`, `Debug Overlay`, and interaction tuning
 - Compact debug overlay for game state controls and hand tracking status
+- Debug game-state mission switching unlocks locked repair missions at `waiting` for faster testing
 - Debug scene helpers
 - Free debug camera
 - `r3f-perf` overlay
@@ -90,8 +102,9 @@ This document lists features that are implemented in the current codebase.
 
 ## Not Implemented Yet
 
-- mission system
+- complete mission system
 - zone system
+- full cinematic system beyond current timecode prototype
 - gameplay-triggered dialogue branches beyond current prototype triggers
 - loading flow
 - minimap and mission HUD

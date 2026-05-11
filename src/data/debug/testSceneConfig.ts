@@ -19,3 +19,32 @@ export const TEST_SCENE_TRIGGER_SEGMENTS = 32;
 export const TEST_SCENE_TRIGGER_COLOR = "#3b82f6";
 export const TEST_SCENE_TRIGGER_ROUGHNESS = 0.3;
 export const TEST_SCENE_TRIGGER_METALNESS = 0.5;
+
+export const TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS = 1.65;
+export const TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS = 0.045;
+
+export const TEST_SCENE_REPAIR_ZONES = [
+  {
+    mission: "bike",
+    label: "Bike",
+    color: "#38bdf8",
+    position: [-12, 0, -12],
+  },
+  {
+    mission: "pylone",
+    label: "Pylone",
+    color: "#facc15",
+    position: [0, 0, -12],
+  },
+  {
+    mission: "ferme",
+    label: "Farm",
+    color: "#86efac",
+    position: [12, 0, -12],
+  },
+] as const satisfies readonly {
+  mission: "bike" | "pylone" | "ferme";
+  label: string;
+  color: string;
+  position: Vector3Tuple;
+}[];

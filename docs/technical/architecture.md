@@ -14,10 +14,24 @@ This document describes the code that exists today in the repository.
   - debug helpers and debug camera mode
   - either the map scene or the debug physics test scene
   - the player rig when the active camera mode is `player`
-- `src/world/GameMap.tsx` loads map nodes from `public/map.json`, resolves available models, and builds the collision octree.
-- `src/world/debug/TestMap.tsx` provides a debug-oriented interaction and physics map.
+- `src/hooks/world/useWorldSceneLoading.ts` owns the production scene loading state shared by `World`, `GameMap`, and the player octree readiness.
+- `src/world/GameMap.tsx` loads map nodes from `public/map.json`, resolves available models, renders them progressively, and shows fallback cubes for missing models.
+- `src/world/GameMapCollision.tsx` builds the player collision octree from dedicated collision nodes only.
+- `src/world/GameStageContent.tsx` is wrapped in Rapier `Physics` in the production game scene so stage gameplay objects can use physics without moving the map or player to Rapier. It now mounts reusable `RepairGame` instances for `bike`, `pylone`, and `ferme` mission states.
+- `src/world/debug/TestMap.tsx` provides a debug-oriented interaction and physics map with the existing grab/trigger/model-preview objects plus separate `Bike`, `Pylone`, and `Farm` repair playground zones.
 - `src/world/player/Player.tsx` mounts the camera and controller.
-- `src/world/player/PlayerController.tsx` owns pointer lock movement, jump handling, and interaction input.
+- `src/world/player/PlayerController.tsx` owns pointer lock movement, jump handling, repair-step movement locking, and interaction input.
+
+## Physics Boundaries
+
+The project currently uses two collision layers with separate responsibilities:
+
+- `GameMapCollision` builds an octree used by the player controller for map collision.
+- The player octree must be built from a small collision-only subset of map nodes. It currently uses the `terrain` node only instead of traversing the full visible map, because building an octree from all rendered props can overload the browser renderer.
+- `GameStageContent` is wrapped in Rapier `Physics` for gameplay objects such as repair triggers, cases, grabbables, and future mission-specific objects.
+- `TestMap` owns its own Rapier `Physics` playground so repair gameplay can be tuned per mission state without depending on the production map layout.
+
+Keep the player and map octree outside the Rapier provider until there is a deliberate migration plan. This avoids mixing player movement rules with object physics before the gameplay systems need it.
 
 ## Interaction Model
 
@@ -78,6 +92,7 @@ This document describes the code that exists today in the repository.
 - `src/components/ui/debug/DebugOverlayLayout.tsx` mounts the compact HTML debug overlay when enabled from `lil-gui`.
 - `src/components/ui/debug/GameStateDebugPanel.tsx` exposes current game state, main/sub-state switching, previous/next step controls, and reset.
 - `src/components/ui/debug/HandTrackingDebugPanel.tsx` shows hand tracking status, usage, loaded glove model, hand count, and fist state while hand tracking is active.
+- `src/components/ui/SceneLoadingOverlay.tsx` displays the fullscreen loading state for 3D scenes, including the production game scene, debug physics scene, and editor scene.
 - `src/components/three/handTracking/HandTrackingGlove.tsx` places the rigged `gant_l` and `gant_r` models on detected hands in the debug physics scene.
 - `src/components/debug/scene/DebugHelpers.tsx` mounts debug helpers.
 - `src/components/debug/scene/DebugCameraControls.tsx` mounts the free debug camera.
@@ -88,7 +103,7 @@ This document describes the code that exists today in the repository.
 - `src/components/three/models/` contains reusable model helpers such as `ExplodableModel`.
 - `src/components/three/interaction/` contains reusable interaction wrappers such as `InteractableObject`, `TriggerObject`, and `GrabbableObject`.
 - `src/components/three/handTracking/` contains R3F hand tracking debug models such as the glove overlays.
-- `src/components/three/gameplay/` contains the current core repair gameplay prototype: the repair case, repair game zone, and module slots.
+- `src/components/three/gameplay/` contains the reusable production `RepairGame` flow, repair case, repair steps, and repair prompt components.
 - `src/components/three/world/` contains reusable world/environment objects such as `SkyModel`.
 
 ## Editor System
@@ -106,20 +121,22 @@ This document describes the code that exists today in the repository.
 - `src/utils/editor/loadEditorScene.ts` handles editor-only folder upload parsing.
 - `src/utils/map/loadMapSceneData.ts` is shared by the game scene and editor to load `public/map.json` and resolve model URLs.
 - `src/types/editor/editor.ts` contains the shared `MapNode`, `SceneData`, and `TransformMode` types.
+- `src/types/gameplay/repairMission.ts` contains shared repair mission ids, mission steps, and guards used across store, config, debug UI, and gameplay components.
 
 ## Map Data
 
 - `public/map.json` is expected to be a `MapNode[]`.
 - Each map node `name` maps to `public/models/{name}/model.glb` when available, with `public/models/{name}/model.gltf` kept as fallback.
 - The editor renders a fallback cube for missing models.
-- The game scene filters out nodes whose model cannot be resolved.
+- The game scene renders fallback cubes for nodes whose model cannot be resolved.
+- The game scene currently uses `terrain` as the collision source for the player octree. Additional collision nodes should be explicit lightweight collision assets, not arbitrary visible decoration models.
 
 ## Current Limitations
 
 - The repository is a prototype, not the full intended game runtime.
 - `src/world/debug/TestMap.tsx` is part of the active scene composition.
 - There is no central gameplay orchestrator such as `GameManager`.
-- Missions and zones are not implemented.
-- Dialogue branching and gameplay-triggered orchestration are still limited.
+- Mission state exists in Zustand and the repair flow is implemented as a prototype for the current repair missions.
+- Cinematics and dialogues exist as prototype timecode-driven systems; dialogue branching and broader gameplay orchestration are still limited.
 - The player uses octree collision and simple movement rules, not a complete gameplay physics stack.
 - Editor save-to-server is implemented as a Vite dev-server plugin, not a production backend API.

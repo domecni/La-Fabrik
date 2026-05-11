@@ -3,6 +3,11 @@ import type {
   InteractableHandle,
   InteractionSnapshot,
 } from "@/types/interaction/interaction";
+import { EventEmitter } from "@/utils/core/EventEmitter";
+
+interface InteractionManagerEvents {
+  change: void;
+}
 
 export class InteractionManager {
   private static _instance: InteractionManager | null = null;
@@ -18,7 +23,7 @@ export class InteractionManager {
     holding: false,
     handHolding: false,
   };
-  private readonly _listeners = new Set<() => void>();
+  private readonly _events = new EventEmitter<InteractionManagerEvents>();
 
   static getInstance(): InteractionManager {
     if (!InteractionManager._instance) {
@@ -88,11 +93,7 @@ export class InteractionManager {
   }
 
   subscribe(listener: () => void): () => void {
-    this._listeners.add(listener);
-
-    return () => {
-      this._listeners.delete(listener);
-    };
+    return this._events.on("change", listener);
   }
 
   destroy(): void {
@@ -107,7 +108,7 @@ export class InteractionManager {
       holding: false,
       handHolding: false,
     };
-    this._listeners.clear();
+    this._events.clear();
     InteractionManager._instance = null;
   }
 
@@ -118,6 +119,6 @@ export class InteractionManager {
       holding: this._holding,
       handHolding: this._handHolding,
     };
-    this._listeners.forEach((cb) => cb());
+    this._events.emit("change", undefined);
   }
 }

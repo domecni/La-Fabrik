@@ -11,7 +11,7 @@ You are working on **La Fabrik**, an interactive 3D web experience built with Re
 ## Current Implementation
 
 - Stack: React 19, Three.js, `@react-three/fiber`, `@react-three/drei`, `@react-three/rapier`, TypeScript, Vite
-- No external global state library is used.
+- Zustand is used for shared game progression state.
 - Current singleton-style services are limited to:
   - `InteractionManager`
   - `AudioManager`

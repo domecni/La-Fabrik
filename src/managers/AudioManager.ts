@@ -1,4 +1,4 @@
-import { logger } from "@/utils/core/logger";
+import { logger } from "@/utils/core/Logger";
 
 export type AudioCategory = "music" | "sfx" | "dialogue";
 export type OneShotAudioCategory = Exclude<AudioCategory, "music">;
@@ -195,7 +195,22 @@ export class AudioManager {
 
     this._musicUnlockHandler = () => {
       this._removeMusicUnlockHandler();
-      void this._music?.play();
+      const music = this._music;
+      if (!music) return;
+
+      void music.play().catch((error: unknown) => {
+        if (
+          error instanceof DOMException &&
+          AudioManager.IGNORED_PLAYBACK_ERRORS.has(error.name)
+        ) {
+          return;
+        }
+
+        logger.error("AudioManager", "Failed to unlock music playback", {
+          path: this._musicPath,
+          error: AudioManager._toLogValue(error),
+        });
+      });
     };
 
     window.addEventListener("pointerdown", this._musicUnlockHandler, {
