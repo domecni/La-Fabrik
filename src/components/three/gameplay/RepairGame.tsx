@@ -1,4 +1,5 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useGLTF } from "@react-three/drei";
 import { ExplodableModel } from "@/components/three/models/ExplodableModel";
 import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairCompletionStep } from "@/components/three/gameplay/RepairCompletionStep";
@@ -10,8 +11,12 @@ import {
   RepairScanSequence,
   type RepairScannedBrokenPart,
 } from "@/components/three/gameplay/RepairScanSequence";
+import { REPAIR_CASE_MODEL_PATH } from "@/data/gameplay/repairCaseConfig";
 import { REPAIR_FRAGMENTATION_SEQUENCE_SECONDS } from "@/data/gameplay/repairGameConfig";
-import { REPAIR_MISSIONS } from "@/data/gameplay/repairMissions";
+import {
+  REPAIR_MISSIONS,
+  type RepairMissionConfig,
+} from "@/data/gameplay/repairMissions";
 import { useRepairFragmentationInput } from "@/hooks/gameplay/useRepairFragmentationInput";
 import { useRepairMissionStep } from "@/hooks/gameplay/useRepairMissionStep";
 import type { RepairMissionId } from "@/types/gameplay/repairMission";
@@ -25,6 +30,23 @@ interface RepairGameProps extends Required<
   mission: RepairMissionId;
   rotation?: Vector3Tuple;
   scale?: ModelTransformProps["scale"];
+}
+
+interface RepairMissionAssetPreloaderProps {
+  config: RepairMissionConfig;
+}
+
+function RepairMissionAssetPreloader({
+  config,
+}: RepairMissionAssetPreloaderProps): null {
+  const modelPaths = useMemo(
+    () => getRepairMissionModelPaths(config),
+    [config],
+  );
+
+  useGLTF(modelPaths);
+
+  return null;
 }
 
 export function RepairGame({
@@ -71,6 +93,9 @@ export function RepairGame({
 
   return (
     <group position={position} rotation={rotation} scale={parsedScale}>
+      <Suspense fallback={null}>
+        <RepairMissionAssetPreloader config={config} />
+      </Suspense>
       <Suspense fallback={null}>
         {step === "waiting" ? (
           <RepairInspectionObject
@@ -123,4 +148,15 @@ export function RepairGame({
       </Suspense>
     </group>
   );
+}
+
+function getRepairMissionModelPaths(config: RepairMissionConfig): string[] {
+  return [
+    ...new Set([
+      REPAIR_CASE_MODEL_PATH,
+      config.modelPath,
+      ...config.brokenParts.flatMap((part) => part.modelPath ?? []),
+      ...config.replacementParts.flatMap((part) => part.modelPath ?? []),
+    ]),
+  ];
 }
