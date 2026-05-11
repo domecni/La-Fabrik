@@ -40,6 +40,15 @@ This document lists features that are implemented in the current codebase.
 - French subtitle fallback when the selected language file is missing
 - Runtime subtitle overlay with speaker-specific colors
 - Timecoded dialogue trigger support for dialogue entries that define `timecode`
+- Dialogue queueing to avoid overlapping dialogue playback
+
+## Cinematics
+
+- Cinematic manifest in `public/cinematics.json`
+- Timecoded cinematic trigger support
+- GSAP camera keyframe playback
+- Optional dialogue cues synchronized to cinematic timelines
+- Player input lock while a cinematic is active
 
 ## Game Options Menu
 
@@ -75,14 +84,15 @@ This document lists features that are implemented in the current codebase.
 - SRT editor for dialogue subtitles
 - Audio preview and timing helpers for SRT cues
 - Dev-server save endpoint for SRT files
+- Dialogue manifest editor with preview and assisted French SRT cue creation
+- Cinematic manifest editor with camera keyframes, dialogue cues, and canvas preview
 - Dialogue manifest validation from the editor UI
 
 ## Not Implemented Yet
 
 - mission system
 - zone system
-- cinematic system
-- dialogue queueing and gameplay-triggered dialogue branches
+- gameplay-triggered dialogue branches beyond current prototype triggers
 - loading flow
 - minimap and mission HUD
 - full production separation between gameplay and debug scenes

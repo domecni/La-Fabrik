@@ -23,6 +23,8 @@ src/
 ├── components/
 │   └── editor/
 │       ├── EditorControls.tsx
+│       ├── EditorCinematicManifestPanel.tsx
+│       ├── EditorDialogueManifestPanel.tsx
 │       ├── EditorSrtPanel.tsx
 │       └── scene/
 │           ├── EditorMap.tsx
@@ -61,6 +63,10 @@ src/
 `src/components/editor/scene/EditorMap.tsx` renders map nodes, fallback cubes, selection highlighting, and transform controls.
 
 `src/components/editor/EditorControls.tsx` renders the HTML control panel outside the canvas.
+
+`src/components/editor/EditorDialogueManifestPanel.tsx` renders the dialogue manifest editor. It loads `dialogues.json`, edits dialogue entries, previews selected dialogue playback, creates missing French SRT cues, and saves the manifest through a dev-server endpoint.
+
+`src/components/editor/EditorCinematicManifestPanel.tsx` renders the cinematic manifest editor. It loads `cinematics.json`, edits camera keyframes and dialogue cues, previews selected cinematics in the editor canvas, and saves the manifest through a dev-server endpoint.
 
 `src/components/editor/EditorSrtPanel.tsx` renders the dialogue subtitle editor inside the control panel. It loads the dialogue manifest, loads one SRT file per voice/language, validates cue structure, previews dialogue audio, and can save SRT files through a dev-server endpoint.
 
@@ -174,6 +180,45 @@ SRT timecodes are relative to the dialogue audio file being previewed, not to th
 
 Missing English SRT files are warnings because runtime loading falls back to French subtitles when the selected language is not available.
 
+## Dialogue Manifest Editing
+
+`EditorDialogueManifestPanel` edits `public/sounds/dialogue/dialogues.json` in memory and persists it through `/api/save-dialogues`.
+
+The panel supports:
+
+- adding a dialogue entry
+- deleting a dialogue entry
+- editing `id`, `voice`, `audio`, `subtitleCueIndex`, and optional `timecode`
+- previewing the selected dialogue through `playDialogueById()`
+- creating a missing French SRT cue through `/api/save-srt`
+
+When a dialogue is added, the editor computes the next `subtitleCueIndex` for the selected voice from the manifest. The generated SRT cue is a valid placeholder block and should be edited later in the SRT panel.
+
+`/api/save-dialogues` is implemented in `vite.config.ts`. It validates manifest shape before writing to `public/sounds/dialogue/dialogues.json`.
+
+## Cinematic Manifest Editing
+
+`EditorCinematicManifestPanel` edits `public/cinematics.json` in memory and persists it through `/api/save-cinematics`.
+
+The manifest shape is:
+
+```ts
+interface CinematicDefinition {
+  id: string;
+  timecode?: number;
+  cameraKeyframes: CinematicCameraKeyframe[];
+  dialogueCues?: CinematicDialogueCue[];
+}
+```
+
+`cameraKeyframes` are relative to the cinematic start. At least two keyframes are required and keyframe times must increase.
+
+`dialogueCues` are also relative to the cinematic start and reference dialogue IDs from `dialogues.json`. They are used by `GameCinematics` to synchronize dialogue playback with camera timelines. A dialogue synchronized this way should not also define a global `timecode` in `dialogues.json`.
+
+The editor preview sends the selected `CinematicDefinition` to `EditorScene`, where GSAP animates the current editor camera. Orbit and fly controls are disabled during preview.
+
+`/api/save-cinematics` is implemented in `vite.config.ts`. It validates manifest shape before writing to `public/cinematics.json`.
+
 ## Styling
 
 Editor styles are in `src/index.css` under the `/* Editor page */` section. Classes are prefixed with `editor-` to avoid collisions with the game UI.
@@ -185,4 +230,5 @@ Editor styles are in `src/index.css` under the `/* Editor page */` section. Clas
 - There is no snap-to-grid, duplication, material editing, or object creation workflow.
 - Save to Server is a Vite dev-server helper, not a production backend API.
 - SRT Save is also a Vite dev-server helper, not a production backend API.
-- The editor validates dialogue assets but does not yet create, delete, or reorder dialogue manifest entries.
+- Dialogue and cinematic manifest saves are Vite dev-server helpers, not production backend APIs.
+- Dialogue creation still uses placeholder audio paths until real MP3 files are added.
