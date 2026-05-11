@@ -65,11 +65,13 @@ interface GameMapProps {
   onLoaded?: (() => void) | undefined;
   onLoadingStateChange?: SceneLoadingChangeHandler | undefined;
   onOctreeReady: OctreeReadyHandler;
+  buildOctree?: boolean;
 }
 
 const MAP_RENDER_BATCH_SIZE = 12;
 
 export function GameMap({
+  buildOctree = true,
   onLoaded,
   onLoadingStateChange,
   onOctreeReady,
@@ -197,6 +199,7 @@ export function GameMap({
         ))}
       </group>
       <GameMapCollision
+        buildOctree={buildOctree}
         mapReady={mapReady}
         nodes={mapNodes}
         onLoaded={onLoaded}

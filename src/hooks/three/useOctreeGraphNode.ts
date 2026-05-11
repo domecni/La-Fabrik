@@ -17,6 +17,8 @@ export function useOctreeGraphNode(
   }, [rebuildKey]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const graphNode = graphNodeRef.current;
     if (!enabled || octreeBuilt.current || !graphNode) return;
     octreeBuilt.current = true;

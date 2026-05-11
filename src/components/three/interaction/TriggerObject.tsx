@@ -81,7 +81,9 @@ export function TriggerObject({
           bodyRef={rbRef}
           onPress={() => {
             if (soundPath) {
-              AudioManager.getInstance().playSound(soundPath, soundVolume);
+              AudioManager.getInstance().playSound(soundPath, soundVolume, {
+                category: "sfx",
+              });
             }
 
             onTrigger?.();

@@ -12,6 +12,8 @@ import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControl
 import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { HandTrackingGlove } from "@/components/three/handTracking/HandTrackingGlove";
 import { Environment } from "@/world/Environment";
+import { GameCinematics } from "@/world/GameCinematics";
+import { GameDialogues } from "@/world/GameDialogues";
 import { GameMusic } from "@/world/GameMusic";
 import { Lighting } from "@/world/Lighting";
 import { GameMap } from "@/world/GameMap";
@@ -24,12 +26,23 @@ interface WorldProps {
   onLoadingStateChange?: SceneLoadingChangeHandler | undefined;
 }
 
+function hasBootFlag(name: string): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).has(name);
+}
+
 export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
   const { status, usageStatus } = useHandTrackingSnapshot();
   const { octree, showGameStage, handleGameMapLoaded, handleOctreeReady } =
     useWorldSceneLoading({ sceneMode, onLoadingStateChange });
+  const noCinematics = hasBootFlag("noCinematics");
+  const noDialogues = hasBootFlag("noDialogues");
+  const noMap = hasBootFlag("noMap");
+  const noMusic = hasBootFlag("noMusic");
+  const noOctree = hasBootFlag("noOctree");
+  const noPlayer = hasBootFlag("noPlayer");
   const playerSpawnPosition =
     sceneMode === "game"
       ? PLAYER_SPAWN_POSITION_GAME
@@ -52,13 +65,18 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
       {sceneMode === "game" ? (
         <>
-          <GameMusic />
-          <GameMap
-            onLoaded={handleGameMapLoaded}
-            onLoadingStateChange={onLoadingStateChange}
-            onOctreeReady={handleOctreeReady}
-          />
-          {showGameStage ? (
+          {noMusic ? null : <GameMusic />}
+          {noCinematics ? null : <GameCinematics />}
+          {noDialogues ? null : <GameDialogues />}
+          {noMap ? null : (
+            <GameMap
+              buildOctree={!noOctree}
+              onLoaded={handleGameMapLoaded}
+              onLoadingStateChange={onLoadingStateChange}
+              onOctreeReady={handleOctreeReady}
+            />
+          )}
+          {noMap || showGameStage ? (
             <Physics>
               <GameStageContent />
             </Physics>
@@ -67,7 +85,8 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
       ) : (
         <TestMap onOctreeReady={handleOctreeReady} />
       )}
-      {cameraMode !== "debug" ? (
+
+      {cameraMode !== "debug" && !noPlayer ? (
         <Player octree={octree} spawnPosition={playerSpawnPosition} />
       ) : null}
     </>

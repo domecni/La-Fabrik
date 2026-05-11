@@ -38,8 +38,37 @@ This document lists features that are implemented in the current codebase.
 
 ## Audio
 
-- One-shot sound playback for trigger interactions
-- Simple per-sound pooling through `AudioManager`
+- Category-based volumes for music, SFX, and dialogue
+- Looped background music playback through `AudioManager`
+- One-shot sound playback for SFX and dialogue, with simple per-sound pooling
+- Optional stereo pan for one-shot sounds
+
+## Dialogue And Subtitles
+
+- Dialogue manifest in `public/sounds/dialogue/dialogues.json`
+- Dialogue audio loaded from `public/sounds/dialogue/`
+- One SRT subtitle file per voice and language
+- French subtitle fallback when the selected language file is missing
+- Runtime subtitle overlay with speaker-specific colors
+- Timecoded dialogue trigger support for dialogue entries that define `timecode`
+- Dialogue queueing to avoid overlapping dialogue playback
+
+## Cinematics
+
+- Cinematic manifest in `public/cinematics.json`
+- Timecoded cinematic trigger support
+- GSAP camera keyframe playback
+- Optional dialogue cues synchronized to cinematic timelines
+- Player input lock while a cinematic is active
+
+## Game Options Menu
+
+- `Esc` opens and closes the in-game options menu
+- Music, SFX, and dialogue volume sliders
+- Subtitle visibility toggle
+- Subtitle language choice between French and English
+- Repair runtime choice between local JavaScript and Python server mode
+- Quit action that clears browser-accessible cookies and returns to `/`
 
 ## Debug Tooling
 
@@ -64,13 +93,20 @@ This document lists features that are implemented in the current codebase.
 - Player-style navigation mode with `WASD`, `ZQSD`, arrow keys, `Space`, and `Shift`
 - JSON export for downloading the edited map
 - Dev-server save endpoint for writing changes back to `public/map.json`
+- SRT editor for dialogue subtitles
+- Audio preview and timing helpers for SRT cues
+- Dev-server save endpoint for SRT files
+- Dialogue manifest editor with preview and assisted French SRT cue creation
+- Cinematic manifest editor with camera keyframes, dialogue cues, and canvas preview
+- Dialogue manifest validation from the editor UI
 
 ## Not Implemented Yet
 
 - complete mission system
 - zone system
-- cinematic system
-- dialogue system
+- full cinematic system beyond current timecode prototype
+- gameplay-triggered dialogue branches beyond current prototype triggers
+- loading flow
 - minimap and mission HUD
 - full production separation between gameplay and debug scenes
 - production backend persistence for editor saves

@@ -27,6 +27,7 @@ interface ResolvedGameMapCollisionNode {
 }
 
 interface GameMapCollisionProps {
+  buildOctree?: boolean;
   mapReady: boolean;
   nodes: readonly GameMapCollisionNode[];
   onLoaded?: (() => void) | undefined;
@@ -92,6 +93,7 @@ function isCollisionNode(
 }
 
 export function GameMapCollision({
+  buildOctree = true,
   mapReady,
   nodes,
   onLoaded,
@@ -129,7 +131,7 @@ export function GameMapCollision({
     groupRef,
     handleOctreeReady,
     collisionReady ? collisionNodes.length : 0,
-    collisionReady && collisionNodes.length > 0,
+    buildOctree && collisionReady && collisionNodes.length > 0,
   );
 
   useEffect(() => {

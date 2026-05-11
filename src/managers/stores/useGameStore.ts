@@ -21,6 +21,7 @@ interface MissionState {
 
 interface GameState {
   mainState: MainGameState;
+  isCinematicPlaying: boolean;
   intro: IntroState;
   bike: MissionState & {
     isRepaired: boolean;
@@ -39,6 +40,7 @@ interface GameState {
 
 interface GameActions {
   setMainState: (mainState: MainGameState) => void;
+  setCinematicPlaying: (isCinematicPlaying: boolean) => void;
   setIntroState: (intro: Partial<IntroState>) => void;
   setBikeState: (bike: Partial<GameState["bike"]>) => void;
   setPyloneState: (pylone: Partial<GameState["pylone"]>) => void;
@@ -222,6 +224,7 @@ function startOutroState(state: GameState): GameStateUpdate {
 function createInitialGameState(): GameState {
   return {
     mainState: "intro",
+    isCinematicPlaying: false,
     intro: {
       dialogueAudio: null,
       hasCompleted: false,
@@ -252,6 +255,7 @@ function createInitialGameState(): GameState {
 export const useGameStore = create<GameStore>()((set) => ({
   ...createInitialGameState(),
   setMainState: (mainState) => set({ mainState }),
+  setCinematicPlaying: (isCinematicPlaying) => set({ isCinematicPlaying }),
   setIntroState: (intro) =>
     set((state) => ({ intro: { ...state.intro, ...intro } })),
   setBikeState: (bike) =>

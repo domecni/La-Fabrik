@@ -124,8 +124,44 @@ Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il
 
 ## Audio
 
-- \`src/managers/AudioManager.ts\` fournit actuellement une lecture de sons one-shot avec pool.
-- Les interactions trigger peuvent lancer directement un son via \`AudioManager\`.
+- \`src/managers/AudioManager.ts\` fournit la lecture de sons one-shot avec pool, la musique en boucle, les volumes par catégorie et un pan stéréo optionnel pour les sons one-shot.
+- Les catégories audio supportées sont \`music\`, \`sfx\` et \`dialogue\`.
+- Les interactions trigger peuvent lancer directement des SFX via \`AudioManager\`.
+
+## Menu options
+
+- \`src/managers/stores/useSettingsStore.ts\` stocke les réglages de volume musique, volume SFX, volume dialogue, sous-titres, langue des sous-titres, runtime de réparation et visibilité du menu.
+- \`src/components/ui/GameSettingsMenu.tsx\` rend le menu options en jeu.
+- \`src/components/ui/GameUI.tsx\` monte le menu comme overlay HTML hors canvas.
+- \`Esc\` ouvre et ferme le menu, et \`src/world/player/PlayerController.tsx\` ignore les inputs joueur pendant son ouverture.
+- Les changements de volume sont transmis à \`AudioManager\` par catégorie.
+
+## Dialogues et sous-titres
+
+- \`public/sounds/dialogue/dialogues.json\` est le manifeste runtime des dialogues.
+- Les fichiers audio de dialogue vivent dans \`public/sounds/dialogue/\`.
+- Les fichiers de sous-titres vivent dans \`public/sounds/dialogue/subtitles/{fr|en}/\`.
+- Le modèle actuel utilise un fichier SRT par voix et par langue.
+- \`src/types/dialogues/dialogues.ts\` contient les types du manifeste.
+- \`src/utils/dialogues/dialogueManifestValidation.ts\` valide la forme du manifeste au runtime.
+- \`src/utils/dialogues/loadDialogueManifest.ts\` charge le manifeste et les cues SRT, avec fallback français si la langue sélectionnée manque.
+- \`src/utils/subtitles/parseSrt.ts\` parse les blocs et timecodes SRT.
+- \`src/utils/dialogues/playDialogue.ts\` joue l'audio de dialogue et synchronise le sous-titre actif avec le temps de l'élément audio.
+- \`src/managers/stores/useSubtitleStore.ts\` stocke la cue de sous-titre affichée.
+- \`src/components/ui/Subtitles.tsx\` rend l'overlay de sous-titres.
+- \`src/world/GameDialogues.tsx\` déclenche actuellement les dialogues qui définissent un \`timecode\`.
+- La lecture de dialogue est mise en file pour éviter les chevauchements.
+
+## Cinématiques
+
+- \`public/cinematics.json\` est le manifeste runtime des cinématiques.
+- \`src/types/cinematics/cinematics.ts\` contient les types du manifeste.
+- \`src/utils/cinematics/cinematicManifestValidation.ts\` valide la forme du manifeste.
+- \`src/utils/cinematics/loadCinematicManifest.ts\` charge \`/cinematics.json\`.
+- \`src/world/GameCinematics.tsx\` déclenche les cinématiques qui définissent un \`timecode\` global.
+- Les cinématiques utilisent GSAP pour animer la position caméra et sa cible de regard.
+- Les \`dialogueCues\` d'une cinématique déclenchent des dialogues à des temps relatifs au début de la cinématique.
+- \`useGameStore.isCinematicPlaying\` sert à bloquer les inputs joueur pendant une cinématique.
 
 ## Système debug
 
@@ -154,7 +190,8 @@ Le joueur et l'octree de carte doivent rester hors du provider Rapier tant qu'il
 - Le dépôt est encore un prototype, pas le runtime complet du jeu.
 - \`src/world/debug/TestMap.tsx\` fait encore partie de la composition active.
 - Il n'existe pas encore d'orchestrateur gameplay central comme \`GameManager\`.
-- L'état de mission existe dans Zustand, mais les zones, cinématiques, dialogues et le flow complet de réparation ne sont pas implémentés.
+- L'état de mission existe dans Zustand et le flow de réparation est implémenté comme prototype pour les missions de réparation actuelles.
+- Les cinématiques et dialogues existent comme systèmes prototype pilotés par timecode; les branches de dialogue et l'orchestration gameplay globale restent limitées.
 - Le joueur utilise une collision octree et des règles simples, pas une pile physique gameplay complète.
 `;
 
@@ -450,8 +487,37 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 
 ## Audio
 
-- Lecture de sons one-shot pour les interactions trigger
-- Pool simple par son via \`AudioManager\`
+- Volumes par catégorie pour la musique, les SFX et les dialogues
+- Lecture de musique en boucle via \`AudioManager\`
+- Lecture de sons one-shot pour les SFX et les dialogues, avec pool simple par son
+- Pan stéréo optionnel pour les sons one-shot
+
+## Dialogues et sous-titres
+
+- Manifeste de dialogues dans \`public/sounds/dialogue/dialogues.json\`
+- Audios de dialogue chargés depuis \`public/sounds/dialogue/\`
+- Un fichier SRT par voix et par langue
+- Fallback vers les sous-titres français quand le fichier de langue sélectionné manque
+- Overlay de sous-titres runtime avec couleurs par speaker
+- Déclenchement timecodé pour les dialogues qui définissent \`timecode\`
+- File d'attente pour éviter les dialogues superposés
+
+## Cinématiques
+
+- Manifeste de cinématiques dans \`public/cinematics.json\`
+- Déclenchement timecodé des cinématiques
+- Lecture de keyframes caméra via GSAP
+- Dialogue cues optionnelles synchronisées avec les timelines de cinématique
+- Blocage des inputs joueur pendant une cinématique
+
+## Menu options
+
+- \`Esc\` ouvre et ferme le menu options en jeu
+- Sliders de volume musique, SFX et dialogue
+- Toggle d'affichage des sous-titres
+- Choix de langue des sous-titres entre français et anglais
+- Choix du runtime de réparation entre JavaScript local et serveur Python
+- Action quitter qui nettoie les cookies accessibles au navigateur et retourne vers \`/\`
 
 ## Outils debug
 
@@ -463,12 +529,28 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - Caméra libre debug
 - Overlay \`r3f-perf\`
 
+## Éditeur de carte
+
+- Route \`/editor\` pour inspecter et éditer \`public/map.json\`
+- Chargement automatique de \`public/map.json\` quand il existe
+- Rendu des modèles disponibles depuis \`public/models/{name}/model.glb\` ou \`model.gltf\`
+- Cubes de fallback pour les nodes dont le modèle manque
+- Sélection d'objet au clic
+- Modes de transformation translation, rotation et scale
+- Export JSON pour télécharger la carte modifiée
+- Endpoint de sauvegarde dev-server pour écrire \`public/map.json\`
+- Éditeur SRT pour les sous-titres de dialogue
+- Preview audio et outils de timing pour les cues SRT
+- Endpoint de sauvegarde dev-server pour les fichiers SRT
+- Validation du manifeste de dialogues depuis l'UI de l'éditeur
+- Éditeur de manifeste dialogues avec preview et création assistée de cue SRT FR
+- Éditeur de manifeste cinématiques avec keyframes caméra, dialogue cues et preview canvas
+
 ## Pas encore implémenté
 
 - système de missions complet
 - système de zones
-- système de cinématiques
-- système de dialogues
+- branches de dialogues gameplay au-delà des déclencheurs prototype actuels
 - flow de chargement
 - minimap et HUD de mission
 - séparation complète production / debug pour les scènes gameplay
@@ -527,6 +609,74 @@ Les modèles sont chargés depuis "/public/models". Si un modèle manque, l'édi
 
 Cette action est masquée dans les builds de production car il n'existe pas encore d'API de persistance production.
 
+## Éditer les dialogues et sous-titres
+
+Le panneau latéral contient aussi des outils pour les dialogues et les sous-titres.
+
+### Manifeste dialogues
+
+Le panneau \`Dialogues\` permet d'éditer \`public/sounds/dialogue/dialogues.json\` sans ouvrir le JSON à la main.
+
+- \`Reload\` recharge le manifeste depuis le disque.
+- \`Add\` crée un dialogue local pour la voix courante et assigne le prochain index SRT disponible.
+- \`Save\` écrit le manifeste via le serveur Vite local.
+- \`Preview dialogue\` joue le dialogue sélectionné avec les sous-titres dans l'éditeur.
+- \`Create FR SRT cue\` crée la cue française si elle manque.
+- \`Delete dialogue\` supprime localement l'entrée sélectionnée.
+
+Après \`Add\`, il faut cliquer \`Save\` pour conserver le dialogue dans le manifeste. La cue SRT FR est écrite directement, mais le manifeste reste local tant qu'il n'est pas sauvegardé.
+
+Les nouveaux dialogues utilisent un chemin audio placeholder comme \`/sounds/dialogue/new_dialogue_24.mp3\`. Remplace-le par un vrai MP3 avant validation finale.
+
+### Éditeur SRT
+
+1. Choisir une voix : \`narrateur\`, \`fermier\` ou \`electricienne\`.
+2. Choisir une langue : \`FR\` ou \`EN\`.
+3. Modifier le texte SRT directement dans la textarea.
+4. Utiliser la preview audio pour vérifier le dialogue sélectionné.
+5. Utiliser \`Set start\`, \`Set end\`, \`-100ms\` et \`+100ms\` pour ajuster le timing de la cue sélectionnée avec l'audio.
+6. Utiliser \`Save SRT\` en développement local, ou \`Export SRT\` pour télécharger le fichier manuellement.
+
+Chaque fichier SRT appartient à une voix, pas à un dialogue. Les indexes de cue doivent correspondre aux valeurs \`subtitleCueIndex\` référencées par le manifeste de dialogues.
+
+## Valider les assets de dialogue
+
+Utilise \`Validate\` dans le panneau SRT pour vérifier le manifeste et les assets liés.
+
+La validation vérifie :
+
+- \`public/sounds/dialogue/dialogues.json\`
+- les fichiers audio de dialogue référencés
+- les fichiers SRT français
+- les indexes de cue référencés par le manifeste
+
+Les fichiers SRT anglais manquants sont des warnings parce que le runtime retombe sur les sous-titres français.
+
+## Éditer les cinématiques
+
+Le panneau \`Cinematics\` permet d'éditer \`public/cinematics.json\`.
+
+Chaque cinématique contient :
+
+- un \`id\`
+- un \`timecode\` global optionnel
+- au moins deux keyframes caméra
+- des dialogue cues optionnelles synchronisées avec la timeline
+
+Les keyframes caméra définissent un temps relatif, une position caméra et une cible de regard. Les dialogue cues définissent un temps relatif et un \`dialogueId\` issu de \`dialogues.json\`.
+
+Actions disponibles :
+
+- \`Reload\` recharge le manifeste.
+- \`Add\` crée une cinématique locale avec deux keyframes.
+- \`Save\` écrit \`public/cinematics.json\` via le serveur Vite local.
+- \`Preview cinematic\` joue l'animation caméra dans le canvas éditeur.
+- \`Add keyframe\` et \`Remove\` modifient le chemin caméra.
+- \`Add dialogue\` et \`Remove\` modifient les dialogues synchronisés.
+- \`Delete cinematic\` supprime localement la cinématique sélectionnée.
+
+Les dialogue cues sont la manière recommandée de synchroniser un dialogue avec une cinématique. Évite de donner aussi un \`timecode\` global au même dialogue dans \`dialogues.json\`, sinon il peut être lancé deux fois.
+
 ## Inspecteur JSON
 
 Le panneau latéral affiche le JSON brut de la carte :
@@ -542,4 +692,6 @@ Utilise-le pour vérifier les valeurs numériques exactes avant export ou sauveg
 - Il n'y a pas encore d'interface pour créer ou supprimer des objets.
 - La sauvegarde production n'est pas implémentée.
 - Les modèles manquants s'affichent comme cubes de fallback au lieu de bloquer tout l'éditeur.
+- La sauvegarde SRT est un helper local du serveur Vite, pas une API backend de production.
+- Les sauvegardes dialogues et cinématiques sont aussi des helpers locaux du serveur Vite.
 `;

@@ -74,6 +74,87 @@ This is useful for checking numeric transform values before saving or exporting.
 
 The button is hidden in production builds because production persistence is not implemented.
 
+## Editing Dialogue Subtitles
+
+The side panel also includes dialogue tools for the dialogue manifest and SRT subtitles.
+
+### Dialogue Manifest
+
+Use the `Dialogues` panel to edit `public/sounds/dialogue/dialogues.json` without opening the JSON file manually.
+
+Available actions:
+
+- `Reload` reloads the manifest from disk.
+- `Add` creates a local dialogue entry for the current voice and assigns the next available SRT cue index.
+- `Save` writes the manifest through the local Vite dev server.
+- `Preview dialogue` plays the selected dialogue and shows subtitles in the editor overlay.
+- `Create FR SRT cue` creates the matching French SRT cue if it is missing.
+- `Delete dialogue` removes the selected entry locally.
+
+After using `Add`, save the manifest to keep the new dialogue entry. The generated SRT cue is written immediately to the French SRT file, but the dialogue manifest is still only local until `Save` is clicked.
+
+New dialogue audio paths start as placeholders such as `/sounds/dialogue/new_dialogue_24.mp3`. Replace them with real MP3 paths before validating the final asset set.
+
+### SRT Editor
+
+Use the `SRT` panel to edit one subtitle file at a time.
+
+1. Choose a voice: `narrateur`, `fermier`, or `electricienne`.
+2. Choose a language: `FR` or `EN`.
+3. Edit the SRT text directly in the textarea.
+4. Use the audio preview to check the selected dialogue.
+5. Use `Set start`, `Set end`, `-100ms`, and `+100ms` to adjust the selected cue timing against the audio.
+6. Use `Save SRT` during local development, or `Export SRT` to download the file manually.
+
+Each SRT file belongs to one voice, not one dialogue. Cue indexes must match the `subtitleCueIndex` values referenced by the dialogue manifest.
+
+## Validating Dialogue Assets
+
+Use `Validate` in the SRT panel to check the dialogue manifest and linked assets.
+
+The validation checks:
+
+- `public/sounds/dialogue/dialogues.json`
+- referenced dialogue audio files
+- French SRT files
+- subtitle cue indexes referenced by the manifest
+
+Missing English SRT files are warnings, not errors, because the runtime falls back to French subtitles. This is intentional until the English translation workflow is ready.
+
+## Editing Cinematics
+
+Use the `Cinematics` panel to edit `public/cinematics.json`.
+
+Each cinematic contains:
+
+- an `id`
+- an optional global `timecode`
+- two or more camera keyframes
+- optional dialogue cues synchronized to the cinematic timeline
+
+Camera keyframes define:
+
+- `time`: seconds relative to the cinematic start
+- `position`: camera position `[x, y, z]`
+- `target`: point the camera looks at `[x, y, z]`
+
+Dialogue cues define:
+
+- `time`: seconds relative to the cinematic start
+- `dialogueId`: an entry from `public/sounds/dialogue/dialogues.json`
+
+Available actions:
+
+- `Reload` reloads the cinematic manifest from disk.
+- `Add` creates a new local cinematic with two camera keyframes.
+- `Save` writes `public/cinematics.json` through the local Vite dev server.
+- `Preview cinematic` plays the selected camera animation in the editor canvas.
+- `Add keyframe` and `Remove` edit the camera path.
+- `Add dialogue` and `Remove` edit dialogue cues linked to the cinematic.
+- `Delete cinematic` removes the selected cinematic locally.
+
+Cinematic dialogue cues are the preferred way to synchronize a dialogue with a cinematic. Avoid also giving the same dialogue a global `timecode`, or it can be triggered twice.
+
 ## Current Limitations
 
 - The editor only modifies existing nodes.
@@ -81,3 +162,5 @@ The button is hidden in production builds because production persistence is not 
 - It does not edit model files or textures.
 - It does not provide production persistence.
 - Fallback cubes indicate missing models; they are editor placeholders, not exported assets.
+- SRT saving is a local Vite dev-server helper, not a production backend feature.
+- Dialogue and cinematic saves are local Vite dev-server helpers, not production backend features.
