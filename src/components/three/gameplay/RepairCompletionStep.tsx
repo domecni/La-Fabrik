@@ -4,6 +4,7 @@ import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo
 import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import { REPAIR_CASE_ANIMATION_DURATION } from "@/data/gameplay/repairCaseConfig";
+import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
 import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
 
 interface RepairCompletionStepProps {
@@ -42,7 +43,7 @@ export function RepairCompletionStep({
       <RepairObjectModel
         label={config.label}
         modelPath={config.modelPath}
-        scale={1}
+        scale={config.modelScale ?? 1}
       />
 
       {!isClosingCase ? (
@@ -50,6 +51,7 @@ export function RepairCompletionStep({
           position={[0, 1.1, 0]}
           colliders="ball"
           label={`Valider ${config.label}`}
+          radius={REPAIR_INTERACTION_RADIUS}
           onTrigger={() => setIsClosingCase(true)}
         >
           <mesh>

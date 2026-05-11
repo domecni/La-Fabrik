@@ -35,6 +35,7 @@ export function RepairReassemblyStep({
     <group>
       <ExplodableModel
         modelPath={config.modelPath}
+        scale={config.modelScale ?? 1}
         split={split}
         splitDistance={1.2}
       />

@@ -11,6 +11,7 @@ import {
   REPAIR_CASE_PLACEHOLDER_SNAP_DURATION,
   REPAIR_CASE_PLACEHOLDER_SNAP_RADIUS,
 } from "@/data/gameplay/repairCaseConfig";
+import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
 import type {
   RepairMissionConfig,
   RepairMissionPartConfig,
@@ -299,6 +300,7 @@ function RepairInstallTarget({
       position={INSTALL_TARGET_POSITION}
       colliders="ball"
       label={label}
+      radius={REPAIR_INTERACTION_RADIUS}
       onTrigger={() => {
         if (!isReadyToInstall) {
           onBlocked();

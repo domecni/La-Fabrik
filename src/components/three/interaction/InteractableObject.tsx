@@ -19,6 +19,7 @@ import type { Vector3Tuple } from "@/types/three/three";
 interface InteractableObjectBaseProps {
   label: string;
   position: Vector3Tuple;
+  radius?: number;
   bodyRef?: RefObject<RapierRigidBody | null>;
   onPress: () => void;
   children: React.ReactNode;
@@ -64,7 +65,15 @@ function createInteractableHandle(
 export function InteractableObject(
   props: InteractableObjectProps,
 ): React.JSX.Element {
-  const { kind, label, position, bodyRef, onPress, children } = props;
+  const {
+    kind,
+    label,
+    position,
+    radius = INTERACTION_RADIUS,
+    bodyRef,
+    onPress,
+    children,
+  } = props;
   const onRelease = props.kind === "grab" ? props.onRelease : null;
   const camera = useThree((state) => state.camera);
   const groupRef = useRef<THREE.Group>(null);
@@ -156,7 +165,7 @@ export function InteractableObject(
 
     camera.getWorldPosition(_cameraPos);
     const dist = _cameraPos.distanceTo(_objectPos);
-    const isNearby = dist <= INTERACTION_RADIUS;
+    const isNearby = dist <= radius;
 
     manager.setNearby(handle.current, isNearby);
 
@@ -169,7 +178,7 @@ export function InteractableObject(
 
     camera.getWorldDirection(_cameraDir);
     _raycaster.set(_cameraPos, _cameraDir);
-    _raycaster.far = INTERACTION_RADIUS;
+    _raycaster.far = radius;
 
     const hits = group ? _raycaster.intersectObject(group, true) : [];
     const validHit = hits.find((h) => h.object !== debugSphereRef.current);
@@ -187,7 +196,7 @@ export function InteractableObject(
       <mesh ref={debugSphereRef} visible={false}>
         <sphereGeometry
           args={[
-            INTERACTION_RADIUS,
+            radius,
             INTERACTION_DEBUG_SPHERE_SEGMENTS,
             INTERACTION_DEBUG_SPHERE_SEGMENTS,
           ]}

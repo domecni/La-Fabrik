@@ -60,6 +60,7 @@ export function RepairScanSequence({
     <group>
       <ExplodableModel
         modelPath={config.modelPath}
+        scale={config.modelScale ?? 1}
         split
         onPartsReady={setParts}
       />

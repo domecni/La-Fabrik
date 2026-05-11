@@ -9,6 +9,7 @@ import {
   REPAIR_CASE_FOCUS_SCALE,
   REPAIR_CASE_MODEL_PATH,
 } from "@/data/gameplay/repairCaseConfig";
+import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
 import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
 import type { Vector3Tuple } from "@/types/three/three";
 
@@ -48,6 +49,7 @@ export function RepairMissionCase({
           position={casePosition}
           colliders="ball"
           label={`Ouvrir ${config.label}`}
+          radius={REPAIR_INTERACTION_RADIUS}
           onTrigger={onInteract}
         >
           <RepairCaseModel

@@ -1,5 +1,9 @@
 import type { RepairMissionId } from "@/types/gameplay/repairMission";
-import type { Vector3Scale, Vector3Tuple } from "@/types/three/three";
+import type {
+  ModelTransformProps,
+  Vector3Scale,
+  Vector3Tuple,
+} from "@/types/three/three";
 
 export interface RepairMissionCaseConfig {
   position: Vector3Tuple;
@@ -20,6 +24,7 @@ export interface RepairMissionConfig {
   label: string;
   description: string;
   modelPath: string;
+  modelScale?: ModelTransformProps["scale"];
   stageUiPath: string;
   interactUiPath: string;
   brokenUiPath: string;
@@ -40,13 +45,14 @@ const DEFAULT_REPAIR_CASE = {
   scale: 1.5,
 } satisfies RepairMissionCaseConfig;
 
-export const REPAIR_MISSIONS = {
+export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
   bike: {
     id: "bike",
     label: "E-bike",
     description:
       "Repair the damaged cooling module before relaunching the bike",
-    modelPath: "/models/refroidisseur/model.gltf",
+    modelPath: "/models/ebike/model.gltf",
+    modelScale: 0.25,
     stageUiPath: "/assets/UI/ebike.webm",
     interactUiPath: REPAIR_INTERACT_UI_PATH,
     brokenUiPath: REPAIR_BROKEN_UI_PATH,
@@ -56,7 +62,8 @@ export const REPAIR_MISSIONS = {
       {
         id: "bike-cooling-core",
         label: "Cooling core",
-        nodeName: "Cylinder",
+        modelPath: "/models/refroidisseur/model.gltf",
+        nodeName: "refroidisseur",
         placeholderName: "placeholder_1",
       },
     ],
@@ -74,7 +81,7 @@ export const REPAIR_MISSIONS = {
       {
         id: "bike-glove-decoy",
         label: "Insulation glove",
-        modelPath: "/models/gant/model.gltf",
+        modelPath: "/models/gant_l/model.gltf",
       },
     ],
   },
@@ -166,4 +173,4 @@ export const REPAIR_MISSIONS = {
       },
     ],
   },
-} satisfies Record<RepairMissionId, RepairMissionConfig>;
+};

@@ -122,7 +122,11 @@ export function RepairGame({
           />
         ) : null}
         {step === "fragmented" ? (
-          <ExplodableModel modelPath={config.modelPath} split />
+          <ExplodableModel
+            modelPath={config.modelPath}
+            scale={config.modelScale ?? 1}
+            split
+          />
         ) : null}
         {step === "scanning" ? (
           <RepairScanSequence
