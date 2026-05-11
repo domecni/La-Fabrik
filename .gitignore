@@ -8,6 +8,7 @@ __pycache__/
 # Build
 dist/
 dist-ssr/
+.vite/
 *.local
 
 # Environment
