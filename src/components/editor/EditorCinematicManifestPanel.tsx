@@ -3,10 +3,16 @@ import { Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import type {
   CinematicCameraKeyframe,
   CinematicDefinition,
+  CinematicDialogueCue,
   CinematicManifest,
 } from "@/types/cinematics/cinematics";
+import type {
+  DialogueDefinition,
+  DialogueManifest,
+} from "@/types/dialogues/dialogues";
 import type { Vector3Tuple } from "@/types/three/three";
 import { loadCinematicManifest } from "@/utils/cinematics/loadCinematicManifest";
+import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 
 type CinematicPatch = Partial<Omit<CinematicDefinition, "timecode">> & {
   timecode?: number | undefined;
@@ -39,7 +45,20 @@ function createKeyframe(
   };
 }
 
-function getManifestErrors(manifest: CinematicManifest | null): string[] {
+function createDialogueCue(
+  dialogues: DialogueDefinition[],
+  previousCue: CinematicDialogueCue | null,
+): CinematicDialogueCue {
+  return {
+    time: previousCue ? previousCue.time + 1 : 0,
+    dialogueId: dialogues[0]?.id ?? "",
+  };
+}
+
+function getManifestErrors(
+  manifest: CinematicManifest | null,
+  dialogueIds: Set<string>,
+): string[] {
   if (!manifest) return ["Manifeste absent."];
 
   const errors: string[] = [];
@@ -82,6 +101,8 @@ function getManifestErrors(manifest: CinematicManifest | null): string[] {
 
       if (!cue.dialogueId.trim()) {
         errors.push(`${label}: dialogue cue ${cueIndex + 1} id obligatoire.`);
+      } else if (dialogueIds.size > 0 && !dialogueIds.has(cue.dialogueId)) {
+        errors.push(`${label}: dialogue cue ${cueIndex + 1} dialogue inconnu.`);
       }
     });
   });
@@ -147,10 +168,15 @@ export function EditorCinematicManifestPanel({
   onPreviewCinematic,
 }: EditorCinematicManifestPanelProps): React.JSX.Element {
   const [manifest, setManifest] = useState<CinematicManifest | null>(null);
+  const [dialogueManifest, setDialogueManifest] =
+    useState<DialogueManifest | null>(null);
   const [selectedCinematicId, setSelectedCinematicId] = useState("");
   const [status, setStatus] = useState("Chargement des cinematics...");
   const [isSaving, setIsSaving] = useState(false);
-  const errors = getManifestErrors(manifest);
+  const dialogueIds = new Set(
+    dialogueManifest?.dialogues.map((dialogue) => dialogue.id) ?? [],
+  );
+  const errors = getManifestErrors(manifest, dialogueIds);
   const selectedCinematic =
     manifest?.cinematics.find(
       (cinematic) => cinematic.id === selectedCinematicId,
@@ -162,8 +188,12 @@ export function EditorCinematicManifestPanel({
     setStatus("Chargement des cinematics...");
 
     try {
-      const loadedManifest = await loadCinematicManifest();
+      const [loadedManifest, loadedDialogueManifest] = await Promise.all([
+        loadCinematicManifest(),
+        loadDialogueManifest(),
+      ]);
       setManifest(loadedManifest);
+      setDialogueManifest(loadedDialogueManifest);
       setSelectedCinematicId(loadedManifest?.cinematics[0]?.id ?? "");
       setStatus(
         loadedManifest
@@ -281,14 +311,54 @@ export function EditorCinematicManifestPanel({
     setStatus("Keyframe supprimee localement.");
   }
 
+  function updateDialogueCue(
+    cueIndex: number,
+    patch: Partial<CinematicDialogueCue>,
+  ): void {
+    if (!selectedCinematic) return;
+
+    const dialogueCues = selectedCinematic.dialogueCues ?? [];
+    updateSelectedCinematic({
+      dialogueCues: dialogueCues.map((cue, index) =>
+        index === cueIndex ? { ...cue, ...patch } : cue,
+      ),
+    });
+  }
+
+  function handleAddDialogueCue(): void {
+    if (!selectedCinematic) return;
+
+    const dialogueCues = selectedCinematic.dialogueCues ?? [];
+    const previousCue = dialogueCues[dialogueCues.length - 1] ?? null;
+    updateSelectedCinematic({
+      dialogueCues: [
+        ...dialogueCues,
+        createDialogueCue(dialogueManifest?.dialogues ?? [], previousCue),
+      ],
+    });
+    setStatus("Dialogue cue ajoutee localement.");
+  }
+
+  function handleRemoveDialogueCue(cueIndex: number): void {
+    if (!selectedCinematic) return;
+
+    updateSelectedCinematic({
+      dialogueCues: (selectedCinematic.dialogueCues ?? []).filter(
+        (_cue, index) => index !== cueIndex,
+      ),
+    });
+    setStatus("Dialogue cue supprimee localement.");
+  }
+
   useEffect(() => {
     let mounted = true;
 
-    void loadCinematicManifest()
-      .then((loadedManifest) => {
+    void Promise.all([loadCinematicManifest(), loadDialogueManifest()])
+      .then(([loadedManifest, loadedDialogueManifest]) => {
         if (!mounted) return;
 
         setManifest(loadedManifest);
+        setDialogueManifest(loadedDialogueManifest);
         setSelectedCinematicId(loadedManifest?.cinematics[0]?.id ?? "");
         setStatus(
           loadedManifest
@@ -449,6 +519,77 @@ export function EditorCinematicManifestPanel({
                   />
                 </div>
               ),
+            )}
+          </div>
+
+          <div className="editor-cinematic-dialogue-cues">
+            <div className="editor-cinematic-dialogue-cues-heading">
+              <strong>Dialogue cues</strong>
+              <button type="button" onClick={handleAddDialogueCue}>
+                <Plus size={13} aria-hidden="true" />
+                Add dialogue
+              </button>
+            </div>
+
+            {(selectedCinematic.dialogueCues ?? []).length === 0 ? (
+              <p>Aucun dialogue synchronise avec cette cinematic.</p>
+            ) : (
+              (selectedCinematic.dialogueCues ?? []).map((cue, cueIndex) => (
+                <div
+                  className="editor-cinematic-dialogue-cue"
+                  key={`${selectedCinematic.id}-dialogue-${cueIndex}`}
+                >
+                  <div className="editor-cinematic-dialogue-cue-heading">
+                    <strong>Dialogue {cueIndex + 1}</strong>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDialogueCue(cueIndex)}
+                    >
+                      <Trash2 size={13} aria-hidden="true" />
+                      Remove
+                    </button>
+                  </div>
+
+                  <label>
+                    Time
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={cue.time}
+                      onChange={(event) =>
+                        updateDialogueCue(cueIndex, {
+                          time: Number(event.target.value),
+                        })
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Dialogue
+                    <select
+                      value={cue.dialogueId}
+                      onChange={(event) =>
+                        updateDialogueCue(cueIndex, {
+                          dialogueId: event.target.value,
+                        })
+                      }
+                    >
+                      {dialogueManifest?.dialogues.length ? (
+                        dialogueManifest.dialogues.map((dialogue) => (
+                          <option key={dialogue.id} value={dialogue.id}>
+                            {dialogue.id}
+                          </option>
+                        ))
+                      ) : (
+                        <option value={cue.dialogueId}>
+                          {cue.dialogueId || "Aucun dialogue disponible"}
+                        </option>
+                      )}
+                    </select>
+                  </label>
+                </div>
+              ))
             )}
           </div>
 

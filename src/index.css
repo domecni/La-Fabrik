@@ -1866,7 +1866,9 @@ canvas {
 .editor-cinematic-manifest-preview,
 .editor-cinematic-manifest-delete,
 .editor-cinematic-keyframes-heading button,
-.editor-cinematic-keyframe-heading button {
+.editor-cinematic-keyframe-heading button,
+.editor-cinematic-dialogue-cues-heading button,
+.editor-cinematic-dialogue-cue-heading button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1885,21 +1887,25 @@ canvas {
 .editor-cinematic-manifest-preview:hover,
 .editor-cinematic-manifest-delete:hover,
 .editor-cinematic-keyframes-heading button:hover,
-.editor-cinematic-keyframe-heading button:hover {
+.editor-cinematic-keyframe-heading button:hover,
+.editor-cinematic-dialogue-cues-heading button:hover,
+.editor-cinematic-dialogue-cue-heading button:hover {
   border-color: #ffffff;
   background: #202020;
 }
 
 .editor-cinematic-manifest-actions button:disabled,
 .editor-cinematic-manifest-preview:disabled,
-.editor-cinematic-keyframe-heading button:disabled {
+.editor-cinematic-keyframe-heading button:disabled,
+.editor-cinematic-dialogue-cue-heading button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
 .editor-cinematic-manifest-select,
 .editor-cinematic-manifest-form label,
-.editor-cinematic-vector-inputs label {
+.editor-cinematic-vector-inputs label,
+.editor-cinematic-dialogue-cue label {
   display: grid;
   gap: 5px;
   color: #8d8d8d;
@@ -1911,6 +1917,7 @@ canvas {
 
 .editor-cinematic-manifest-select select,
 .editor-cinematic-manifest-form input,
+.editor-cinematic-manifest-form select,
 .editor-cinematic-vector-inputs input {
   width: 100%;
   box-sizing: border-box;
@@ -1923,6 +1930,7 @@ canvas {
 
 .editor-cinematic-manifest-select select:focus,
 .editor-cinematic-manifest-form input:focus,
+.editor-cinematic-manifest-form select:focus,
 .editor-cinematic-vector-inputs input:focus {
   border-color: #ffffff;
   outline: none;
@@ -1930,7 +1938,9 @@ canvas {
 
 .editor-cinematic-manifest-form,
 .editor-cinematic-keyframes,
-.editor-cinematic-keyframe {
+.editor-cinematic-keyframe,
+.editor-cinematic-dialogue-cues,
+.editor-cinematic-dialogue-cue {
   display: grid;
   gap: 8px;
 }
@@ -1942,7 +1952,8 @@ canvas {
   background: #070707;
 }
 
-.editor-cinematic-keyframes {
+.editor-cinematic-keyframes,
+.editor-cinematic-dialogue-cues {
   padding: 10px;
   border: 1px solid #242424;
   border-radius: 14px;
@@ -1950,7 +1961,9 @@ canvas {
 }
 
 .editor-cinematic-keyframes-heading,
-.editor-cinematic-keyframe-heading {
+.editor-cinematic-keyframe-heading,
+.editor-cinematic-dialogue-cues-heading,
+.editor-cinematic-dialogue-cue-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1958,13 +1971,16 @@ canvas {
 }
 
 .editor-cinematic-keyframes-heading strong,
-.editor-cinematic-keyframe-heading strong {
+.editor-cinematic-keyframe-heading strong,
+.editor-cinematic-dialogue-cues-heading strong,
+.editor-cinematic-dialogue-cue-heading strong {
   color: #f2f2f2;
   font-size: 0.76rem;
   font-weight: 800;
 }
 
-.editor-cinematic-keyframe {
+.editor-cinematic-keyframe,
+.editor-cinematic-dialogue-cue {
   padding: 9px;
   border: 1px solid #1f1f1f;
   border-radius: 12px;
@@ -1996,9 +2012,17 @@ canvas {
   color: #bae6fd;
 }
 
-.editor-cinematic-keyframe-heading button {
+.editor-cinematic-keyframe-heading button,
+.editor-cinematic-dialogue-cue-heading button {
   padding: 6px 8px;
   color: #fca5a5;
+}
+
+.editor-cinematic-dialogue-cues p {
+  margin: 0;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .editor-cinematic-manifest-status {
