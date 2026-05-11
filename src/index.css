@@ -1863,6 +1863,7 @@ canvas {
 }
 
 .editor-cinematic-manifest-actions button,
+.editor-cinematic-manifest-preview,
 .editor-cinematic-manifest-delete,
 .editor-cinematic-keyframes-heading button,
 .editor-cinematic-keyframe-heading button {
@@ -1881,6 +1882,7 @@ canvas {
 }
 
 .editor-cinematic-manifest-actions button:hover,
+.editor-cinematic-manifest-preview:hover,
 .editor-cinematic-manifest-delete:hover,
 .editor-cinematic-keyframes-heading button:hover,
 .editor-cinematic-keyframe-heading button:hover {
@@ -1889,6 +1891,7 @@ canvas {
 }
 
 .editor-cinematic-manifest-actions button:disabled,
+.editor-cinematic-manifest-preview:disabled,
 .editor-cinematic-keyframe-heading button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -1986,6 +1989,11 @@ canvas {
 .editor-cinematic-manifest-delete {
   border-color: rgba(248, 113, 113, 0.32);
   color: #fca5a5;
+}
+
+.editor-cinematic-manifest-preview {
+  border-color: rgba(125, 211, 252, 0.24);
+  color: #bae6fd;
 }
 
 .editor-cinematic-keyframe-heading button {

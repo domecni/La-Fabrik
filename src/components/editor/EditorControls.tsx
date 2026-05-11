@@ -15,6 +15,7 @@ import {
 import { EditorCinematicManifestPanel } from "@/components/editor/EditorCinematicManifestPanel";
 import { EditorDialogueManifestPanel } from "@/components/editor/EditorDialogueManifestPanel";
 import { EditorSrtPanel } from "@/components/editor/EditorSrtPanel";
+import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import type { MapNode, TransformMode } from "@/types/editor/editor";
 
 interface EditorControlsProps {
@@ -31,6 +32,7 @@ interface EditorControlsProps {
   onExportJson: () => void;
   onSaveToServer?: (() => void | Promise<void>) | undefined;
   onPlayerMode?: (() => void) | undefined;
+  onPreviewCinematic?: ((cinematic: CinematicDefinition) => void) | undefined;
   isPlayerMode?: boolean;
 }
 
@@ -62,6 +64,7 @@ export function EditorControls({
   onExportJson,
   onSaveToServer,
   onPlayerMode,
+  onPreviewCinematic,
   isPlayerMode,
 }: EditorControlsProps): React.JSX.Element {
   const viewModeLabel = isPlayerMode ? "View locked" : "Lock view";
@@ -240,7 +243,7 @@ export function EditorControls({
           </div>
         </section>
 
-        <EditorCinematicManifestPanel />
+        <EditorCinematicManifestPanel onPreviewCinematic={onPreviewCinematic} />
         <EditorDialogueManifestPanel />
         <EditorSrtPanel />
       </aside>

@@ -2,8 +2,10 @@ import { useCallback, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { EditorControls } from "@/components/editor/EditorControls";
 import { EditorScene } from "@/components/editor/scene/EditorScene";
+import type { EditorCinematicPreviewRequest } from "@/components/editor/scene/EditorScene";
 import { Subtitles } from "@/components/ui/Subtitles";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
+import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
 import type { MapNode, SceneData, TransformMode } from "@/types/editor/editor";
 
@@ -29,6 +31,8 @@ export function EditorPage(): React.JSX.Element {
   const [transformMode, setTransformMode] =
     useState<TransformMode>("translate");
   const [isPlayerMode, setIsPlayerMode] = useState(false);
+  const [cinematicPreviewRequest, setCinematicPreviewRequest] =
+    useState<EditorCinematicPreviewRequest | null>(null);
 
   const {
     undoCount,
@@ -87,6 +91,20 @@ export function EditorPage(): React.JSX.Element {
 
   const handlePlayerMode = useCallback(() => {
     setIsPlayerMode((prev) => !prev);
+  }, []);
+
+  const handlePreviewCinematic = useCallback(
+    (cinematic: CinematicDefinition) => {
+      setCinematicPreviewRequest({
+        id: window.crypto.randomUUID(),
+        cinematic,
+      });
+    },
+    [],
+  );
+
+  const handleCinematicPreviewComplete = useCallback(() => {
+    setCinematicPreviewRequest(null);
   }, []);
 
   const handleNodeTransform = useCallback(
@@ -172,6 +190,8 @@ export function EditorPage(): React.JSX.Element {
           onUndo={handleUndo}
           onRedo={handleRedo}
           isPlayerMode={isPlayerMode}
+          cinematicPreviewRequest={cinematicPreviewRequest}
+          onCinematicPreviewComplete={handleCinematicPreviewComplete}
         />
       </Canvas>
 
@@ -194,6 +214,7 @@ export function EditorPage(): React.JSX.Element {
           onExportJson={handleExportJson}
           onSaveToServer={import.meta.env.DEV ? handleSaveToServer : undefined}
           onPlayerMode={handlePlayerMode}
+          onPreviewCinematic={handlePreviewCinematic}
           isPlayerMode={isPlayerMode}
         />
       )}

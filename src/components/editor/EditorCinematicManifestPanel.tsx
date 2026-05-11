@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import type {
   CinematicCameraKeyframe,
   CinematicDefinition,
@@ -124,7 +124,13 @@ function updateVector(
   return nextVector;
 }
 
-export function EditorCinematicManifestPanel(): React.JSX.Element {
+interface EditorCinematicManifestPanelProps {
+  onPreviewCinematic?: ((cinematic: CinematicDefinition) => void) | undefined;
+}
+
+export function EditorCinematicManifestPanel({
+  onPreviewCinematic,
+}: EditorCinematicManifestPanelProps): React.JSX.Element {
   const [manifest, setManifest] = useState<CinematicManifest | null>(null);
   const [selectedCinematicId, setSelectedCinematicId] = useState("");
   const [status, setStatus] = useState("Chargement des cinematics...");
@@ -430,6 +436,16 @@ export function EditorCinematicManifestPanel(): React.JSX.Element {
               ),
             )}
           </div>
+
+          <button
+            className="editor-cinematic-manifest-preview"
+            type="button"
+            disabled={errors.length > 0 || !onPreviewCinematic}
+            onClick={() => onPreviewCinematic?.(selectedCinematic)}
+          >
+            <Play size={14} aria-hidden="true" />
+            Preview cinematic
+          </button>
 
           <button
             className="editor-cinematic-manifest-delete"
