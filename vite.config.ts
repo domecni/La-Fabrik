@@ -233,7 +233,9 @@ const saveCinematicManifestPlugin = (): Plugin => ({
 
       try {
         const data = JSON.parse(Buffer.concat(chunks).toString()) as unknown;
-        parseCinematicManifestData(data);
+        const manifest = parseCinematicManifestData(data);
+        const dialogueManifest = await loadDialogueManifestData();
+        validateCinematicDialogueCues(manifest, dialogueManifest);
 
         const manifestPath = path.resolve(__dirname, "public/cinematics.json");
         await fs.promises.writeFile(
@@ -340,12 +342,7 @@ interface DialogueValidationResult extends JsonObject {
 async function validateDialogueAssets(): Promise<DialogueValidationResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const manifestPath = path.resolve(
-    __dirname,
-    "public/sounds/dialogue/dialogues.json",
-  );
-  const manifestContent = await fs.promises.readFile(manifestPath, "utf8");
-  const manifest = parseDialogueManifestData(JSON.parse(manifestContent));
+  const manifest = await loadDialogueManifestData();
 
   const subtitleCueCache = new Map<string, Set<number>>();
 
@@ -394,6 +391,15 @@ async function validateDialogueAssets(): Promise<DialogueValidationResult> {
     errors,
     warnings,
   };
+}
+
+async function loadDialogueManifestData(): Promise<DialogueManifestData> {
+  const manifestPath = path.resolve(
+    __dirname,
+    "public/sounds/dialogue/dialogues.json",
+  );
+  const manifestContent = await fs.promises.readFile(manifestPath, "utf8");
+  return parseDialogueManifestData(JSON.parse(manifestContent));
 }
 
 function parseDialogueManifestData(data: unknown): DialogueManifestData {
@@ -528,6 +534,25 @@ function parseCinematicData(data: unknown): CinematicData {
   }
 
   return cinematic;
+}
+
+function validateCinematicDialogueCues(
+  cinematicManifest: CinematicManifestData,
+  dialogueManifest: DialogueManifestData,
+): void {
+  const dialogueIds = new Set(
+    dialogueManifest.dialogues.map((dialogue) => dialogue.id),
+  );
+
+  for (const cinematic of cinematicManifest.cinematics) {
+    for (const cue of cinematic.dialogueCues ?? []) {
+      if (!dialogueIds.has(cue.dialogueId)) {
+        throw new Error(
+          `Cinematic ${cinematic.id} references unknown dialogue ${cue.dialogueId}`,
+        );
+      }
+    }
+  }
 }
 
 function parseCinematicDialogueCueData(
