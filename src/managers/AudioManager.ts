@@ -24,10 +24,19 @@ interface StereoNodes {
   panner: StereoPannerNode;
 }
 
+interface OneShotAudioState {
+  category: OneShotAudioCategory;
+  volume: number;
+}
+
 export class AudioManager {
   private static _instance: AudioManager | null = null;
   private readonly _audioPools = new Map<string, HTMLAudioElement[]>();
   private readonly _stereoNodes = new WeakMap<HTMLAudioElement, StereoNodes>();
+  private readonly _oneShotStates = new WeakMap<
+    HTMLAudioElement,
+    OneShotAudioState
+  >();
   private readonly _categoryVolumes: Record<AudioCategory, number> = {
     ...DEFAULT_CATEGORY_VOLUMES,
   };
@@ -59,7 +68,10 @@ export class AudioManager {
 
     if (category === "music" && this._music) {
       this._music.volume = this._getEffectiveVolume("music", this._musicVolume);
+      return;
     }
+
+    this._updateOneShotVolumes(category);
   }
 
   getCategoryVolume(category: AudioCategory): number {
@@ -73,7 +85,9 @@ export class AudioManager {
   ): HTMLAudioElement {
     const audio = this._acquireAudio(path);
     const category = options.category ?? AudioManager.DEFAULT_SOUND_CATEGORY;
-    audio.volume = this._getEffectiveVolume(category, volume);
+    const baseVolume = AudioManager._clampVolume(volume);
+    this._oneShotStates.set(audio, { category, volume: baseVolume });
+    audio.volume = this._getEffectiveVolume(category, baseVolume);
     audio.playbackRate = options.playbackRate ?? 1;
     audio.currentTime = 0;
     this._setStereoPan(audio, options.pan ?? 0);
@@ -232,6 +246,19 @@ export class AudioManager {
 
   private _getEffectiveVolume(category: AudioCategory, volume: number): number {
     return AudioManager._clampVolume(volume) * this._categoryVolumes[category];
+  }
+
+  private _updateOneShotVolumes(category: AudioCategory): void {
+    if (category === "music") return;
+
+    this._audioPools.forEach((pool) => {
+      pool.forEach((audio) => {
+        const state = this._oneShotStates.get(audio);
+        if (!state || state.category !== category) return;
+
+        audio.volume = this._getEffectiveVolume(category, state.volume);
+      });
+    });
   }
 
   private static _clampPan(pan: number): number {
