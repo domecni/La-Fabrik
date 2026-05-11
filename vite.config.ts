@@ -361,7 +361,9 @@ async function validateDialogueAssets(): Promise<DialogueValidationResult> {
     if (enSubtitlePath) {
       const resolvedEnPath = resolvePublicPath(enSubtitlePath);
       if (!resolvedEnPath || !fs.existsSync(resolvedEnPath)) {
-        warnings.push(`English subtitle file missing for voice ${voice.id}`);
+        warnings.push(
+          `English subtitle file missing for voice ${voice.id}; runtime will fall back to French`,
+        );
       }
     }
   }

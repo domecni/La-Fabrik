@@ -119,7 +119,7 @@ The validation checks:
 - French SRT files
 - subtitle cue indexes referenced by the manifest
 
-Missing English SRT files are warnings because the runtime falls back to French subtitles.
+Missing English SRT files are warnings, not errors, because the runtime falls back to French subtitles. This is intentional until the English translation workflow is ready.
 
 ## Editing Cinematics
 

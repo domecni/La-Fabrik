@@ -178,7 +178,7 @@ The current model is one SRT file per voice and language. A dialogue entry refer
 
 SRT timecodes are relative to the dialogue audio file being previewed, not to the global game timeline.
 
-Missing English SRT files are warnings because runtime loading falls back to French subtitles when the selected language is not available.
+Missing English SRT files are warnings, not errors, because runtime loading falls back to French subtitles when the selected language is not available. Keep this behavior until the English translation workflow is ready.
 
 ## Dialogue Manifest Editing
 
