@@ -1716,6 +1716,126 @@ canvas {
   color: #fca5a5;
 }
 
+/* Editor dialogue manifest panel */
+.editor-dialogue-manifest-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.editor-dialogue-manifest-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.editor-dialogue-manifest-actions button,
+.editor-dialogue-manifest-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 9px;
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  background: #151515;
+  color: #f2f2f2;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.editor-dialogue-manifest-actions button:hover,
+.editor-dialogue-manifest-delete:hover {
+  border-color: #ffffff;
+  background: #202020;
+}
+
+.editor-dialogue-manifest-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.editor-dialogue-manifest-select,
+.editor-dialogue-manifest-form label {
+  display: grid;
+  gap: 5px;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-dialogue-manifest-select select,
+.editor-dialogue-manifest-form input,
+.editor-dialogue-manifest-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  background: #101010;
+  color: #f2f2f2;
+}
+
+.editor-dialogue-manifest-select select:focus,
+.editor-dialogue-manifest-form input:focus,
+.editor-dialogue-manifest-form select:focus {
+  border-color: #ffffff;
+  outline: none;
+}
+
+.editor-dialogue-manifest-form {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #1f1f1f;
+  border-radius: 16px;
+  background: #070707;
+}
+
+.editor-dialogue-manifest-delete {
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #fca5a5;
+}
+
+.editor-dialogue-manifest-status {
+  margin: 0;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.editor-dialogue-manifest-diagnostic {
+  display: grid;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  background: #101010;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.editor-dialogue-manifest-diagnostic.is-valid {
+  border-color: rgba(134, 239, 172, 0.32);
+  color: #86efac;
+}
+
+.editor-dialogue-manifest-diagnostic.is-invalid {
+  border-color: rgba(248, 113, 113, 0.38);
+  color: #fca5a5;
+}
+
+.editor-dialogue-manifest-diagnostic ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+}
+
 /* Editor responsive layout */
 @media (max-width: 768px) {
   .editor-error h2 {

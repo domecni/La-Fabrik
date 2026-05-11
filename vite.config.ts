@@ -12,6 +12,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 const MAX_MAP_PAYLOAD_BYTES = 1024 * 1024;
 const MAX_SRT_PAYLOAD_BYTES = 256 * 1024;
+const MAX_DIALOGUE_MANIFEST_PAYLOAD_BYTES = 256 * 1024;
 const JSON_HEADERS = { "Content-Type": "application/json" };
 type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
 type JsonObject = { readonly [key: string]: JsonValue };
@@ -160,6 +161,52 @@ const validateDialoguesPlugin = (): Plugin => ({
   },
 });
 
+const saveDialogueManifestPlugin = (): Plugin => ({
+  name: "save-dialogue-manifest-api",
+  configureServer(server) {
+    server.middlewares.use("/api/save-dialogues", async (req, res) => {
+      if (req.method !== "POST") {
+        sendJson(res, 405, { error: "Method not allowed" }, { Allow: "POST" });
+        return;
+      }
+
+      const chunks: Buffer[] = [];
+      let size = 0;
+
+      for await (const chunk of req) {
+        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        size += buffer.length;
+        if (size > MAX_DIALOGUE_MANIFEST_PAYLOAD_BYTES) {
+          sendJson(res, 413, { error: "Payload too large" });
+          req.destroy();
+          return;
+        }
+        chunks.push(buffer);
+      }
+
+      try {
+        const data = JSON.parse(Buffer.concat(chunks).toString()) as unknown;
+        parseDialogueManifestData(data);
+
+        const manifestPath = path.resolve(
+          __dirname,
+          "public/sounds/dialogue/dialogues.json",
+        );
+        await fs.promises.writeFile(
+          manifestPath,
+          `${JSON.stringify(data, null, 2)}\n`,
+          "utf8",
+        );
+        sendJson(res, 200, { success: true });
+      } catch (err) {
+        const status = err instanceof SyntaxError ? 400 : 500;
+        const message = err instanceof Error ? err.message : "Unknown error";
+        sendJson(res, status, { error: message });
+      }
+    });
+  },
+});
+
 interface SrtPayload {
   voice: string;
   language: string;
@@ -173,6 +220,7 @@ interface DialogueManifestData {
 
 interface DialogueVoiceData {
   id: string;
+  speaker: string;
   subtitles: Partial<Record<"fr" | "en", string>>;
 }
 
@@ -181,6 +229,7 @@ interface DialogueData {
   voice: string;
   audio: string;
   subtitleCueIndex: number;
+  timecode?: number;
 }
 
 function isSrtPayload(data: unknown): data is SrtPayload {
@@ -302,6 +351,10 @@ function parseDialogueVoiceData(data: unknown): DialogueVoiceData {
     throw new Error("Invalid dialogue voice");
   }
 
+  if (typeof data.speaker !== "string") {
+    throw new Error(`Dialogue voice ${data.id} must define a speaker`);
+  }
+
   if (!isRecord(data.subtitles)) {
     throw new Error(`Dialogue voice ${data.id} must define subtitles`);
   }
@@ -312,6 +365,7 @@ function parseDialogueVoiceData(data: unknown): DialogueVoiceData {
 
   return {
     id: data.id,
+    speaker: data.speaker,
     subtitles,
   };
 }
@@ -332,12 +386,21 @@ function parseDialogueData(data: unknown, voiceIds: Set<string>): DialogueData {
     throw new Error("Invalid dialogue definition");
   }
 
-  return {
+  const dialogue: DialogueData = {
     id: data.id,
     voice: data.voice,
     audio: data.audio,
     subtitleCueIndex: data.subtitleCueIndex,
   };
+
+  if (data.timecode !== undefined) {
+    if (typeof data.timecode !== "number") {
+      throw new Error("Invalid dialogue definition");
+    }
+    dialogue.timecode = data.timecode;
+  }
+
+  return dialogue;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -383,6 +446,7 @@ export default defineConfig({
     react(),
     saveMapPlugin(),
     saveSrtPlugin(),
+    saveDialogueManifestPlugin(),
     validateDialoguesPlugin(),
   ],
   resolve: {
