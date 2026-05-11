@@ -3,23 +3,106 @@ import { Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import type {
   DialogueDefinition,
   DialogueManifest,
+  DialogueSpeaker,
   DialogueVoiceId,
 } from "@/types/dialogues/dialogues";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import { playDialogueById } from "@/utils/dialogues/playDialogue";
+import { parseSrt } from "@/utils/subtitles/parseSrt";
 
 const DEFAULT_VOICE: DialogueVoiceId = "narrateur";
 type DialoguePatch = Partial<Omit<DialogueDefinition, "timecode">> & {
   timecode?: number | undefined;
 };
 
-function createDialogue(index: number): DialogueDefinition {
+function createDialogue(
+  index: number,
+  manifest: DialogueManifest,
+  voice: DialogueVoiceId,
+): DialogueDefinition {
   return {
     id: `new_dialogue_${index}`,
-    voice: DEFAULT_VOICE,
-    audio: "/sounds/dialogue/new_dialogue.mp3",
-    subtitleCueIndex: 1,
+    voice,
+    audio: `/sounds/dialogue/new_dialogue_${index}.mp3`,
+    subtitleCueIndex: getNextCueIndex(manifest, voice),
   };
+}
+
+function getNextCueIndex(
+  manifest: DialogueManifest,
+  voice: DialogueVoiceId,
+): number {
+  const cueIndexes = manifest.dialogues
+    .filter((dialogue) => dialogue.voice === voice)
+    .map((dialogue) => dialogue.subtitleCueIndex);
+
+  return Math.max(0, ...cueIndexes) + 1;
+}
+
+function getVoiceSpeaker(
+  manifest: DialogueManifest,
+  voice: DialogueVoiceId,
+): DialogueSpeaker {
+  return (
+    manifest.voices.find((item) => item.id === voice)?.speaker ?? "Narrateur"
+  );
+}
+
+function getFrenchSrtPath(voice: DialogueVoiceId): string {
+  return `/sounds/dialogue/subtitles/fr/${voice}.srt`;
+}
+
+function createSrtCueBlock(cueIndex: number, speaker: DialogueSpeaker): string {
+  return `${cueIndex}\n00:00:00,000 --> 00:00:02,000\n${speaker}: Nouveau sous-titre ${cueIndex} a definir`;
+}
+
+function appendSrtCueIfMissing(
+  content: string,
+  cueIndex: number,
+  speaker: DialogueSpeaker,
+): string {
+  const cues = parseSrt(content);
+  if (cues.some((cue) => cue.index === cueIndex)) return content;
+
+  const trimmedContent = content.trim();
+  const cueBlock = createSrtCueBlock(cueIndex, speaker);
+  return trimmedContent
+    ? `${trimmedContent}\n\n${cueBlock}\n`
+    : `${cueBlock}\n`;
+}
+
+async function saveSrtFile(
+  voice: DialogueVoiceId,
+  content: string,
+): Promise<void> {
+  const response = await fetch("/api/save-srt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ voice, language: "fr", content }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    throw new Error(body?.error ?? "Sauvegarde SRT impossible");
+  }
+}
+
+async function createFrenchSrtCue(
+  manifest: DialogueManifest,
+  dialogue: DialogueDefinition,
+): Promise<void> {
+  const srtPath = getFrenchSrtPath(dialogue.voice);
+  const response = await fetch(srtPath);
+  const content = response.ok ? await response.text() : "";
+  const nextContent = appendSrtCueIfMissing(
+    content,
+    dialogue.subtitleCueIndex,
+    getVoiceSpeaker(manifest, dialogue.voice),
+  );
+
+  await saveSrtFile(dialogue.voice, nextContent);
 }
 
 function getManifestErrors(manifest: DialogueManifest | null): string[] {
@@ -96,6 +179,7 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
   const [status, setStatus] = useState("Chargement du manifeste...");
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isCreatingSrtCue, setIsCreatingSrtCue] = useState(false);
   const errors = getManifestErrors(manifest);
   const selectedDialogue =
     manifest?.dialogues.find(
@@ -147,16 +231,38 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
     }
   }
 
-  function handleAddDialogue(): void {
+  async function handleAddDialogue(): Promise<void> {
     if (!manifest) return;
 
-    const dialogue = createDialogue(manifest.dialogues.length + 1);
-    setManifest({
+    const voice = selectedDialogue?.voice ?? DEFAULT_VOICE;
+    const dialogue = createDialogue(
+      manifest.dialogues.length + 1,
+      manifest,
+      voice,
+    );
+    const nextManifest = {
       ...manifest,
       dialogues: [...manifest.dialogues, dialogue],
-    });
+    };
+
+    setManifest(nextManifest);
     setSelectedDialogueId(dialogue.id);
-    setStatus("Nouveau dialogue ajoute localement.");
+    setIsCreatingSrtCue(true);
+    setStatus("Nouveau dialogue ajoute localement. Creation de la cue FR...");
+
+    try {
+      await createFrenchSrtCue(nextManifest, dialogue);
+      setStatus(
+        `Nouveau dialogue ajoute avec cue FR ${dialogue.subtitleCueIndex}. Sauvegarde le manifeste pour le garder.`,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      setStatus(
+        `Dialogue ajoute localement, mais cue FR non creee: ${message}`,
+      );
+    } finally {
+      setIsCreatingSrtCue(false);
+    }
   }
 
   function handleRemoveDialogue(dialogueId: string): void {
@@ -224,6 +330,23 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
     }
   }
 
+  async function handleCreateFrenchSrtCue(): Promise<void> {
+    if (!manifest || !selectedDialogue) return;
+
+    setIsCreatingSrtCue(true);
+    setStatus(`Creation de la cue FR ${selectedDialogue.subtitleCueIndex}...`);
+
+    try {
+      await createFrenchSrtCue(manifest, selectedDialogue);
+      setStatus(`Cue FR ${selectedDialogue.subtitleCueIndex} prete.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      setStatus(message);
+    } finally {
+      setIsCreatingSrtCue(false);
+    }
+  }
+
   useEffect(() => {
     let mounted = true;
 
@@ -269,9 +392,13 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
           <RefreshCw size={14} aria-hidden="true" />
           Reload
         </button>
-        <button type="button" disabled={!manifest} onClick={handleAddDialogue}>
+        <button
+          type="button"
+          disabled={!manifest || isCreatingSrtCue}
+          onClick={() => void handleAddDialogue()}
+        >
           <Plus size={14} aria-hidden="true" />
-          Add
+          {isCreatingSrtCue ? "Adding..." : "Add"}
         </button>
         <button
           type="button"
@@ -373,6 +500,16 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
               }}
             />
           </label>
+
+          <button
+            className="editor-dialogue-manifest-srt-cue"
+            type="button"
+            disabled={isCreatingSrtCue}
+            onClick={() => void handleCreateFrenchSrtCue()}
+          >
+            <Plus size={14} aria-hidden="true" />
+            {isCreatingSrtCue ? "Creating..." : "Create FR SRT cue"}
+          </button>
 
           <button
             className="editor-dialogue-manifest-preview"
