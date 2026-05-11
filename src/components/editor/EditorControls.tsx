@@ -12,6 +12,7 @@ import {
   Save,
   Undo2,
 } from "lucide-react";
+import { EditorCinematicManifestPanel } from "@/components/editor/EditorCinematicManifestPanel";
 import { EditorDialogueManifestPanel } from "@/components/editor/EditorDialogueManifestPanel";
 import { EditorSrtPanel } from "@/components/editor/EditorSrtPanel";
 import type { MapNode, TransformMode } from "@/types/editor/editor";
@@ -239,6 +240,7 @@ export function EditorControls({
           </div>
         </section>
 
+        <EditorCinematicManifestPanel />
         <EditorDialogueManifestPanel />
         <EditorSrtPanel />
       </aside>

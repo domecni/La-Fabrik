@@ -1836,6 +1836,186 @@ canvas {
   padding-left: 16px;
 }
 
+/* Editor cinematic manifest panel */
+.editor-cinematic-manifest-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.editor-cinematic-manifest-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.editor-cinematic-manifest-actions button,
+.editor-cinematic-manifest-delete,
+.editor-cinematic-keyframes-heading button,
+.editor-cinematic-keyframe-heading button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 9px;
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  background: #151515;
+  color: #f2f2f2;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.editor-cinematic-manifest-actions button:hover,
+.editor-cinematic-manifest-delete:hover,
+.editor-cinematic-keyframes-heading button:hover,
+.editor-cinematic-keyframe-heading button:hover {
+  border-color: #ffffff;
+  background: #202020;
+}
+
+.editor-cinematic-manifest-actions button:disabled,
+.editor-cinematic-keyframe-heading button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.editor-cinematic-manifest-select,
+.editor-cinematic-manifest-form label,
+.editor-cinematic-vector-inputs label {
+  display: grid;
+  gap: 5px;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-cinematic-manifest-select select,
+.editor-cinematic-manifest-form input,
+.editor-cinematic-vector-inputs input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  background: #101010;
+  color: #f2f2f2;
+}
+
+.editor-cinematic-manifest-select select:focus,
+.editor-cinematic-manifest-form input:focus,
+.editor-cinematic-vector-inputs input:focus {
+  border-color: #ffffff;
+  outline: none;
+}
+
+.editor-cinematic-manifest-form,
+.editor-cinematic-keyframes,
+.editor-cinematic-keyframe {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-cinematic-manifest-form {
+  padding: 10px;
+  border: 1px solid #1f1f1f;
+  border-radius: 16px;
+  background: #070707;
+}
+
+.editor-cinematic-keyframes {
+  padding: 10px;
+  border: 1px solid #242424;
+  border-radius: 14px;
+  background: #101010;
+}
+
+.editor-cinematic-keyframes-heading,
+.editor-cinematic-keyframe-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editor-cinematic-keyframes-heading strong,
+.editor-cinematic-keyframe-heading strong {
+  color: #f2f2f2;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.editor-cinematic-keyframe {
+  padding: 9px;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  background: #070707;
+}
+
+.editor-cinematic-vector-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.editor-cinematic-vector-inputs span {
+  grid-column: 1 / -1;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-cinematic-manifest-delete {
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #fca5a5;
+}
+
+.editor-cinematic-keyframe-heading button {
+  padding: 6px 8px;
+  color: #fca5a5;
+}
+
+.editor-cinematic-manifest-status {
+  margin: 0;
+  color: #8d8d8d;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.editor-cinematic-manifest-diagnostic {
+  display: grid;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid #242424;
+  border-radius: 12px;
+  background: #101010;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.editor-cinematic-manifest-diagnostic.is-valid {
+  border-color: rgba(134, 239, 172, 0.32);
+  color: #86efac;
+}
+
+.editor-cinematic-manifest-diagnostic.is-invalid {
+  border-color: rgba(248, 113, 113, 0.38);
+  color: #fca5a5;
+}
+
+.editor-cinematic-manifest-diagnostic ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+}
+
 /* Editor responsive layout */
 @media (max-width: 768px) {
   .editor-error h2 {

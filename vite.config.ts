@@ -13,6 +13,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const MAX_MAP_PAYLOAD_BYTES = 1024 * 1024;
 const MAX_SRT_PAYLOAD_BYTES = 256 * 1024;
 const MAX_DIALOGUE_MANIFEST_PAYLOAD_BYTES = 256 * 1024;
+const MAX_CINEMATIC_MANIFEST_PAYLOAD_BYTES = 256 * 1024;
 const JSON_HEADERS = { "Content-Type": "application/json" };
 type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
 type JsonObject = { readonly [key: string]: JsonValue };
@@ -207,6 +208,49 @@ const saveDialogueManifestPlugin = (): Plugin => ({
   },
 });
 
+const saveCinematicManifestPlugin = (): Plugin => ({
+  name: "save-cinematic-manifest-api",
+  configureServer(server) {
+    server.middlewares.use("/api/save-cinematics", async (req, res) => {
+      if (req.method !== "POST") {
+        sendJson(res, 405, { error: "Method not allowed" }, { Allow: "POST" });
+        return;
+      }
+
+      const chunks: Buffer[] = [];
+      let size = 0;
+
+      for await (const chunk of req) {
+        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        size += buffer.length;
+        if (size > MAX_CINEMATIC_MANIFEST_PAYLOAD_BYTES) {
+          sendJson(res, 413, { error: "Payload too large" });
+          req.destroy();
+          return;
+        }
+        chunks.push(buffer);
+      }
+
+      try {
+        const data = JSON.parse(Buffer.concat(chunks).toString()) as unknown;
+        parseCinematicManifestData(data);
+
+        const manifestPath = path.resolve(__dirname, "public/cinematics.json");
+        await fs.promises.writeFile(
+          manifestPath,
+          `${JSON.stringify(data, null, 2)}\n`,
+          "utf8",
+        );
+        sendJson(res, 200, { success: true });
+      } catch (err) {
+        const status = err instanceof SyntaxError ? 400 : 500;
+        const message = err instanceof Error ? err.message : "Unknown error";
+        sendJson(res, status, { error: message });
+      }
+    });
+  },
+});
+
 interface SrtPayload {
   voice: string;
   language: string;
@@ -230,6 +274,22 @@ interface DialogueData {
   audio: string;
   subtitleCueIndex: number;
   timecode?: number;
+}
+
+interface CinematicManifestData {
+  cinematics: CinematicData[];
+}
+
+interface CinematicData {
+  id: string;
+  timecode?: number;
+  cameraKeyframes: CinematicKeyframeData[];
+}
+
+interface CinematicKeyframeData {
+  time: number;
+  position: [number, number, number];
+  target: [number, number, number];
 }
 
 function isSrtPayload(data: unknown): data is SrtPayload {
@@ -403,6 +463,80 @@ function parseDialogueData(data: unknown, voiceIds: Set<string>): DialogueData {
   return dialogue;
 }
 
+function parseCinematicManifestData(data: unknown): CinematicManifestData {
+  if (!isRecord(data) || data.version !== 1) {
+    throw new Error("Invalid cinematic manifest");
+  }
+
+  if (!Array.isArray(data.cinematics)) {
+    throw new Error("Cinematic manifest requires a cinematics array");
+  }
+
+  return {
+    cinematics: data.cinematics.map(parseCinematicData),
+  };
+}
+
+function parseCinematicData(data: unknown): CinematicData {
+  if (!isRecord(data) || typeof data.id !== "string") {
+    throw new Error("Invalid cinematic definition");
+  }
+
+  if (!Array.isArray(data.cameraKeyframes)) {
+    throw new Error(`Cinematic ${data.id} requires cameraKeyframes`);
+  }
+
+  const cameraKeyframes = data.cameraKeyframes.map(parseCinematicKeyframeData);
+  if (cameraKeyframes.length < 2) {
+    throw new Error(`Cinematic ${data.id} requires at least two keyframes`);
+  }
+
+  cameraKeyframes.forEach((keyframe, index) => {
+    const previousKeyframe = cameraKeyframes[index - 1];
+    if (previousKeyframe && keyframe.time <= previousKeyframe.time) {
+      throw new Error(`Cinematic ${data.id} keyframe times must increase`);
+    }
+  });
+
+  const cinematic: CinematicData = {
+    id: data.id,
+    cameraKeyframes,
+  };
+
+  if (data.timecode !== undefined) {
+    if (typeof data.timecode !== "number") {
+      throw new Error(`Cinematic ${data.id} has an invalid timecode`);
+    }
+    cinematic.timecode = data.timecode;
+  }
+
+  return cinematic;
+}
+
+function parseCinematicKeyframeData(data: unknown): CinematicKeyframeData {
+  if (!isRecord(data) || typeof data.time !== "number") {
+    throw new Error("Invalid cinematic camera keyframe");
+  }
+
+  return {
+    time: data.time,
+    position: parseCinematicVector(data.position),
+    target: parseCinematicVector(data.target),
+  };
+}
+
+function parseCinematicVector(value: unknown): [number, number, number] {
+  if (
+    !Array.isArray(value) ||
+    value.length !== 3 ||
+    value.some((item) => typeof item !== "number")
+  ) {
+    throw new Error("Invalid cinematic vector");
+  }
+
+  return [value[0], value[1], value[2]];
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -447,6 +581,7 @@ export default defineConfig({
     saveMapPlugin(),
     saveSrtPlugin(),
     saveDialogueManifestPlugin(),
+    saveCinematicManifestPlugin(),
     validateDialoguesPlugin(),
   ],
   resolve: {
