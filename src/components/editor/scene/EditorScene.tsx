@@ -17,6 +17,7 @@ interface EditorSceneProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
   onSelectNode: (index: number | null) => void;
+  isSelectionLocked: boolean;
   hoveredNodeIndex: number | null;
   onHoverNode: (index: number | null) => void;
   transformMode: TransformMode;
@@ -35,6 +36,7 @@ export function EditorScene({
   sceneData,
   selectedNodeIndex,
   onSelectNode,
+  isSelectionLocked,
   hoveredNodeIndex,
   onHoverNode,
   transformMode,
@@ -68,7 +70,7 @@ export function EditorScene({
       if (selectedNodeIndex !== null) {
         switch (e.key.toLowerCase()) {
           case "escape":
-            onSelectNode(null);
+            if (!isSelectionLocked) onSelectNode(null);
             break;
           case "t":
             onTransformModeChange("translate");
@@ -85,7 +87,14 @@ export function EditorScene({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedNodeIndex, onSelectNode, onTransformModeChange, onUndo, onRedo]);
+  }, [
+    isSelectionLocked,
+    selectedNodeIndex,
+    onSelectNode,
+    onTransformModeChange,
+    onUndo,
+    onRedo,
+  ]);
 
   return (
     <>
@@ -113,6 +122,7 @@ export function EditorScene({
         sceneData={sceneData}
         selectedNodeIndex={selectedNodeIndex}
         onSelectNode={onSelectNode}
+        isSelectionLocked={isSelectionLocked}
         hoveredNodeIndex={hoveredNodeIndex}
         onHoverNode={onHoverNode}
         transformMode={transformMode}

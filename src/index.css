@@ -1142,6 +1142,61 @@ canvas {
   line-height: 1.45;
 }
 
+.editor-panel-group {
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.editor-panel-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 12px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  list-style: none;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.editor-panel-group-summary::-webkit-details-marker {
+  display: none;
+}
+
+.editor-panel-group-summary:hover {
+  color: #f2f2f2;
+}
+
+.editor-panel-group-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #777777;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.editor-panel-group-meta svg {
+  transition: transform 160ms ease;
+}
+
+.editor-panel-group[open] .editor-panel-group-meta svg {
+  transform: rotate(180deg);
+}
+
+.editor-panel-group-content > .editor-control-section:first-child,
+.editor-panel-group-content > .editor-json-section:first-child,
+.editor-panel-group-content > .editor-cinematic-manifest-section:first-child,
+.editor-panel-group-content > .editor-dialogue-manifest-section:first-child,
+.editor-panel-group-content > .editor-srt-section:first-child {
+  border-top: 0;
+}
+
 .editor-control-section {
   padding: 14px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
@@ -1313,7 +1368,8 @@ canvas {
 }
 
 .editor-selected-info {
-  display: flex;
+  display: grid;
+  grid-template-columns: 17px 1fr auto;
   align-items: center;
   gap: 11px;
   background: #ffffff;
@@ -1321,6 +1377,38 @@ canvas {
   border-radius: 16px;
   padding: 12px;
   color: #050505;
+}
+
+.editor-selected-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.editor-selected-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  color: #050505;
+  background: rgba(0, 0, 0, 0.06);
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.editor-selected-actions button:hover {
+  background: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.editor-selected-actions button[aria-pressed="true"] {
+  color: #ffffff;
+  background: #050505;
 }
 
 .editor-selected-info strong,

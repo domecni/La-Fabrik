@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { Component, Suspense, useEffect, useState } from "react";
+import {
+  Component,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { GameMapCollision } from "@/world/GameMapCollision";
@@ -20,6 +27,7 @@ interface ErrorBoundaryProps {
   fallback: ReactNode;
   modelUrl: string | null;
   node: MapNode;
+  onSettled: () => void;
 }
 
 interface ErrorBoundaryState {
@@ -50,6 +58,7 @@ class ModelErrorBoundary extends Component<
       },
       error,
     );
+    this.props.onSettled();
   }
 
   render(): ReactNode {
@@ -68,19 +77,39 @@ interface GameMapProps {
   buildOctree?: boolean;
 }
 
-const MAP_RENDER_BATCH_SIZE = 12;
-
 export function GameMap({
   buildOctree = true,
   onLoaded,
   onLoadingStateChange,
   onOctreeReady,
 }: GameMapProps): React.JSX.Element {
+  const settledMapNodesRef = useRef(new Set<number>());
   const [mapNodes, setMapNodes] = useState<LoadedMapNode[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [visibleNodeCount, setVisibleNodeCount] = useState(0);
-  const visibleMapNodes = mapNodes.slice(0, visibleNodeCount);
-  const mapReady = mapLoaded && visibleNodeCount >= mapNodes.length;
+  const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
+  const mapReady = mapLoaded && settledMapNodeCount >= mapNodes.length;
+
+  const handleMapNodeSettled = useCallback((index: number) => {
+    if (settledMapNodesRef.current.has(index)) return;
+
+    settledMapNodesRef.current.add(index);
+    setSettledMapNodeCount(settledMapNodesRef.current.size);
+  }, []);
+
+  const showEmptyMap = useCallback(
+    (currentStep: string) => {
+      setMapNodes([]);
+      setMapLoaded(true);
+      settledMapNodesRef.current.clear();
+      setSettledMapNodeCount(0);
+      onLoadingStateChange?.({
+        currentStep,
+        progress: 0.7,
+        status: "loading",
+      });
+    },
+    [onLoadingStateChange],
+  );
 
   useEffect(() => {
     onLoadingStateChange?.({
@@ -94,11 +123,7 @@ export function GameMap({
         const sceneData = await loadMapSceneData();
         if (!sceneData) {
           logger.warn("GameMap", "map.json not found");
-          onLoadingStateChange?.({
-            currentStep: "Map introuvable",
-            progress: 1,
-            status: "loading",
-          });
+          showEmptyMap("Map introuvable");
           return;
         }
 
@@ -128,9 +153,10 @@ export function GameMap({
 
         setMapNodes(loadedMapNodes);
         setMapLoaded(true);
-        setVisibleNodeCount(0);
+        settledMapNodesRef.current.clear();
+        setSettledMapNodeCount(0);
         onLoadingStateChange?.({
-          currentStep: "Montage progressif des models",
+          currentStep: "Chargement des modèles de la map",
           progress: 0.25,
           status: "loading",
         });
@@ -138,63 +164,41 @@ export function GameMap({
         logger.error("GameMap", "Error loading map", {
           error: error instanceof Error ? error : new Error(String(error)),
         });
-        onLoadingStateChange?.({
-          currentStep: "Erreur de chargement de la map",
-          progress: 1,
-          status: "loading",
-        });
+        showEmptyMap("Erreur de chargement de la map");
       }
     };
 
     loadMap();
-  }, [onLoaded, onLoadingStateChange]);
-
-  useEffect(() => {
-    if (mapNodes.length === 0 || visibleNodeCount >= mapNodes.length) return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      setVisibleNodeCount((current) =>
-        Math.min(current + MAP_RENDER_BATCH_SIZE, mapNodes.length),
-      );
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [mapNodes.length, visibleNodeCount]);
+  }, [onLoadingStateChange, showEmptyMap]);
 
   useEffect(() => {
     if (mapNodes.length === 0) return;
 
     const renderProgress =
-      mapNodes.length === 0 ? 1 : visibleNodeCount / mapNodes.length;
+      mapNodes.length === 0 ? 1 : settledMapNodeCount / mapNodes.length;
     onLoadingStateChange?.({
-      currentStep: "Montage progressif des models",
+      currentStep: "Chargement des modèles de la map",
       progress: 0.25 + renderProgress * 0.45,
       status: "loading",
     });
-  }, [mapNodes.length, onLoadingStateChange, visibleNodeCount]);
+  }, [mapNodes.length, onLoadingStateChange, settledMapNodeCount]);
 
   return (
     <>
       <group>
-        {visibleMapNodes.map((mapNode, index) => (
+        {mapNodes.map((mapNode, index) => (
           <ModelErrorBoundary
             key={index}
             fallback={<FallbackMapNode node={mapNode.node} />}
             modelUrl={mapNode.modelUrl}
             node={mapNode.node}
+            onSettled={() => handleMapNodeSettled(index)}
           >
-            {mapNode.modelUrl ? (
-              <Suspense fallback={<FallbackMapNode node={mapNode.node} />}>
-                <ModelInstance
-                  node={mapNode.node}
-                  modelUrl={mapNode.modelUrl}
-                />
-              </Suspense>
-            ) : (
-              <FallbackMapNode node={mapNode.node} />
-            )}
+            <MapNodeInstance
+              node={mapNode.node}
+              modelUrl={mapNode.modelUrl}
+              onSettled={() => handleMapNodeSettled(index)}
+            />
           </ModelErrorBoundary>
         ))}
       </group>
@@ -210,12 +214,40 @@ export function GameMap({
   );
 }
 
+function MapNodeInstance({
+  node,
+  modelUrl,
+  onSettled,
+}: {
+  node: MapNode;
+  modelUrl: string | null;
+  onSettled: () => void;
+}): React.JSX.Element {
+  useEffect(() => {
+    if (modelUrl !== null) return;
+
+    onSettled();
+  }, [modelUrl, onSettled]);
+
+  if (!modelUrl) {
+    return <FallbackMapNode node={node} />;
+  }
+
+  return (
+    <Suspense fallback={<FallbackMapNode node={node} />}>
+      <ModelInstance node={node} modelUrl={modelUrl} onLoaded={onSettled} />
+    </Suspense>
+  );
+}
+
 function ModelInstance({
   node,
   modelUrl,
+  onLoaded,
 }: {
   node: MapNode;
   modelUrl: string;
+  onLoaded: () => void;
 }): React.JSX.Element {
   const { position, rotation, scale } = node;
   const { scene } = useLoggedGLTF(modelUrl, {
@@ -225,6 +257,10 @@ function ModelInstance({
     scale,
   });
   const sceneInstance = useClonedObject(scene);
+
+  useEffect(() => {
+    onLoaded();
+  }, [onLoaded]);
 
   return (
     <primitive

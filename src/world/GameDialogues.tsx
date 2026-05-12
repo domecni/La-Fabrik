@@ -12,6 +12,7 @@ export function GameDialogues(): null {
   const [manifest, setManifest] = useState<DialogueManifest | null>(null);
   const playedDialoguesRef = useRef(new Set<string>());
   const activeAudiosRef = useRef(new Set<HTMLAudioElement>());
+  const startedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -38,7 +39,9 @@ export function GameDialogues(): null {
   useFrame(({ clock }) => {
     if (!manifest) return;
 
-    const elapsedTime = clock.getElapsedTime();
+    startedAtRef.current ??= clock.getElapsedTime();
+
+    const elapsedTime = clock.getElapsedTime() - startedAtRef.current;
 
     manifest.dialogues.forEach((dialogue) => {
       if (dialogue.timecode === undefined) return;

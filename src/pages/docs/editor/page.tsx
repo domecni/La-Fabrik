@@ -1,13 +1,12 @@
 import editor from "../../../../docs/user/editor.md?raw";
 import { DocsDocument } from "@/components/docs/DocsDocument";
-import { editorFr } from "@/data/docs/docsTranslations";
 
 export function DocsEditorPage(): React.JSX.Element {
   return (
     <DocsDocument
       content={editor}
-      frContent={editorFr}
-      meta="09"
+      frContent={editor}
+      meta="14"
       title="Editor User Guide"
     />
   );

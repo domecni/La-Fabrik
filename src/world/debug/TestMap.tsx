@@ -154,7 +154,7 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
       <ModelPreviewErrorBoundary modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}>
         <AnimatedModel
           modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}
-          defaultAnimation="Idle"
+          defaultAnimation="Dance"
           position={[0, 0, -5]}
           scale={1}
         />

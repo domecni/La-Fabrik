@@ -38,13 +38,13 @@ export function HomePage(): React.JSX.Element {
   const handleSceneLoadingStateChange = useCallback(
     (nextState: SceneLoadingState) => {
       setSceneLoadingState((currentState) => {
-        const shouldRestartProgress = currentState.status === "ready";
+        if (currentState.status === "ready" && nextState.status === "loading") {
+          return currentState;
+        }
 
         return {
           ...nextState,
-          progress: shouldRestartProgress
-            ? nextState.progress
-            : Math.max(currentState.progress, nextState.progress),
+          progress: Math.max(currentState.progress, nextState.progress),
         };
       });
     },

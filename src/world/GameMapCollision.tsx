@@ -102,10 +102,18 @@ export function GameMapCollision({
 }: GameMapCollisionProps): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null);
   const settledCollisionNodesRef = useRef(new Set<number>());
+  const loadedNotifiedRef = useRef(false);
   const [settledCollisionNodeCount, setSettledCollisionNodeCount] = useState(0);
   const collisionNodes = nodes.filter(isCollisionNode);
   const collisionReady =
     mapReady && settledCollisionNodeCount >= collisionNodes.length;
+
+  const notifyLoaded = useCallback(() => {
+    if (loadedNotifiedRef.current) return;
+
+    loadedNotifiedRef.current = true;
+    onLoaded?.();
+  }, [onLoaded]);
 
   const handleCollisionNodeSettled = useCallback((index: number) => {
     if (settledCollisionNodesRef.current.has(index)) return;
@@ -122,9 +130,9 @@ export function GameMapCollision({
         status: "loading",
       });
       onOctreeReady(octree);
-      onLoaded?.();
+      notifyLoaded();
     },
-    [onLoaded, onLoadingStateChange, onOctreeReady],
+    [notifyLoaded, onLoadingStateChange, onOctreeReady],
   );
 
   useOctreeGraphNode(
@@ -138,7 +146,12 @@ export function GameMapCollision({
     if (!mapReady) return;
 
     if (collisionNodes.length === 0) {
-      onLoaded?.();
+      notifyLoaded();
+      return;
+    }
+
+    if (collisionReady && !buildOctree) {
+      notifyLoaded();
       return;
     }
 
@@ -150,10 +163,11 @@ export function GameMapCollision({
       status: "loading",
     });
   }, [
+    buildOctree,
     collisionNodes.length,
     collisionReady,
     mapReady,
-    onLoaded,
+    notifyLoaded,
     onLoadingStateChange,
   ]);
 

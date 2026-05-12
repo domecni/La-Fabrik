@@ -11,5 +11,5 @@ export const PLAYER_MAX_DELTA = 0.05;
 export const PLAYER_ACCELERATION_MULTIPLIER = 9;
 export const PLAYER_XZ_DAMPING_FACTOR = 8;
 
-export const PLAYER_SPAWN_POSITION_GAME: Vector3Tuple = [0, 100, 0];
+export const PLAYER_SPAWN_POSITION_GAME: Vector3Tuple = [0, 50, 0];
 export const PLAYER_SPAWN_POSITION_PHYSICS: Vector3Tuple = [0, 3, 0];

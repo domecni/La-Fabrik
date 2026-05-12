@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useThree } from "@react-three/fiber";
 import type { Octree } from "three/addons/math/Octree.js";
 import type { Vector3Tuple } from "@/types/three/three";
@@ -16,7 +16,7 @@ export function Player({
 }: PlayerProps): React.JSX.Element {
   const camera = useThree((state) => state.camera);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     camera.position.set(...spawnPosition);
   }, [camera, spawnPosition]);
 

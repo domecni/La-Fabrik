@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Capsule } from "three/addons/math/Capsule.js";
@@ -57,6 +57,18 @@ const _up = new THREE.Vector3(0, 1, 0);
 const _translateVec = new THREE.Vector3();
 const _collisionCorrection = new THREE.Vector3();
 
+function createSpawnCapsule(spawnPosition: Vector3Tuple): Capsule {
+  return new Capsule(
+    new THREE.Vector3(
+      spawnPosition[0],
+      spawnPosition[1] - PLAYER_EYE_HEIGHT + PLAYER_CAPSULE_RADIUS,
+      spawnPosition[2],
+    ),
+    new THREE.Vector3(...spawnPosition),
+    PLAYER_CAPSULE_RADIUS,
+  );
+}
+
 function isPlayerInputLocked(): boolean {
   return (
     useSettingsStore.getState().isSettingsMenuOpen ||
@@ -94,17 +106,11 @@ export function PlayerController({
   const velocity = useRef(new THREE.Vector3());
   const onFloor = useRef(false);
   const wantsJump = useRef(false);
-  const canMove = useGameStore((state) => state.missionFlow.canMove);
+  const initializedRef = useRef(false);  const canMove = useGameStore((state) => state.missionFlow.canMove);
 
-  const capsule = useRef(
-    new Capsule(
-      new THREE.Vector3(0, PLAYER_CAPSULE_RADIUS, 0),
-      new THREE.Vector3(0, PLAYER_EYE_HEIGHT - PLAYER_CAPSULE_RADIUS, 0),
-      PLAYER_CAPSULE_RADIUS,
-    ),
-  );
+  const capsule = useRef(createSpawnCapsule(spawnPosition));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     capsule.current.start.set(
       spawnPosition[0],
       spawnPosition[1] - PLAYER_EYE_HEIGHT + PLAYER_CAPSULE_RADIUS,
@@ -115,6 +121,7 @@ export function PlayerController({
     onFloor.current = false;
     wantsJump.current = false;
     camera.position.copy(capsule.current.end);
+    initializedRef.current = true;
   }, [camera, spawnPosition]);
 
   useEffect(() => {
@@ -201,6 +208,8 @@ export function PlayerController({
   }, []);
 
   useFrame((_, delta) => {
+    if (!initializedRef.current) return;
+
     if (isPlayerInputLocked() || !canMove) {
       keys.current = { ...DEFAULT_KEYS };
       velocity.current.set(0, 0, 0);

@@ -6,7 +6,7 @@ export function DocsMainFeaturePage(): React.JSX.Element {
     <DocsDocument
       content={mainFeature}
       frContent={mainFeature}
-      meta="07"
+      meta="13"
       title="Main Feature"
     />
   );

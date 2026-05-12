@@ -22,6 +22,7 @@ export function GameCinematics(): null {
   const playedCinematicsRef = useRef(new Set<string>());
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const activeAudiosRef = useRef(new Set<HTMLAudioElement>());
+  const startedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -59,7 +60,9 @@ export function GameCinematics(): null {
   useFrame(({ clock }) => {
     if (!manifest) return;
 
-    const elapsedTime = clock.getElapsedTime();
+    startedAtRef.current ??= clock.getElapsedTime();
+
+    const elapsedTime = clock.getElapsedTime() - startedAtRef.current;
 
     manifest.cinematics.forEach((cinematic) => {
       if (cinematic.timecode === undefined) return;

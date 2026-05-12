@@ -10,7 +10,9 @@ interface UseWorldSceneLoadingOptions {
 
 interface UseWorldSceneLoadingResult {
   octree: Octree | null;
+  gameplayReady: boolean;
   showGameStage: boolean;
+  handleGameStageLoaded: () => void;
   handleGameMapLoaded: () => void;
   handleOctreeReady: (octree: Octree) => void;
 }
@@ -21,14 +23,25 @@ export function useWorldSceneLoading({
 }: UseWorldSceneLoadingOptions): UseWorldSceneLoadingResult {
   const [octree, setOctree] = useState<Octree | null>(null);
   const [gameMapLoaded, setGameMapLoaded] = useState(false);
+  const [gameStageLoaded, setGameStageLoaded] = useState(false);
   const showGameStage = sceneMode === "game" && gameMapLoaded;
+  const gameplayReady = showGameStage && gameStageLoaded && octree !== null;
   const sceneReady =
-    (sceneMode === "game" && gameMapLoaded) ||
+    (sceneMode === "game" && gameplayReady) ||
     (sceneMode === "physics" && octree !== null);
 
   const handleGameMapLoaded = useCallback(() => {
     setGameMapLoaded(true);
   }, []);
+
+  const handleGameStageLoaded = useCallback(() => {
+    setGameStageLoaded(true);
+    onLoadingStateChange?.({
+      currentStep: "Initialisation gameplay",
+      progress: 0.96,
+      status: "loading",
+    });
+  }, [onLoadingStateChange]);
 
   const handleOctreeReady = useCallback(
     (nextOctree: Octree) => {
@@ -74,7 +87,9 @@ export function useWorldSceneLoading({
 
   return {
     octree,
+    gameplayReady,
     showGameStage,
+    handleGameStageLoaded,
     handleGameMapLoaded,
     handleOctreeReady,
   };
