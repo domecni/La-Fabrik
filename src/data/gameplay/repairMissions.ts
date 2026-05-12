@@ -52,7 +52,7 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
     description:
       "Repair the damaged cooling module before relaunching the bike",
     modelPath: "/models/ebike/model.gltf",
-    modelScale: 0.0055,
+    modelScale: 0.50,
     stageUiPath: "/assets/UI/ebike.webm",
     interactUiPath: REPAIR_INTERACT_UI_PATH,
     brokenUiPath: REPAIR_BROKEN_UI_PATH,
