@@ -11,6 +11,7 @@ interface EditorMapProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
   onSelectNode: (index: number | null) => void;
+  isSelectionLocked: boolean;
   hoveredNodeIndex: number | null;
   onHoverNode: (index: number | null) => void;
   transformMode: TransformMode;
@@ -28,6 +29,7 @@ interface EditorNodeCommonProps {
   isHovered: boolean;
   objectsMapRef: EditorNodeObjectRef;
   onSelectNode: (index: number | null) => void;
+  isSelectionLocked: boolean;
   onHoverNode: (index: number | null) => void;
 }
 
@@ -108,11 +110,13 @@ function getNodeHighlightColor(
 function createEditorNodePointerHandlers(
   index: number,
   onSelectNode: (index: number | null) => void,
+  isSelectionLocked: boolean,
   onHoverNode: (index: number | null) => void,
 ): EditorNodePointerHandlers {
   return {
     onClick: (event) => {
       event.stopPropagation();
+      if (isSelectionLocked) return;
       onSelectNode(index);
     },
     onPointerEnter: (event) => {
@@ -130,6 +134,7 @@ export function EditorMap({
   sceneData,
   selectedNodeIndex,
   onSelectNode,
+  isSelectionLocked,
   hoveredNodeIndex,
   onHoverNode,
   transformMode,
@@ -192,8 +197,9 @@ export function EditorMap({
       <axesHelper args={[10]} />
 
       <group
-        onClick={(e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
+        onClick={(event: ThreeEvent<MouseEvent>) => {
+          event.stopPropagation();
+          if (isSelectionLocked) return;
           onSelectNode(null);
         }}
       >
@@ -211,6 +217,7 @@ export function EditorMap({
                 isHovered={hoveredNodeIndex === index}
                 objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
+                isSelectionLocked={isSelectionLocked}
                 onHoverNode={onHoverNode}
               />
             );
@@ -224,6 +231,7 @@ export function EditorMap({
                 isHovered={hoveredNodeIndex === index}
                 objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
+                isSelectionLocked={isSelectionLocked}
                 onHoverNode={onHoverNode}
               />
             );
@@ -251,6 +259,7 @@ function EditorModelNode({
   isHovered,
   objectsMapRef,
   onSelectNode,
+  isSelectionLocked,
   onHoverNode,
 }: EditorNodeCommonProps & {
   modelUrl: string;
@@ -269,6 +278,7 @@ function EditorModelNode({
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
+    isSelectionLocked,
     onHoverNode,
   );
   useRegisteredEditorNode(groupRef, index, node, objectsMapRef);
@@ -343,12 +353,14 @@ function EditorFallbackNode({
   isHovered,
   objectsMapRef,
   onSelectNode,
+  isSelectionLocked,
   onHoverNode,
 }: EditorNodeCommonProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
+    isSelectionLocked,
     onHoverNode,
   );
   useRegisteredEditorNode(meshRef, index, node, objectsMapRef);
