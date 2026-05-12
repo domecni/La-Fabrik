@@ -6,7 +6,7 @@ export function DocsAnimationPage(): React.JSX.Element {
     <DocsDocument
       content={animation}
       frContent={animation}
-      meta="11"
+      meta="15"
       title="Animation & 3D Model System"
     />
   );

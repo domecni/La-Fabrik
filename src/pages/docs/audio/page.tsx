@@ -6,7 +6,7 @@ export function DocsAudioPage(): React.JSX.Element {
     <DocsDocument
       content={audio}
       frContent={audio}
-      meta="05"
+      meta="08"
       title="Audio Technical Notes"
     />
   );
