@@ -9,6 +9,9 @@ import { parseMapNodes } from "./src/utils/map/mapNodeValidation";
 import { parseSrt } from "./src/utils/subtitles/parseSrt";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const THREE_SOURCE_ENTRY = fileURLToPath(
+  new URL("./node_modules/three/src/Three.js", import.meta.url),
+);
 
 const MAX_MAP_PAYLOAD_BYTES = 1024 * 1024;
 const MAX_SRT_PAYLOAD_BYTES = 256 * 1024;
@@ -634,18 +637,35 @@ function resolvePublicPath(publicPath: string): string | null {
   return resolvedPath;
 }
 
-export default defineConfig({
-  plugins: [
-    react(),
-    saveMapPlugin(),
-    saveSrtPlugin(),
-    saveDialogueManifestPlugin(),
-    saveCinematicManifestPlugin(),
-    validateDialoguesPlugin(),
-  ],
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+export default defineConfig(({ mode }) => {
+  const isThreeDebug = mode === "three-debug";
+
+  return {
+    plugins: [
+      react(),
+      saveMapPlugin(),
+      saveSrtPlugin(),
+      saveDialogueManifestPlugin(),
+      saveCinematicManifestPlugin(),
+      validateDialoguesPlugin(),
+    ],
+    resolve: {
+      alias: [
+        {
+          find: "@",
+          replacement: fileURLToPath(new URL("./src", import.meta.url)),
+        },
+        ...(isThreeDebug
+          ? [{ find: /^three$/, replacement: THREE_SOURCE_ENTRY }]
+          : []),
+      ],
     },
-  },
+    ...(isThreeDebug
+      ? {
+          optimizeDeps: {
+            exclude: ["three"],
+          },
+        }
+      : {}),
+  };
 });

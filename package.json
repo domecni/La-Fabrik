@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:three-debug": "vite --mode three-debug --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
