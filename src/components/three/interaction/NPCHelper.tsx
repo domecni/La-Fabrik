@@ -3,21 +3,17 @@ import { useGameStore } from "@/managers/stores/useGameStore";
 import { Debug } from "@/utils/debug/Debug";
 import type { Vector3Tuple } from "@/types/three/three";
 
-interface VillageoisHelperObjectProps {
+interface NPCHelperProps {
   position: Vector3Tuple;
 }
 
-export function VillageoisHelperObject({
-  position,
-}: VillageoisHelperObjectProps): React.JSX.Element {
+export function NPCHelper({ position }: NPCHelperProps): React.JSX.Element {
   const step = useGameStore((state) => state.missionFlow.step);
   const setStep = useGameStore((state) => state.setFlowStep);
   const debug = Debug.getInstance();
 
   const handlePress = (): void => {
-    console.log("[VillageoisHelper] handlePress called, current step:", step);
     if (step === "searching") {
-      console.log("[VillageoisHelper] Transitioning to helped");
       setStep("helped");
     }
   };
@@ -27,13 +23,6 @@ export function VillageoisHelperObject({
   if (!shouldShow) {
     return <></>;
   }
-
-  console.log(
-    "[VillageoisHelper] Rendering, step:",
-    step,
-    "position:",
-    position,
-  );
 
   return (
     <InteractableObject

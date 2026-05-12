@@ -16,8 +16,8 @@ import {
 import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { HandTrackingGlove } from "@/components/three/handTracking/HandTrackingGlove";
-import { CentralObject } from "@/components/three/interaction/CentralObject";
-import { VillageoisHelperObject } from "@/components/three/interaction/VillageoisHelperObject";
+import { PyloneDestroyed } from "@/components/three/interaction/PyloneDestroyed";
+import { NPCHelper } from "@/components/three/interaction/NPCHelper";
 import { Environment } from "@/world/Environment";
 import { GameCinematics } from "@/world/GameCinematics";
 import { GameDialogues } from "@/world/GameDialogues";
@@ -75,8 +75,8 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
           <GameFlow />
           <ZoneDetection />
           <ZoneDebugVisuals />
-          <VillageoisHelperObject position={[1, 12, -55]} />
-          <CentralObject position={[1, 15, -45]} />
+          <NPCHelper position={[1, 12, -55]} />
+          <PyloneDestroyed position={[1, 15, -45]} />
           {noMusic ? null : <GameMusic />}
           {noCinematics ? null : <GameCinematics />}
           {noDialogues ? null : <GameDialogues />}

@@ -3,13 +3,13 @@ import { useGameStore } from "@/managers/stores/useGameStore";
 import { Debug } from "@/utils/debug/Debug";
 import type { Vector3Tuple } from "@/types/three/three";
 
-interface CentralObjectProps {
+interface PyloneDestroyedProps {
   position: Vector3Tuple;
 }
 
-export function CentralObject({
+export function PyloneDestroyed({
   position,
-}: CentralObjectProps): React.JSX.Element {
+}: PyloneDestroyedProps): React.JSX.Element {
   const step = useGameStore((state) => state.missionFlow.step);
   const setStep = useGameStore((state) => state.setFlowStep);
   const setCanMove = useGameStore((state) => state.setCanMove);
@@ -17,19 +17,13 @@ export function CentralObject({
   const debug = Debug.getInstance();
 
   const handlePress = (): void => {
-    console.log("[CentralObject] handlePress called, current step:", step);
-
     if (step === "helped") {
-      console.log("[CentralObject] Transitioning to manipulation");
       setCanMove(false);
       setStep("manipulation");
     } else if (step === "searching") {
-      console.log("[CentralObject] Showing help message");
       showDialog(
         "Cet objet est trop lourd pour le porter tout seul, trouve de l'aide",
       );
-    } else {
-      console.log("[CentralObject] Step is not helped or searching, skipping");
     }
   };
 
@@ -39,8 +33,6 @@ export function CentralObject({
   if (!shouldShow) {
     return <></>;
   }
-
-  console.log("[CentralObject] Rendering, step:", step, "position:", position);
 
   return (
     <InteractableObject
