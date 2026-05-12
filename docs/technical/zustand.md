@@ -1,72 +1,85 @@
-# Zustand Game State
+# Zustand Stores
 
 This document explains how Zustand is used in the current project.
 
 ## Why Zustand Exists Here
 
-The project needs one shared source of truth for the player's progression through the experience.
+The project needs shared state that is durable enough to be read by multiple React and React Three Fiber systems.
 
-The current progression is split into main states:
+Zustand is used for:
+
+- game progression
+- settings
+- subtitle display
+
+It is not used for high-frequency frame values. Values such as player velocity, temporary vectors, object positions during a grab, raycasts, and animation-loop data stay in refs or manager-local state.
+
+## Store Locations
+
+Current Zustand stores:
+
+```txt
+src/managers/stores/useGameStore.ts
+src/managers/stores/useSettingsStore.ts
+src/managers/stores/useSubtitleStore.ts
+```
+
+They are under `src/managers/stores/` because they are shared runtime state, not state owned by one visual component.
+
+## Store Responsibilities
+
+| Store              | Responsibility                                                    |
+| ------------------ | ----------------------------------------------------------------- |
+| `useGameStore`     | Durable game progression, mission steps, cinematic input lock     |
+| `useSettingsStore` | Menu visibility, volumes, subtitle options, repair-runtime toggle |
+| `useSubtitleStore` | Currently displayed subtitle cue                                  |
+
+## Managers vs Stores
+
+Managers own imperative runtime objects and side effects.
+
+Examples:
+
+- `AudioManager` owns audio elements, music playback, sound pools, category volumes, and optional panner nodes.
+- `InteractionManager` owns transient interaction handles and input-oriented focus/holding state.
+
+Stores own durable shared state:
+
+- current game phase
+- mission sub-step
+- progression flags
+- settings values
+- currently displayed subtitle cue
+
+Rule of thumb:
+
+- manager = runtime objects, side effects, frame-adjacent imperative logic
+- store = shared state that UI, world, or gameplay components need to subscribe to
+
+## Game Store Shape
+
+`useGameStore` exposes the main game progression.
+
+Main states:
 
 | Main state | Role                            |
 | ---------- | ------------------------------- |
 | `intro`    | Onboarding and opening sequence |
 | `bike`     | E-bike repair sequence          |
-| `pylone`   | Power grid sequence             |
-| `ferme`    | Vertical farm sequence          |
+| `pylone`   | Power pylon repair sequence     |
+| `ferme`    | Vertical farm repair sequence   |
 | `outro`    | Ending sequence                 |
 
-Each main state can also own smaller sub state, such as the current mission step, dialogue audio, or completion flags.
+Other important state:
 
-Zustand is useful because React and React Three Fiber components can subscribe only to the state slice they need. When that slice changes, only the subscribed components re-render.
+- `isCinematicPlaying`
+- `intro`
+- `bike`
+- `pylone`
+- `ferme`
+- `outro`
 
-## Store Location
-
-The game progression store lives here:
-
-```txt
-src/managers/stores/useGameStore.ts
-```
-
-The store is placed under `src/managers/stores/` because it belongs to the gameplay orchestration layer, not to a specific visual component.
-
-## Managers vs Store
-
-Managers are responsible for local runtime objects and imperative behavior.
-
-Examples:
-
-- `AudioManager` owns audio elements and sound pools.
-- `InteractionManager` owns transient interaction handles and input-oriented behavior.
-
-Managers can read from or write to the Zustand store when their local behavior needs to affect global gameplay progression.
-
-The Zustand store is responsible for durable global state:
-
-- current main state
-- mission sub state
-- progression flags
-- dialogue/audio references
-- state transitions
-
-Rule of thumb:
-
-- manager = runtime objects, side effects, and local imperative logic
-- store = global gameplay state that UI or world components can subscribe to
-
-## Current Shape
-
-The store exposes:
-
-- `mainState`: the active game phase
-- `intro`: intro-specific state
-- `bike`: e-bike mission state
-- `pylone`: power grid mission state
-- `ferme`: farm mission state
-- `outro`: ending state
-- actions for direct updates and progression updates
-
-The mission steps currently use this sequence:
+Mission steps:
 
 ```ts
 "locked" |
@@ -78,6 +91,8 @@ The mission steps currently use this sequence:
   "reassembling" |
   "done";
 ```
+
+`isCinematicPlaying` is read by `PlayerController` to ignore player input while camera timelines are active.
 
 ## Reading State In Components
 
@@ -95,7 +110,7 @@ export function Example(): React.JSX.Element {
 
 This is better than reading the whole store, because the component re-renders only when `mainState` changes.
 
-## Updating State
+## Updating Game State
 
 Prefer explicit actions from the store.
 
@@ -113,9 +128,15 @@ const setMainState = useGameStore((state) => state.setMainState);
 setMainState("bike");
 ```
 
-Direct setters are useful for debug panels, but production gameplay should prefer business actions such as `advanceGameState`, `completeBike`, or `completePylone`.
+Direct setters are useful for debug panels, but production gameplay should prefer business actions such as:
 
-Mission gameplay that can target `bike`, `pylone`, or `ferme` should prefer the generic mission actions:
+- `advanceGameState`
+- `completeBike`
+- `completePylone`
+- `completeFerme`
+- `completeMission`
+
+Mission gameplay that can target `bike`, `pylone`, or `ferme` should prefer generic mission actions:
 
 ```ts
 const setMissionStep = useGameStore((state) => state.setMissionStep);
@@ -125,40 +146,71 @@ setMissionStep("bike", "inspected");
 completeMission("bike");
 ```
 
-This keeps reusable gameplay components such as repair flows from duplicating mission-specific branches like `setBikeState`, `setPyloneState`, and `setFermeState`.
+This keeps reusable gameplay components such as `RepairGame` from duplicating mission-specific branches like `setBikeState`, `setPyloneState`, and `setFermeState`.
+
+## Settings Store
+
+`useSettingsStore` owns player-facing settings and forwards audio volume changes to `AudioManager`.
+
+State:
+
+- `isSettingsMenuOpen`
+- `musicVolume`
+- `sfxVolume`
+- `dialogueVolume`
+- `subtitlesEnabled`
+- `subtitleLanguage`
+- `repairRuntime`
+
+Audio setters clamp values between `0` and `1`, then call:
+
+```ts
+AudioManager.getInstance().setCategoryVolume(category, nextVolume);
+```
+
+This keeps UI state and browser audio state synchronized.
+
+Current caveat: `repairRuntime` is stored and displayed in the settings menu, but the repair game does not consume it yet. Treat it as a staged architecture hook rather than an active runtime switch.
+
+## Subtitle Store
+
+`useSubtitleStore` is intentionally tiny.
+
+State/actions:
+
+- `activeSubtitle`
+- `setActiveSubtitle`
+- `clearActiveSubtitle`
+
+`playDialogueById()` writes to this store while dialogue audio plays. `Subtitles` reads from it and respects `useSettingsStore().subtitlesEnabled`.
 
 ## World Integration
 
-`src/world/GameStageContent.tsx` subscribes to `mainState` and mounts stage-specific content.
+`src/world/GameStageContent.tsx` subscribes to `mainState` and mounts the repair-game content.
 
-For repair missions, it mounts the reusable `RepairGame` component with a mission id:
+Current production repair placement:
 
 ```tsx
 <RepairGame mission="bike" position={[8, 0, -6]} />
+<RepairGame mission="pylone" position={[64, 0, -66]} />
+<RepairGame mission="ferme" position={[-24, 0, 42]} />
 ```
 
-`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`. Shared repair ids, mission steps, and runtime guards live in `src/types/gameplay/repairMission.ts` so static mission config does not depend on the Zustand store. The production repair flow currently supports `waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done -> next mission` state transitions.
+`RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`.
 
-Mission-specific behavior stays in `src/data/gameplay/repairMissions.ts`: each mission can define its broken nodes, placeholder targets, scan duration, and reassembly duration without adding mission branches to `RepairGame`.
+Shared repair ids, mission steps, and runtime guards live in:
 
-That means the scene can progressively move toward this pattern:
-
-```tsx
-switch (mainState) {
-  case "intro":
-    return <IntroContent />;
-  case "bike":
-    return <BikeContent />;
-  case "pylone":
-    return <PyloneContent />;
-  case "ferme":
-    return <FarmContent />;
-  case "outro":
-    return <OutroContent />;
-}
+```txt
+src/types/gameplay/repairMission.ts
 ```
 
-In React Three Fiber, mounting and unmounting JSX controls what appears in the Three.js scene. When a state-specific component disappears from JSX, React removes it from the scene.
+Mission-specific behavior stays in:
+
+```txt
+src/data/gameplay/repairMissions.ts
+```
+
+That lets the repair flow stay reusable while each mission defines its own model, broken parts, replacement parts, prompts, and timing.
 
 ## UI Integration
 
@@ -166,13 +218,16 @@ In React Three Fiber, mounting and unmounting JSX controls what appears in the T
 
 Current overlays:
 
-- `DebugOverlayLayout`: debug-only overlay shown with `?debug`, including the `GameStateDebugPanel` progression panel
-- `GameStateDebugPanel`: compact debug UI for viewing and switching main/sub states, stepping backward or forward, and resetting the store
+- `DebugOverlayLayout`: debug-only overlay shown with `?debug`
+- `GameStateDebugPanel`: compact debug UI for viewing and switching main/sub states
 - `Crosshair`: player aiming helper
 - `InteractPrompt`: interaction prompt
-- `RepairMovementLockIndicator`: player-facing indicator shown while repair steps temporarily disable movement
+- `RepairMovementLockIndicator`: indicator intended for repair movement lock
+- `HandTrackingVisualizer`: hand tracking SVG fallback/debug visualization
+- `Subtitles`: active dialogue subtitle overlay
+- `GameSettingsMenu`: options menu and settings controls
 
-`src/pages/page.tsx` should stay thin and mount only the canvas and `GameUI`.
+Current caveat: `useRepairMovementLocked()` returns `false` immediately on the current branch, so the movement-lock rule and indicator exist but are disabled at runtime.
 
 ## Regression Rules
 
@@ -182,7 +237,10 @@ Current overlays:
 - Keep gameplay transitions inside store actions when possible.
 - Keep debug-only controls behind `?debug`.
 - Add new state only when a real runtime feature needs it.
+- Keep settings side effects, such as audio category updates, inside settings actions rather than spreading them across UI components.
 
 ## Next Steps
 
-Move repair validation into mission data once each mission has distinct broken module nodes, replacement assets, and completion events.
+- Decide whether `repairRuntime` should be removed, implemented, or clearly labeled as experimental.
+- Re-enable or remove the repair movement-lock rule depending on desired gameplay.
+- Move broader mission orchestration into a clearer layer if intro, mission, dialogue, and cinematic branching grows.

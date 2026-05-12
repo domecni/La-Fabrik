@@ -95,20 +95,11 @@ If any ray hits the object while the object is within `INTERACTION_RADIUS`, the 
 
 ## Depth Handling
 
-Because MediaPipe `z` is relative, the frontend captures the starting depth when the grab begins:
+Because MediaPipe `z` is relative and noisy, the current frontend does not use it as a direct world-depth controller for object grabbing.
 
-```txt
-initialHandZ = hand.z
-initialHoldDistance = hit.distance
-```
+Instead, `GrabbableObject` computes a ray from the 2D hand center and moves the object toward a configurable hold distance in front of the active camera. That hold distance is shared with the mouse grab path and can be tuned in the debug GUI.
 
-While holding, the object distance from the camera is adjusted by the change in hand depth:
-
-```txt
-holdDistance = initialHoldDistance + (hand.z - initialHandZ) * sensitivity
-```
-
-The final hold distance is clamped between the configured grab minimum and maximum distances to avoid unstable movement.
+This is less expressive than true depth-aware hand movement, but it is more stable for the current first-person prototype.
 
 ## UI And Debug
 
@@ -131,7 +122,7 @@ The glove models are intentionally smaller than the raw SVG overlay so they do n
 ## Known Limitations
 
 - Production usage is currently limited to repair mission steps that explicitly need hands.
-- MediaPipe depth is relative and can be noisy.
+- MediaPipe depth is relative and currently not used for stable object depth control.
 - The virtual hit zone is an approximation based on multiple raycasts, not a real 3D collider.
 - There is no smoothing layer for hand position or depth yet.
 - The SVG hand visualization is a fallback, not the primary display when glove models load correctly.
