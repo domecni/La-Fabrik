@@ -10,8 +10,8 @@ interface PyloneDestroyedProps {
 export function PyloneDestroyed({
   position,
 }: PyloneDestroyedProps): React.JSX.Element {
-  const step = useGameStore((state) => state.missionFlow.step);
-  const setStep = useGameStore((state) => state.setFlowStep);
+  const step = useGameStore((state) => state.intro.currentStep);
+  const setStep = useGameStore((state) => state.setIntroStep);
   const setCanMove = useGameStore((state) => state.setCanMove);
   const showDialog = useGameStore((state) => state.showDialog);
   const debug = Debug.getInstance();

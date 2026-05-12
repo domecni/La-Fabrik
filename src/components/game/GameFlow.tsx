@@ -4,8 +4,8 @@ import { useGameStore } from "@/managers/stores/useGameStore";
 import { AUDIO_PATHS } from "@/data/audioConfig";
 
 export function GameFlow(): null {
-  const step = useGameStore((state) => state.missionFlow.step);
-  const setStep = useGameStore((state) => state.setFlowStep);
+  const step = useGameStore((state) => state.intro.currentStep);
+  const setStep = useGameStore((state) => state.setIntroStep);
   const setActivityCity = useGameStore((state) => state.setActivityCity);
   const setCanMove = useGameStore((state) => state.setCanMove);
   const hasInitialized = useRef(false);

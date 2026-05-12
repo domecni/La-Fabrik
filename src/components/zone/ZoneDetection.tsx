@@ -26,8 +26,8 @@ export function ZoneDetection(): null {
   const camera = useThree((state) => state.camera);
   const triggeredZones = useRef<Set<string>>(new Set());
   const debug = Debug.getInstance();
-  const step = useGameStore((state) => state.missionFlow.step);
-  const setStep = useGameStore((state) => state.setFlowStep);
+  const step = useGameStore((state) => state.intro.currentStep);
+  const setStep = useGameStore((state) => state.setIntroStep);
 
   useEffect(() => {
     if (!debug.active) return;
@@ -45,7 +45,7 @@ export function ZoneDetection(): null {
     folder.add(playerPos, "z").name("Player Z").listen().disable();
 
     const unsubStore = useGameStore.subscribe((state) => {
-      gameState.step = state.missionFlow.step;
+      gameState.step = state.intro.currentStep;
       folder.controllersRecursive().forEach((c) => c.updateDisplay());
     });
 

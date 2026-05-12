@@ -8,8 +8,8 @@ interface NPCHelperProps {
 }
 
 export function NPCHelper({ position }: NPCHelperProps): React.JSX.Element {
-  const step = useGameStore((state) => state.missionFlow.step);
-  const setStep = useGameStore((state) => state.setFlowStep);
+  const step = useGameStore((state) => state.intro.currentStep);
+  const setStep = useGameStore((state) => state.setIntroStep);
   const debug = Debug.getInstance();
 
   const handlePress = (): void => {

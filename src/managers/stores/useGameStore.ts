@@ -10,6 +10,7 @@ export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
 export type { MissionStep, RepairMissionId };
 
 interface IntroState {
+  currentStep: GameStep;
   dialogueAudio: string | null;
   hasCompleted: boolean;
   isBikeUnlocked: boolean;
@@ -25,7 +26,6 @@ interface MissionFlowState {
   canMove: boolean;
   dialogMessage: string | null;
   playerName: string;
-  step: GameStep;
 }
 
 interface GameState {
@@ -54,7 +54,7 @@ interface GameActions {
   hideDialog: () => void;
   setActivityCity: (activityCity: boolean) => void;
   setCanMove: (canMove: boolean) => void;
-  setFlowStep: (step: GameStep) => void;
+  setIntroStep: (step: GameStep) => void;
   setIntroState: (intro: Partial<IntroState>) => void;
   setPlayerName: (playerName: string) => void;
   setBikeState: (bike: Partial<GameState["bike"]>) => void;
@@ -246,9 +246,9 @@ function createInitialGameState(): GameState {
       canMove: false,
       dialogMessage: null,
       playerName: "",
-      step: "intro",
     },
     intro: {
+      currentStep: "intro",
       dialogueAudio: null,
       hasCompleted: false,
       isBikeUnlocked: false,
@@ -291,8 +291,8 @@ export const useGameStore = create<GameStore>()((set) => ({
     set((state) => ({
       missionFlow: { ...state.missionFlow, canMove },
     })),
-  setFlowStep: (step) =>
-    set((state) => ({ missionFlow: { ...state.missionFlow, step } })),
+  setIntroStep: (step: GameStep) =>
+    set((state) => ({ intro: { ...state.intro, currentStep: step } })),
   setIntroState: (intro) =>
     set((state) => ({ intro: { ...state.intro, ...intro } })),
   setPlayerName: (playerName) =>

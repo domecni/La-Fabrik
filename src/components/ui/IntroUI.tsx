@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useGameStore } from "@/managers/stores/useGameStore";
 
 export function IntroUI(): React.JSX.Element | null {
-  const step = useGameStore((state) => state.missionFlow.step);
+  const step = useGameStore((state) => state.intro.currentStep);
   const setPlayerName = useGameStore((state) => state.setPlayerName);
-  const setStep = useGameStore((state) => state.setFlowStep);
+  const setStep = useGameStore((state) => state.setIntroStep);
   const [inputValue, setInputValue] = useState("");
 
   if (step !== "naming") return null;
@@ -100,7 +100,7 @@ export function IntroUI(): React.JSX.Element | null {
 }
 
 export function BienvenueDisplay(): React.JSX.Element | null {
-  const step = useGameStore((state) => state.missionFlow.step);
+  const step = useGameStore((state) => state.intro.currentStep);
   const playerName = useGameStore((state) => state.missionFlow.playerName);
 
   if (step !== "bienvenue") return null;
