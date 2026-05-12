@@ -67,6 +67,7 @@ export function EditorPage(): React.JSX.Element {
   const [transformMode, setTransformMode] =
     useState<TransformMode>("translate");
   const [isPlayerMode, setIsPlayerMode] = useState(false);
+  const [isSelectionLocked, setIsSelectionLocked] = useState(false);
   const [sceneLoadingState, setSceneLoadingState] = useState<SceneLoadingState>(
     {
       ...INITIAL_SCENE_LOADING_STATE,
@@ -110,6 +111,14 @@ export function EditorPage(): React.JSX.Element {
 
   const handleSelectNode = useCallback((index: number | null) => {
     setSelectedNodeIndex(index);
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedNodeIndex(null);
+  }, []);
+
+  const handleSelectionLockToggle = useCallback(() => {
+    setIsSelectionLocked((locked) => !locked);
   }, []);
 
   const handleHoverNode = useCallback((index: number | null) => {
@@ -246,6 +255,7 @@ export function EditorPage(): React.JSX.Element {
             sceneData={sceneData!}
             selectedNodeIndex={selectedNodeIndex}
             onSelectNode={handleSelectNode}
+            isSelectionLocked={isSelectionLocked}
             hoveredNodeIndex={hoveredNodeIndex}
             onHoverNode={handleHoverNode}
             transformMode={transformMode}
@@ -276,6 +286,9 @@ export function EditorPage(): React.JSX.Element {
               ? sceneData.mapNodes[selectedNodeIndex].name || null
               : null
           }
+          isSelectionLocked={isSelectionLocked}
+          onSelectionLockToggle={handleSelectionLockToggle}
+          onClearSelection={handleClearSelection}
           undoCount={undoCount}
           redoCount={redoCount}
           onUndo={handleUndo}

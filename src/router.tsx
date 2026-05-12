@@ -8,6 +8,7 @@ import { HomePage } from "@/pages/page";
 import { EditorPage } from "@/pages/editor/page";
 import {
   DocsAnimationRoute,
+  DocsAudioRoute,
   DocsArchitectureRoute,
   DocsEditorRoute,
   DocsFeaturesRoute,
@@ -47,6 +48,7 @@ const docsChildRoutes = [
   { path: "architecture", component: DocsArchitectureRoute },
   { path: "target-architecture", component: DocsTargetArchitectureRoute },
   { path: "technical-editor", component: DocsTechnicalEditorRoute },
+  { path: "audio", component: DocsAudioRoute },
   { path: "hand-tracking", component: DocsHandTrackingRoute },
   { path: "zustand", component: DocsZustandRoute },
   { path: "features", component: DocsFeaturesRoute },

@@ -7,7 +7,7 @@ export function DocsEditorPage(): React.JSX.Element {
     <DocsDocument
       content={editor}
       frContent={editorFr}
-      meta="09"
+      meta="10"
       title="Editor User Guide"
     />
   );

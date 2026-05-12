@@ -6,7 +6,7 @@ export function DocsHandTrackingPage(): React.JSX.Element {
     <DocsDocument
       content={handTracking}
       frContent={handTracking}
-      meta="05"
+      meta="06"
       title="Hand Tracking Technical Notes"
     />
   );

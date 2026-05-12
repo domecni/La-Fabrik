@@ -47,6 +47,7 @@ Keep the player and map octree outside the Rapier provider until there is a deli
 - `src/managers/AudioManager.ts` provides pooled one-shot playback, looped music playback, category volumes, and optional stereo pan for one-shot sounds.
 - Supported audio categories are `music`, `sfx`, and `dialogue`.
 - Trigger interactions may play SFX directly through `AudioManager`.
+- Detailed audio documentation lives in `docs/technical/audio.md`.
 
 ## Settings Menu
 

@@ -47,6 +47,10 @@ const LazyDocsTechnicalEditorPage = lazyNamed(
   () => import("@/pages/docs/technical-editor/page"),
   "DocsTechnicalEditorPage",
 );
+const LazyDocsAudioPage = lazyNamed(
+  () => import("@/pages/docs/audio/page"),
+  "DocsAudioPage",
+);
 const LazyDocsHandTrackingPage = lazyNamed(
   () => import("@/pages/docs/hand-tracking/page"),
   "DocsHandTrackingPage",
@@ -81,6 +85,7 @@ export const DocsTargetArchitectureRoute = createDocsRoute(
 export const DocsTechnicalEditorRoute = createDocsRoute(
   LazyDocsTechnicalEditorPage,
 );
+export const DocsAudioRoute = createDocsRoute(LazyDocsAudioPage);
 export const DocsHandTrackingRoute = createDocsRoute(LazyDocsHandTrackingPage);
 export const DocsZustandRoute = createDocsRoute(LazyDocsZustandPage);
 export const DocsFeaturesRoute = createDocsRoute(LazyDocsFeaturesPage);

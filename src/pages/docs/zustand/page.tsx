@@ -7,7 +7,7 @@ export function DocsZustandPage(): React.JSX.Element {
     <DocsDocument
       content={zustand}
       frContent={zustandFr}
-      meta="05"
+      meta="07"
       title="Zustand Game State"
     />
   );

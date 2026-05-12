@@ -556,142 +556,145 @@ Ce document liste les fonctionnalités présentes dans le code actuel.
 - séparation complète production / debug pour les scènes gameplay
 `;
 
-export const editorFr = `# Éditeur de carte
+export const editorFr = `# Guide utilisateur de l'éditeur
 
-L'éditeur de carte est disponible sur "/editor". Il permet d'inspecter et d'ajuster les objets déclarés dans "/public/map.json" directement depuis le navigateur.
+L'éditeur est disponible sur \`/editor\`. Il sert à modifier la carte runtime, les cinématiques, le manifeste de dialogues et les sous-titres SRT sans éditer tous les fichiers à la main.
 
-## Ce qui est édité
+## À quoi il sert
 
-L'éditeur travaille sur la liste de nodes stockée dans "/public/map.json".
+Utilise l'éditeur pour :
 
-Chaque node décrit un objet de la scène :
+- déplacer, tourner ou scaler les objets de \`public/map.json\`
+- inspecter le JSON généré avant export ou sauvegarde
+- prévisualiser et modifier \`public/cinematics.json\`
+- créer, prévisualiser et valider les dialogues de \`public/sounds/dialogue/dialogues.json\`
+- modifier les fichiers SRT FR/EN par voix
 
-- "name" : nom du dossier modèle dans "/public/models/{name}/model.glb", avec fallback vers "model.gltf"
-- "type" : catégorie de l'objet
-- "position" : "[x, y, z]"
-- "rotation" : "[x, y, z]"
-- "scale" : "[x, y, z]"
+## Organisation du panneau
 
-Les modèles sont chargés depuis "/public/models". Si un modèle manque, l'éditeur affiche un cube gris de remplacement pour que le node reste sélectionnable et déplaçable.
+Le panneau latéral est divisé en groupes repliables :
 
-## Workflow de base
+- \`Editor\` : transforms, raccourcis, sélection, vue, JSON et actions fichier.
+- \`Cinematics\` : cinématiques et keyframes caméra.
+- \`Dialogues\` : manifeste des dialogues.
+- \`SRT\` : fichiers de sous-titres par voix et langue.
 
-1. Ouvrir "/editor".
-2. Sélectionner un objet dans la vue 3D.
-3. Choisir un mode de transformation : translation, rotation ou scale.
-4. Déplacer la gizmo de transformation.
-5. Utiliser undo ou redo si nécessaire.
-6. Exporter le JSON mis à jour ou le sauvegarder sur le serveur de dev.
+## Carte et transforms
 
-## Contrôles
+1. Ouvre \`/editor\`.
+2. Clique un objet pour le sélectionner.
+3. Choisis \`Translate\`, \`Rotate\` ou \`Scale\`.
+4. Déplace la gizmo dans la vue 3D.
+5. Vérifie le bloc \`JSON\` si tu veux contrôler les valeurs exactes.
+6. Utilise \`Undo\` ou \`Redo\` si besoin.
+7. Utilise \`Export JSON\` ou \`Save to server\`.
+
+Contrôles utiles :
 
 | Action | Input |
 | --- | --- |
-| Sélectionner un objet | Clic sur l'objet |
-| Désélectionner | "Esc" ou clic dans le vide |
-| Mode translation | "T" |
-| Mode rotation | "R" |
-| Mode scale | "S" |
-| Undo | "Ctrl+Z" |
-| Redo | "Ctrl+Y" |
-| Déplacement en vue verrouillée | "WASD", "ZQSD", flèches |
-| Monter / descendre | "Space", "Shift" |
+| Sélectionner | Clic objet |
+| Désélectionner | \`Esc\` ou clic vide |
+| Verrouiller la sélection | bouton lock |
+| Vider la sélection | bouton \`X\` |
+| Translate | \`T\` |
+| Rotate | \`R\` |
+| Scale | \`S\` |
+| Undo / redo | \`Ctrl+Z\` / \`Ctrl+Y\` |
+| Déplacement vue verrouillée | \`WASD\`, \`ZQSD\`, flèches |
 
-## Actions fichier
+Quand la sélection est verrouillée, cliquer un autre objet, cliquer dans le vide ou appuyer sur \`Esc\` ne change pas la sélection. Le bouton \`X\` reste le moyen volontaire de la vider.
 
-### Export JSON
+## Inspecteur JSON
 
-"Export JSON" télécharge la liste actuelle des nodes sous le nom "map.json". À utiliser pour remplacer manuellement "/public/map.json".
+Le bloc \`JSON\` affiche le JSON qui sera exporté ou sauvegardé :
 
-### Save to server
+- sans sélection, il affiche toute la liste de nodes
+- avec une sélection, il affiche les lignes du node sélectionné
 
-"Save to server" est disponible uniquement en développement local. L'action écrit la carte modifiée dans "/public/map.json" via l'endpoint du serveur de dev Vite.
+Cet inspecteur est en lecture seule. Les valeurs changent via la gizmo de transformation.
 
-Cette action est masquée dans les builds de production car il n'existe pas encore d'API de persistance production.
+## Sauvegarde
 
-## Éditer les dialogues et sous-titres
+- \`Export JSON\` télécharge un \`map.json\` local.
+- \`Save to server\` écrit directement \`public/map.json\` via le serveur Vite local.
 
-Le panneau latéral contient aussi des outils pour les dialogues et les sous-titres.
+Les sauvegardes serveur sont des helpers de développement, pas des APIs de production.
 
-### Manifeste dialogues
+## Cinématiques
 
-Le panneau \`Dialogues\` permet d'éditer \`public/sounds/dialogue/dialogues.json\` sans ouvrir le JSON à la main.
+Le groupe \`Cinematics\` édite \`public/cinematics.json\`.
 
-- \`Reload\` recharge le manifeste depuis le disque.
-- \`Add\` crée un dialogue local pour la voix courante et assigne le prochain index SRT disponible.
-- \`Save\` écrit le manifeste via le serveur Vite local.
-- \`Preview dialogue\` joue le dialogue sélectionné avec les sous-titres dans l'éditeur.
-- \`Create FR SRT cue\` crée la cue française si elle manque.
-- \`Delete dialogue\` supprime localement l'entrée sélectionnée.
-
-Après \`Add\`, il faut cliquer \`Save\` pour conserver le dialogue dans le manifeste. La cue SRT FR est écrite directement, mais le manifeste reste local tant qu'il n'est pas sauvegardé.
-
-Les nouveaux dialogues utilisent un chemin audio placeholder comme \`/sounds/dialogue/new_dialogue_24.mp3\`. Remplace-le par un vrai MP3 avant validation finale.
-
-### Éditeur SRT
-
-1. Choisir une voix : \`narrateur\`, \`fermier\` ou \`electricienne\`.
-2. Choisir une langue : \`FR\` ou \`EN\`.
-3. Modifier le texte SRT directement dans la textarea.
-4. Utiliser la preview audio pour vérifier le dialogue sélectionné.
-5. Utiliser \`Set start\`, \`Set end\`, \`-100ms\` et \`+100ms\` pour ajuster le timing de la cue sélectionnée avec l'audio.
-6. Utiliser \`Save SRT\` en développement local, ou \`Export SRT\` pour télécharger le fichier manuellement.
-
-Chaque fichier SRT appartient à une voix, pas à un dialogue. Les indexes de cue doivent correspondre aux valeurs \`subtitleCueIndex\` référencées par le manifeste de dialogues.
-
-## Valider les assets de dialogue
-
-Utilise \`Validate\` dans le panneau SRT pour vérifier le manifeste et les assets liés.
-
-La validation vérifie :
-
-- \`public/sounds/dialogue/dialogues.json\`
-- les fichiers audio de dialogue référencés
-- les fichiers SRT français
-- les indexes de cue référencés par le manifeste
-
-Les fichiers SRT anglais manquants sont des warnings parce que le runtime retombe sur les sous-titres français.
-
-## Éditer les cinématiques
-
-Le panneau \`Cinematics\` permet d'éditer \`public/cinematics.json\`.
-
-Chaque cinématique contient :
+Une cinématique contient :
 
 - un \`id\`
 - un \`timecode\` global optionnel
 - au moins deux keyframes caméra
-- des dialogue cues optionnelles synchronisées avec la timeline
+- des \`dialogueCues\` optionnelles
 
-Les keyframes caméra définissent un temps relatif, une position caméra et une cible de regard. Les dialogue cues définissent un temps relatif et un \`dialogueId\` issu de \`dialogues.json\`.
+Workflow conseillé :
 
-Actions disponibles :
+1. Sélectionne une cinématique ou clique \`Add\`.
+2. Donne un \`id\` stable.
+3. Ajoute ou ajuste les keyframes caméra.
+4. Garde les temps de keyframes dans l'ordre croissant.
+5. Ajoute des \`dialogueCues\` si un dialogue doit démarrer pendant la cinématique.
+6. Clique \`Preview cinematic\` pour tester la caméra.
+7. Clique \`Save\`.
 
-- \`Reload\` recharge le manifeste.
-- \`Add\` crée une cinématique locale avec deux keyframes.
-- \`Save\` écrit \`public/cinematics.json\` via le serveur Vite local.
-- \`Preview cinematic\` joue l'animation caméra dans le canvas éditeur.
-- \`Add keyframe\` et \`Remove\` modifient le chemin caméra.
-- \`Add dialogue\` et \`Remove\` modifient les dialogues synchronisés.
-- \`Delete cinematic\` supprime localement la cinématique sélectionnée.
+Les temps de keyframes et de dialogue cues sont relatifs au début de la cinématique.
 
-Les dialogue cues sont la manière recommandée de synchroniser un dialogue avec une cinématique. Évite de donner aussi un \`timecode\` global au même dialogue dans \`dialogues.json\`, sinon il peut être lancé deux fois.
+## Dialogues
 
-## Inspecteur JSON
+Le groupe \`Dialogues\` édite \`public/sounds/dialogue/dialogues.json\`.
 
-Le panneau latéral affiche le JSON brut de la carte :
+Chaque dialogue contient :
 
-- sans sélection, il affiche toute la liste des nodes
-- avec un objet sélectionné, il met en évidence les lignes du node sélectionné
+- \`id\` : identifiant stable utilisé par les cinématiques et le runtime
+- \`voice\` : \`narrateur\`, \`fermier\` ou \`electricienne\`
+- \`audio\` : chemin MP3 runtime
+- \`subtitleCueIndex\` : numéro de cue dans le SRT de la voix
+- \`timecode\` : déclenchement global optionnel
 
-Utilise-le pour vérifier les valeurs numériques exactes avant export ou sauvegarde.
+Workflow conseillé pour créer un dialogue :
+
+1. Clique \`Add\`.
+2. Choisis la bonne voix.
+3. Remplace l'\`id\` généré par un ID lisible.
+4. Remplace le chemin audio placeholder par le vrai MP3.
+5. Vérifie le \`subtitleCueIndex\`.
+6. Clique \`Create FR SRT cue\` si la cue manque.
+7. Clique \`Save\`.
+8. Passe dans \`SRT\` pour écrire le texte et régler les timings.
+9. Lance \`Validate\`.
+
+## SRT
+
+Le groupe \`SRT\` édite un fichier de sous-titres à la fois.
+
+1. Choisis une voix.
+2. Choisis \`FR\` ou \`EN\`.
+3. Écris le texte SRT.
+4. Prévisualise l'audio.
+5. Utilise \`Set start\`, \`Set end\`, \`-100ms\` et \`+100ms\` pour ajuster les timings.
+6. Clique \`Save SRT\` ou \`Export SRT\`.
+
+Il y a un fichier SRT par voix et par langue, pas un fichier par dialogue. Les timings SRT sont relatifs au fichier audio du dialogue.
+
+## Validation
+
+\`Validate\` vérifie :
+
+- le manifeste \`dialogues.json\`
+- les fichiers audio référencés
+- les fichiers SRT français
+- les indexes de cues référencés
+- les SRT anglais en warning si manquants
 
 ## Limites actuelles
 
-- L'éditeur modifie uniquement les nodes existants.
-- Il n'y a pas encore d'interface pour créer ou supprimer des objets.
-- La sauvegarde production n'est pas implémentée.
-- Les modèles manquants s'affichent comme cubes de fallback au lieu de bloquer tout l'éditeur.
-- La sauvegarde SRT est un helper local du serveur Vite, pas une API backend de production.
-- Les sauvegardes dialogues et cinématiques sont aussi des helpers locaux du serveur Vite.
+- L'éditeur modifie les nodes existants mais ne crée pas encore d'objet de carte.
+- Les sauvegardes serveur sont limitées au développement local.
+- L'éditeur SRT reste textuel, sans waveform.
+- Les modèles manquants sont représentés par des cubes de fallback.
 `;
