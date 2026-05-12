@@ -4,6 +4,20 @@ import {
   useGameStore,
 } from "@/managers/stores/useGameStore";
 import { isMissionStep, MISSION_STEPS } from "@/types/gameplay/repairMission";
+import { type GameStep } from "@/types/game";
+
+const GAME_STEPS: GameStep[] = [
+  "intro",
+  "start-intro",
+  "naming",
+  "bienvenue",
+  "star-move",
+  "mission2",
+  "searching",
+  "helped",
+  "manipulation",
+  "outOfFabrik",
+];
 
 const MAIN_STATES: MainGameState[] = [
   "intro",
@@ -29,7 +43,7 @@ export function GameStateDebugPanel(): React.JSX.Element {
   const detail = useGameStore((state) => {
     switch (state.mainState) {
       case "intro":
-        return state.intro.hasCompleted ? "completed" : "waiting";
+        return state.intro.currentStep;
       case "bike":
         return state.bike.currentStep;
       case "pylone":
@@ -41,7 +55,7 @@ export function GameStateDebugPanel(): React.JSX.Element {
     }
   });
   const setMainState = useGameStore((state) => state.setMainState);
-  const setIntroState = useGameStore((state) => state.setIntroState);
+  const setIntroStep = useGameStore((state) => state.setIntroStep);
   const setBikeState = useGameStore((state) => state.setBikeState);
   const setPyloneState = useGameStore((state) => state.setPyloneState);
   const setFermeState = useGameStore((state) => state.setFermeState);
@@ -52,14 +66,14 @@ export function GameStateDebugPanel(): React.JSX.Element {
 
   const subStateOptions =
     mainState === "intro"
-      ? ["waiting", "completed"]
+      ? GAME_STEPS
       : mainState === "outro"
         ? ["waiting", "started"]
         : MISSION_STEPS;
 
   function setSubState(nextSubState: string): void {
     if (mainState === "intro") {
-      setIntroState({ hasCompleted: nextSubState === "completed" });
+      setIntroStep(nextSubState as GameStep);
       return;
     }
 
