@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { AmbientLight, DirectionalLight } from "three";
 import {
@@ -23,6 +23,11 @@ import {
 } from "@/data/world/lightingConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 
+const SHADOW_MAP_SIZE = 2048;
+const SHADOW_CAMERA_SIZE = 100;
+const SHADOW_CAMERA_NEAR = 0.5;
+const SHADOW_CAMERA_FAR = 200;
+
 type LightingState = {
   ambientIntensity: number;
   sunIntensity: number;
@@ -36,6 +41,20 @@ const LIGHTING_STATE: LightingState = { ...LIGHTING_DEFAULTS };
 export function Lighting(): React.JSX.Element {
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
+
+  useEffect(() => {
+    if (!sun.current) return;
+
+    sun.current.shadow.mapSize.width = SHADOW_MAP_SIZE;
+    sun.current.shadow.mapSize.height = SHADOW_MAP_SIZE;
+    sun.current.shadow.camera.left = -SHADOW_CAMERA_SIZE;
+    sun.current.shadow.camera.right = SHADOW_CAMERA_SIZE;
+    sun.current.shadow.camera.top = SHADOW_CAMERA_SIZE;
+    sun.current.shadow.camera.bottom = -SHADOW_CAMERA_SIZE;
+    sun.current.shadow.camera.near = SHADOW_CAMERA_NEAR;
+    sun.current.shadow.camera.far = SHADOW_CAMERA_FAR;
+    sun.current.shadow.camera.updateProjectionMatrix();
+  }, []);
 
   useDebugFolder("Lighting", (folder) => {
     folder
