@@ -4,8 +4,6 @@ export const VEGETATION_LOD = {
   windFadeEnd: 70,
 };
 
-export const VEGETATION_MAX_INSTANCES = 2000;
-
 export const VEGETATION_TYPES = {
   buissons: {
     mapName: "buissons",

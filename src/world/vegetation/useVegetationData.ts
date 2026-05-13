@@ -3,7 +3,6 @@ import type { MapNode } from "@/types/editor/editor";
 import type { Vector3Tuple } from "@/types/three/three";
 import { getMapNodes, loadMapSceneData } from "@/utils/map/loadMapSceneData";
 import {
-  VEGETATION_MAX_INSTANCES,
   VEGETATION_TYPES,
   type VegetationType,
 } from "@/world/vegetation/vegetationConfig";
@@ -32,7 +31,6 @@ function extractVegetationData(mapNodes: MapNode[]): VegetationData {
 
     const instances = mapNodes
       .filter((node) => node.name === config.mapName)
-      .slice(0, VEGETATION_MAX_INSTANCES)
       .map(mapNodeToInstance);
 
     if (instances.length > 0) {
