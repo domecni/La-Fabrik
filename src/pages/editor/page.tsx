@@ -15,6 +15,7 @@ import {
   type SceneLoadingChangeHandler,
   type SceneLoadingState,
 } from "@/types/world/sceneLoading";
+import { logger } from "@/utils/core/Logger";
 
 const SAVE_ERROR_MESSAGE = "Erreur lors de l'enregistrement";
 
@@ -243,8 +244,27 @@ export function EditorPage(): React.JSX.Element {
       <Canvas
         camera={{ position: [0, 50, 100], fov: 50 }}
         style={{ width: "100%", height: "100%" }}
+        gl={{
+          powerPreference: "high-performance",
+          antialias: true,
+          stencil: false,
+        }}
         onCreated={({ gl }) => {
           gl.setClearColor("#050505");
+
+          const canvas = gl.domElement;
+          const handleContextLost = (event: Event) => {
+            event.preventDefault();
+            logger.error("WebGL", "Context lost - GPU resources exhausted");
+          };
+          const handleContextRestored = () => {
+            logger.info("WebGL", "Context restored");
+          };
+          canvas.addEventListener("webglcontextlost", handleContextLost);
+          canvas.addEventListener(
+            "webglcontextrestored",
+            handleContextRestored,
+          );
         }}
       >
         <EditorSceneLoadingTracker

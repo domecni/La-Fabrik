@@ -12,6 +12,7 @@ import {
   INITIAL_SCENE_LOADING_STATE,
   type SceneLoadingState,
 } from "@/types/world/sceneLoading";
+import { logger } from "@/utils/core/Logger";
 import { World } from "@/world/World";
 
 export function HomePage(): React.JSX.Element {
@@ -51,11 +52,36 @@ export function HomePage(): React.JSX.Element {
     [],
   );
 
+  const handleCanvasCreated = useCallback(
+    ({ gl }: { gl: THREE.WebGLRenderer }) => {
+      const canvas = gl.domElement;
+
+      const handleContextLost = (event: Event) => {
+        event.preventDefault();
+        logger.error("WebGL", "Context lost - GPU resources exhausted");
+      };
+
+      const handleContextRestored = () => {
+        logger.info("WebGL", "Context restored");
+      };
+
+      canvas.addEventListener("webglcontextlost", handleContextLost);
+      canvas.addEventListener("webglcontextrestored", handleContextRestored);
+    },
+    [],
+  );
+
   return (
     <HandTrackingProvider>
       <Canvas
         camera={{ position: [85, 60, 85], fov: 42 }}
         shadows={{ type: THREE.PCFShadowMap }}
+        gl={{
+          powerPreference: "high-performance",
+          antialias: true,
+          stencil: false,
+        }}
+        onCreated={handleCanvasCreated}
       >
         <Suspense fallback={null}>
           <World onLoadingStateChange={handleSceneLoadingStateChange} />
