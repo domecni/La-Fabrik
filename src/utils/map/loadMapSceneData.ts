@@ -4,6 +4,7 @@ import { parseMapNodes } from "@/utils/map/mapNodeValidation";
 const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];
 const HTML_CONTENT_TYPE = "text/html";
+const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
 type ModelEntry = [modelName: string, modelUrl: string];
 
 export async function loadMapSceneData(): Promise<SceneData | null> {
@@ -26,7 +27,13 @@ async function createSceneData(mapNodes: MapNode[]): Promise<SceneData> {
 async function loadMapModelUrls(
   mapNodes: MapNode[],
 ): Promise<Map<string, string>> {
-  const uniqueModelNames = [...new Set(mapNodes.map((node) => node.name))];
+  const uniqueModelNames = [
+    ...new Set(
+      mapNodes
+        .filter((node) => !MAP_STRUCTURE_NODE_NAMES.has(node.name))
+        .map((node) => node.name),
+    ),
+  ];
   const modelEntries = await Promise.all(
     uniqueModelNames.map((modelName) => loadModelEntry(modelName)),
   );

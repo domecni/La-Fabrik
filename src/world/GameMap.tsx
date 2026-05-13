@@ -22,6 +22,16 @@ interface LoadedMapNode {
   modelUrl: string | null;
 }
 
+const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
+const LITE_MAP_SKIPPED_NODE_NAMES = new Set([
+  "arbre",
+  "buissons",
+  "champdeble",
+  "champdesoja",
+  "champsdetournesol",
+  "sapin",
+]);
+
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback: ReactNode;
@@ -133,7 +143,17 @@ export function GameMap({
           status: "loading",
         });
 
-        const loadedMapNodes = sceneData.mapNodes.map((node) => {
+        const visibleMapNodes = sceneData.mapNodes.filter(liteMap);
+        const skippedMapNodeCount =
+          sceneData.mapNodes.length - visibleMapNodes.length;
+
+        if (skippedMapNodeCount > 0) {
+          logger.warn("GameMap", "Lite map skipped heavy map nodes", {
+            skippedMapNodeCount,
+          });
+        }
+
+        const loadedMapNodes = visibleMapNodes.map((node) => {
           const modelUrl = sceneData.models.get(node.name);
           return { node, modelUrl: modelUrl ?? null };
         });
@@ -212,6 +232,26 @@ export function GameMap({
       />
     </>
   );
+}
+
+/**
+ * Temporary development-only map reducer.
+ *
+ * TODO: replace this with a real map performance pass: merged static geometry,
+ * instancing for repeated props, LOD, and/or zone-based loading. For now this
+ * keeps the app usable on local machines by not rendering the densest exported
+ * nodes from map.json.
+ */
+function liteMap(node: MapNode): boolean {
+  if (MAP_STRUCTURE_NODE_NAMES.has(node.name)) {
+    return false;
+  }
+
+  if (node.type === "Mesh") {
+    return false;
+  }
+
+  return !LITE_MAP_SKIPPED_NODE_NAMES.has(node.name);
 }
 
 function MapNodeInstance({
