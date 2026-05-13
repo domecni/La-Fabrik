@@ -2,8 +2,8 @@ name: 🔁 Branch Promotions
 
 on:
   schedule:
-    - cron: "0 6 * * 1,4" # Lundi et Jeudi à 6h UTC (design → develop)
-    - cron: "0 6 * * 1"   # Lundi à 6h UTC (develop → main)
+    - cron: "0 6 * * 1,4"  # Lundi et Jeudi à 6h UTC (design → develop)
+    - cron: "0 6 * * 1" # Lundi à 6h UTC (develop → main)
   workflow_dispatch:
     inputs:
       promotion:
