@@ -6,7 +6,7 @@ export function useGraphicsSettings(): GraphicsState {
 }
 
 export function useSetGraphicsSettings(): (
-  graphics: Partial<GraphicsState>
+  graphics: Partial<GraphicsState>,
 ) => void {
   return useWorldSettingsStore((state) => state.setGraphics);
 }
@@ -33,19 +33,19 @@ export function useGrassDensity(): number {
 
 export function useGraphicsSetters() {
   const setDynamicGrass = useWorldSettingsStore(
-    (state) => state.setDynamicGrass
+    (state) => state.setDynamicGrass,
   );
   const setDynamicTrees = useWorldSettingsStore(
-    (state) => state.setDynamicTrees
+    (state) => state.setDynamicTrees,
   );
   const setDynamicClouds = useWorldSettingsStore(
-    (state) => state.setDynamicClouds
+    (state) => state.setDynamicClouds,
   );
   const setShadowsEnabled = useWorldSettingsStore(
-    (state) => state.setShadowsEnabled
+    (state) => state.setShadowsEnabled,
   );
   const setGrassDensity = useWorldSettingsStore(
-    (state) => state.setGrassDensity
+    (state) => state.setGrassDensity,
   );
 
   return {
