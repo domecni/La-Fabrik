@@ -6,7 +6,7 @@ export const VEGETATION_LOD = {
 
 export const VEGETATION_TYPES = {
   buissons: {
-    mapName: "buissons",
+    mapName: "buisson",
     modelPath: "/models/buisson/model.gltf",
     castShadow: true,
     receiveShadow: true,
