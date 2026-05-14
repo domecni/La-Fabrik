@@ -5,6 +5,7 @@ const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];
 const HTML_CONTENT_TYPE = "text/html";
 const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
+const POSITION_PRECISION = 3;
 type ModelEntry = [modelName: string, modelUrl: string];
 
 let cachedSceneData: SceneData | null = null;
@@ -45,7 +46,42 @@ async function loadMapSceneDataInternal(): Promise<SceneData | null> {
 
   const mapPayload: unknown = await response.json();
   const mapNodes = parseMapNodes(mapPayload);
-  return createSceneData(mapNodes);
+  const deduplicatedNodes = deduplicateMapNodes(mapNodes);
+  return createSceneData(deduplicatedNodes);
+}
+
+function createPositionKey(node: MapNode): string {
+  const [x, y, z] = node.position;
+  const px = x.toFixed(POSITION_PRECISION);
+  const py = y.toFixed(POSITION_PRECISION);
+  const pz = z.toFixed(POSITION_PRECISION);
+  return `${node.name}:${px},${py},${pz}`;
+}
+
+function deduplicateMapNodes(nodes: MapNode[]): MapNode[] {
+  const seen = new Set<string>();
+  const result: MapNode[] = [];
+
+  const sortedNodes = [...nodes].sort((a, b) => {
+    if (a.type === "Object3D" && b.type !== "Object3D") return -1;
+    if (a.type !== "Object3D" && b.type === "Object3D") return 1;
+    return 0;
+  });
+
+  for (const node of sortedNodes) {
+    if (MAP_STRUCTURE_NODE_NAMES.has(node.name)) {
+      result.push(node);
+      continue;
+    }
+
+    const key = createPositionKey(node);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(node);
+    }
+  }
+
+  return result;
 }
 
 async function createSceneData(mapNodes: MapNode[]): Promise<SceneData> {

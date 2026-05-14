@@ -28,7 +28,7 @@ interface LoadedMapNode {
 const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
 const LITE_MAP_SKIPPED_NODE_NAMES = new Set([
   "arbre",
-  "buissons",
+  "buisson",
   "champdeble",
   "champdesoja",
   "champsdetournesol",

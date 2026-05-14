@@ -30,7 +30,9 @@ function extractVegetationData(mapNodes: MapNode[]): VegetationData {
     if (!config.enabled) continue;
 
     const instances = mapNodes
-      .filter((node) => node.name === config.mapName)
+      .filter(
+        (node) => node.name === config.mapName && node.type === "Object3D",
+      )
       .map(mapNodeToInstance);
 
     if (instances.length > 0) {
