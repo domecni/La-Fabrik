@@ -18,6 +18,7 @@ const IDENTITY_NODE = {
   rotation: [0, 0, 0],
   scale: [1, 1, 1],
 };
+const MAX_MESH_Y_PLACEMENT_OFFSET = 2;
 
 function cloneNode(node) {
   return {
@@ -63,9 +64,21 @@ function getOrCreateModelGroup(parent, modelName) {
 
 function createRenderableObject(objectNode, meshNode) {
   const mappedMesh = mapMeshNode(meshNode);
+  const renderableNode = cloneNode(objectNode ?? meshNode);
+
+  if (objectNode && meshNode) {
+    const yOffset = Math.abs(objectNode.position[1] - meshNode.position[1]);
+    if (yOffset <= MAX_MESH_Y_PLACEMENT_OFFSET) {
+      renderableNode.position = [
+        objectNode.position[0],
+        meshNode.position[1],
+        objectNode.position[2],
+      ];
+    }
+  }
 
   return {
-    ...cloneNode(objectNode ?? meshNode),
+    ...renderableNode,
     name: mappedMesh.name,
     type: "Object3D",
     children: [mappedMesh],

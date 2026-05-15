@@ -31,3 +31,12 @@ declare module "three/addons/math/Octree.js" {
     capsuleIntersect(capsule: Capsule): CapsuleIntersectResult | false;
   }
 }
+
+declare module "three/addons/utils/BufferGeometryUtils.js" {
+  import { BufferGeometry } from "three";
+
+  export function mergeGeometries(
+    geometries: BufferGeometry[],
+    useGroups?: boolean,
+  ): BufferGeometry | null;
+}

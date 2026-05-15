@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { VegetationInstance } from "@/world/vegetation/useVegetationData";
 import { disposeInstancedMesh } from "@/utils/three/dispose";
 
@@ -13,27 +14,59 @@ interface InstancedVegetationProps {
 
 interface MeshData {
   geometry: THREE.BufferGeometry;
-  material: THREE.Material | THREE.Material[];
-  localMatrix: THREE.Matrix4;
+  material: THREE.Material;
 }
 
 function extractMeshes(scene: THREE.Group): MeshData[] {
-  const meshes: MeshData[] = [];
+  const meshesByMaterial = new Map<
+    string,
+    { geometries: THREE.BufferGeometry[]; material: THREE.Material }
+  >();
   scene.updateMatrixWorld(true);
 
   scene.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      meshes.push({
-        geometry: child.geometry.clone(),
-        material: Array.isArray(child.material)
-          ? child.material.map((m) => m.clone())
-          : child.material.clone(),
-        localMatrix: child.matrixWorld.clone(),
+    if (!(child instanceof THREE.Mesh)) return;
+
+    const material = Array.isArray(child.material)
+      ? child.material[0]
+      : child.material;
+    if (!material) return;
+
+    const geometry = child.geometry.clone();
+    geometry.applyMatrix4(child.matrixWorld);
+
+    const existing = meshesByMaterial.get(material.uuid);
+    if (existing) {
+      existing.geometries.push(geometry);
+    } else {
+      meshesByMaterial.set(material.uuid, {
+        geometries: [geometry],
+        material: material.clone(),
       });
     }
   });
 
-  return meshes;
+  return [...meshesByMaterial.values()]
+    .map(({ geometries, material }) => {
+      const mergedGeometry = mergeGeometries(geometries, false);
+
+      for (const geometry of geometries) {
+        if (geometry !== mergedGeometry) {
+          geometry.dispose();
+        }
+      }
+
+      if (!mergedGeometry) {
+        material.dispose();
+        return null;
+      }
+
+      return {
+        geometry: mergedGeometry,
+        material,
+      };
+    })
+    .filter((meshData): meshData is MeshData => meshData !== null);
 }
 
 function createInstanceMatrices(
@@ -84,10 +117,7 @@ export function InstancedVegetation({
       for (let i = 0; i < matrices.length; i++) {
         const matrix = matrices[i];
         if (matrix) {
-          instancedMesh.setMatrixAt(
-            i,
-            new THREE.Matrix4().multiplyMatrices(matrix, meshData.localMatrix),
-          );
+          instancedMesh.setMatrixAt(i, matrix);
         }
       }
 

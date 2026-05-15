@@ -8,7 +8,4 @@ export const INSTANCED_MAP_EXCEPTIONS = new Set([
   "Scene",
   "blocking",
   "terrain",
-  "ecole",
-  "generateur",
-  "lafabrik",
 ]);
