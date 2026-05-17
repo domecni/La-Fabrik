@@ -181,7 +181,7 @@ function playCinematic(
 let cameraTransitionTimeline: gsap.core.Timeline | null = null;
 let globalCamera: THREE.Camera | null = null;
 
-export function setGlobalCamera(camera: THREE.Camera): void {
+export function setGlobalCamera(camera: THREE.Camera | null): void {
   globalCamera = camera;
 }
 

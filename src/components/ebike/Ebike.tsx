@@ -3,13 +3,27 @@ import * as THREE from "three";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
+import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { animateCameraTransition } from "@/world/GameCinematics";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { Vector3Tuple } from "@/types/three/three";
 
 const EBIKE_MODEL_PATH = "/models/ebike/model.gltf";
-const EBIKE_CAMERA_POSITION: Vector3Tuple = [0, 1.5, -2];
-const EBIKE_DROP_PLAYER_POSITION: Vector3Tuple = [2, 0, 0];
+
+interface CameraTransform {
+  position: Vector3Tuple;
+  rotation: Vector3Tuple;
+}
+
+const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
+  position: [-3, 8, 0],
+  rotation: [0, 90, 0],
+};
+
+const EBIKE_DROP_PLAYER_TRANSFORM: CameraTransform = {
+  position: [3, 1.5, 0],
+  rotation: [0, 0, 0],
+};
 
 interface EbikeProps {
   position: Vector3Tuple;
@@ -19,17 +33,38 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useLoggedGLTF(EBIKE_MODEL_PATH, {
     scope: "Ebike",
-    position,
+    position: [0, 0, 0],
   });
   const model = useClonedObject(scene);
   const movementMode = useGameStore((state) => state.player.movementMode);
 
+  const debugRef = useRef({ showCameraPoints: true });
+  useDebugFolder("Ebike", (folder) => {
+    folder
+      .add(debugRef.current, "showCameraPoints")
+      .name("Show Camera Points")
+      .onChange((value: boolean) => {
+        debugRef.current.showCameraPoints = value;
+      });
+  });
+
+  const camPointPos: Vector3Tuple = [
+    position[0] + EBIKE_CAMERA_TRANSFORM.position[0],
+    position[1] + EBIKE_CAMERA_TRANSFORM.position[1],
+    position[2] + EBIKE_CAMERA_TRANSFORM.position[2],
+  ];
+  const dropPointPos: Vector3Tuple = [
+    position[0] + EBIKE_DROP_PLAYER_TRANSFORM.position[0],
+    position[1] + EBIKE_DROP_PLAYER_TRANSFORM.position[1],
+    position[2] + EBIKE_DROP_PLAYER_TRANSFORM.position[2],
+  ];
+
   const handleInteract = (): void => {
     if (movementMode === "walk") {
       const targetCamPos: Vector3Tuple = [
-        position[0] + EBIKE_CAMERA_POSITION[0],
-        position[1] + EBIKE_CAMERA_POSITION[1],
-        position[2] + EBIKE_CAMERA_POSITION[2],
+        position[0] + EBIKE_CAMERA_TRANSFORM.position[0],
+        position[1] + EBIKE_CAMERA_TRANSFORM.position[1],
+        position[2] + EBIKE_CAMERA_TRANSFORM.position[2],
       ];
       const targetLookAt: Vector3Tuple = [
         position[0],
@@ -42,9 +77,9 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
       });
     } else {
       const targetCamPos: Vector3Tuple = [
-        position[0] + EBIKE_DROP_PLAYER_POSITION[0],
-        position[1] + EBIKE_DROP_PLAYER_POSITION[1],
-        position[2] + EBIKE_DROP_PLAYER_POSITION[2],
+        position[0] + EBIKE_DROP_PLAYER_TRANSFORM.position[0],
+        position[1] + EBIKE_DROP_PLAYER_TRANSFORM.position[1],
+        position[2] + EBIKE_DROP_PLAYER_TRANSFORM.position[2],
       ];
       const targetLookAt: Vector3Tuple = [
         position[0],
@@ -59,7 +94,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   };
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={position}>
       <primitive object={model} />
       <InteractableObject
         kind="trigger"
@@ -75,6 +110,26 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           <meshStandardMaterial color="red" opacity={0.5} transparent />
         </mesh>
       </InteractableObject>
+      {debugRef.current.showCameraPoints && (
+        <>
+          <mesh position={camPointPos}>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial
+              color="yellow"
+              emissive="yellow"
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          <mesh position={dropPointPos}>
+            <sphereGeometry args={[0.3, 16, 16]} />
+            <meshStandardMaterial
+              color="cyan"
+              emissive="cyan"
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }

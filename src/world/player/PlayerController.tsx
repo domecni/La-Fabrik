@@ -108,6 +108,7 @@ export function PlayerController({
   const initializedRef = useRef(false);
   const canMove = useGameStore((state) => state.missionFlow.canMove);
   const currentSpeed = useGameStore((state) => state.player.currentSpeed);
+  const movementMode = useGameStore((state) => state.player.movementMode);
 
   const capsule = useRef(createSpawnCapsule(spawnPosition));
 
@@ -282,7 +283,9 @@ export function PlayerController({
       }
     }
 
-    camera.position.copy(capsule.current.end);
+    if (movementMode !== "ebike") {
+      camera.position.copy(capsule.current.end);
+    }
   });
 
   return null;
