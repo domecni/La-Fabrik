@@ -23,7 +23,7 @@ export const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
 };
 
 const EBIKE_DROP_PLAYER_TRANSFORM: CameraTransform = {
-  position: [0, 1.5, 3],
+  position: [0, 1.5, -3],
   rotation: [0, 0, 0],
 };
 
@@ -47,6 +47,16 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     position[2],
   ]);
   const restingRotation = useRef<number>(0);
+  const forkRef = useRef<THREE.Object3D | null>(null);
+
+  useEffect(() => {
+    if (model) {
+      const fork = model.getObjectByName("fourche");
+      if (fork) {
+        forkRef.current = fork;
+      }
+    }
+  }, [model]);
 
   useEffect(() => {
     (window as any).ebikeVisualGroup = groupRef;
@@ -59,7 +69,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     };
   }, []);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (groupRef.current) {
       if (movementMode === "ebike") {
         restingPosition.current = [
@@ -68,9 +78,26 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           groupRef.current.position.z,
         ];
         restingRotation.current = groupRef.current.rotation.y;
+
+        // Smoothly rotate the front fork ("fourche") up to 15 degrees in its own Z axis
+        const steerFactor = (window as any).ebikeSteerFactor || 0;
+        if (forkRef.current) {
+          // 15 degrees is 0.26 radians
+          const targetForkRotation = steerFactor * 0.26;
+          forkRef.current.rotation.z = THREE.MathUtils.lerp(
+            forkRef.current.rotation.z,
+            targetForkRotation,
+            12 * delta
+          );
+        }
       } else {
         groupRef.current.position.set(...restingPosition.current);
         groupRef.current.rotation.set(0, restingRotation.current, 0);
+
+        // Reset fork rotation when parked
+        if (forkRef.current) {
+          forkRef.current.rotation.z = 0;
+        }
       }
       (window as any).ebikeParkedPosition = restingPosition.current;
       (window as any).ebikeParkedRotation = restingRotation.current;

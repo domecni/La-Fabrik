@@ -158,6 +158,11 @@ export function PlayerController({
       const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]);
       camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
     } else if (movementMode === "walk" && prevMovementModeRef.current === "ebike") {
+      // Restore default walk FOV
+      const perspectiveCam = camera as THREE.PerspectiveCamera;
+      perspectiveCam.fov = 60;
+      perspectiveCam.updateProjectionMatrix();
+
       // Dismount! Teleport player capsule 3 units to the right
       const rightDir = new THREE.Vector3();
       camera.getWorldDirection(_forward);
@@ -358,22 +363,51 @@ export function PlayerController({
     }
 
     if (movementModeRef.current === "ebike") {
-      // Offset of position rotated by e-bike angle
+      // Calculate dynamic steering factor
+      let targetSteer = 0;
+      if (keys.current.left) targetSteer = 1;
+      else if (keys.current.right) targetSteer = -1;
+
+      const currentSteer = (window as any).ebikeSteerFactor || 0;
+      const steerFactor = THREE.MathUtils.lerp(currentSteer, targetSteer, 8 * dt);
+      (window as any).ebikeSteerFactor = steerFactor;
+
+      // 1. Dynamic FOV stretch based on speed!
+      const speed = velocity.current.length();
+      const targetFov = 60 + Math.min(speed * 0.35, 9); // stretch FOV up to 9 degrees at high speed (halved by two)!
+      const perspectiveCam = camera as THREE.PerspectiveCamera;
+      perspectiveCam.fov = THREE.MathUtils.lerp(perspectiveCam.fov, targetFov, 6 * dt);
+      perspectiveCam.updateProjectionMatrix();
+
+      // 2. Camera lag & dynamic swing trailing
       const cameraOffset = new THREE.Vector3(...EBIKE_CAMERA_TRANSFORM.position);
       cameraOffset.applyAxisAngle(_up, ebikeAngle.current);
 
-      const camPos = new THREE.Vector3()
+      // Swing camera to optimize the view for both left and right turns:
+      // Since the camera is on the left (X = -3.5), it naturally trails beautifully in right turns,
+      // but cuts forward in left turns. We compensate by pushing the camera backward (+Z) during left turns!
+      const swingX = -Math.abs(steerFactor) * 1.5;
+      const swingZ = steerFactor > 0 ? steerFactor * 2.5 : steerFactor * 1.0;
+
+      const cameraSwing = new THREE.Vector3(swingX, 0, swingZ);
+      cameraSwing.applyAxisAngle(_up, ebikeAngle.current);
+      cameraOffset.add(cameraSwing);
+
+      const targetCamPos = new THREE.Vector3()
         .copy(capsule.current.end)
         .add(cameraOffset);
-      camera.position.copy(camPos);
 
-      // Set camera rotation strictly to EBIKE_CAMERA_TRANSFORM.rotation + ebikeAngle.current
+      // Smoothly lerp camera position to eliminate rigidity
+      camera.position.lerp(targetCamPos, 12 * dt);
+
+      // 3. Dynamic camera roll based on steering!
       const pitchRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[0]);
       const yawRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[1]) + ebikeAngle.current;
-      const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]);
+      // Tilt camera slightly opposite to the turn direction (-5 degrees maximum roll)
+      const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]) - steerFactor * 0.08;
       camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
 
-      // Synchronize visual e-bike mesh position and rotation instantly to eliminate 1-frame follow latency jitter!
+      // 4. Synchronize visual e-bike position and apply leaning!
       const ebikeVisual = (window as any).ebikeVisualGroup?.current;
       if (ebikeVisual) {
         ebikeVisual.position.set(
@@ -381,7 +415,9 @@ export function PlayerController({
           capsule.current.end.y - PLAYER_EYE_HEIGHT,
           capsule.current.end.z
         );
-        ebikeVisual.rotation.set(0, ebikeAngle.current, 0);
+        // Lean (roll) the bike sideways in turns (up to 15 degrees)
+        const leanAngle = steerFactor * 0.26; // rotate in direction of turn!
+        ebikeVisual.rotation.set(0, ebikeAngle.current, leanAngle, "YXZ");
       }
     } else {
       camera.position.copy(capsule.current.end);
