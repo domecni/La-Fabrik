@@ -18,13 +18,13 @@ export interface CameraTransform {
 }
 
 export const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
-  position: [-3, 8, 0],
-  rotation: [0, 0, 0],
+  position: [-3, 6, 0],
+  rotation: [-10, -90, 0],
 };
 
 const EBIKE_DROP_PLAYER_TRANSFORM: CameraTransform = {
   position: [3, 1.5, 0],
-  rotation: [90, 90, 0],
+  rotation: [0, 0, 0],
 };
 
 interface EbikeProps {
@@ -56,16 +56,6 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
         groupRef.current.rotation.set(0, 0, 0);
       }
     }
-  });
-
-  const debugRef = useRef({ showCameraPoints: true });
-  useDebugFolder("Ebike", (folder) => {
-    folder
-      .add(debugRef.current, "showCameraPoints")
-      .name("Show Camera Points")
-      .onChange((value: boolean) => {
-        debugRef.current.showCameraPoints = value;
-      });
   });
 
   const camPointPos: Vector3Tuple = [
@@ -113,6 +103,29 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
       });
     }
   };
+
+  const handleInteractRef = useRef(handleInteract);
+  handleInteractRef.current = handleInteract;
+
+  const debugRef = useRef({ showCameraPoints: true });
+  const debugActions = useRef({
+    toggleRide: () => {
+      handleInteractRef.current();
+    }
+  });
+
+  useDebugFolder("Ebike", (folder) => {
+    folder
+      .add(debugRef.current, "showCameraPoints")
+      .name("Show Camera Points")
+      .onChange((value: boolean) => {
+        debugRef.current.showCameraPoints = value;
+      });
+
+    folder
+      .add(debugActions.current, "toggleRide")
+      .name("Monter / Descendre");
+  });
 
   return (
     <>
