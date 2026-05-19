@@ -403,8 +403,9 @@ export function PlayerController({
       // 3. Dynamic camera roll based on steering!
       const pitchRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[0]);
       const yawRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[1]) + ebikeAngle.current;
-      // Tilt camera slightly opposite to the turn direction (-5 degrees maximum roll)
-      const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]) - steerFactor * 0.08;
+      // COMMENTED OUT: Camera roll/tilt during turns (keeping it flat)
+      // const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]) - steerFactor * 0.08;
+      const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]);
       camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
 
       // 4. Synchronize visual e-bike position and apply leaning!
