@@ -5,26 +5,26 @@ import { InteractableObject } from "@/components/three/interaction/InteractableO
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
-import { animateCameraTransition } from "@/world/GameCinematics";
+import { animateCameraTransition, animateCameraTransformTransition } from "@/world/GameCinematics";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { PLAYER_EYE_HEIGHT } from "@/data/player/playerConfig";
 import type { Vector3Tuple } from "@/types/three/three";
 
 const EBIKE_MODEL_PATH = "/models/ebike/model.gltf";
 
-interface CameraTransform {
+export interface CameraTransform {
   position: Vector3Tuple;
   rotation: Vector3Tuple;
 }
 
-const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
+export const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
   position: [-3, 8, 0],
-  rotation: [90, 90, 90],
+  rotation: [0, 0, 0],
 };
 
 const EBIKE_DROP_PLAYER_TRANSFORM: CameraTransform = {
   position: [3, 1.5, 0],
-  rotation: [0, 0, 0],
+  rotation: [90, 90, 0],
 };
 
 interface EbikeProps {
@@ -86,13 +86,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
         position[1] + EBIKE_CAMERA_TRANSFORM.position[1],
         position[2] + EBIKE_CAMERA_TRANSFORM.position[2],
       ];
-      const targetLookAt: Vector3Tuple = [
-        position[0],
-        position[1] + 1,
-        position[2],
-      ];
-
-      animateCameraTransition(targetCamPos, targetLookAt, 1, () => {
+      animateCameraTransformTransition(targetCamPos, EBIKE_CAMERA_TRANSFORM.rotation, 1, () => {
         useGameStore.getState().setPlayerMovementMode("ebike");
       });
     } else {

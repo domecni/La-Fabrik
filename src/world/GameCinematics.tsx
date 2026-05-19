@@ -233,3 +233,62 @@ export function animateCameraTransition(
     0,
   );
 }
+
+export function animateCameraTransformTransition(
+  targetPosition: Vector3Tuple,
+  targetRotation: Vector3Tuple,
+  duration: number = 1,
+  onComplete?: () => void,
+): void {
+  if (!globalCamera) {
+    logger.warn("GameCinematics", "Camera not found for transition");
+    onComplete?.();
+    return;
+  }
+
+  const camera = globalCamera;
+
+  cameraTransitionTimeline?.kill();
+  useGameStore.getState().setCinematicPlaying(true);
+
+  // Convert target rotation in degrees to quaternion
+  const targetEuler = new THREE.Euler(
+    THREE.MathUtils.degToRad(targetRotation[0]),
+    THREE.MathUtils.degToRad(targetRotation[1]),
+    THREE.MathUtils.degToRad(targetRotation[2]),
+    "YXZ"
+  );
+  const startQuaternion = camera.quaternion.clone();
+  const endQuaternion = new THREE.Quaternion().setFromEuler(targetEuler);
+
+  const transitionObj = { progress: 0 };
+
+  cameraTransitionTimeline = gsap.timeline({
+    onUpdate: () => {
+      camera.quaternion.copy(startQuaternion).slerp(endQuaternion, transitionObj.progress);
+    },
+    onComplete: () => {
+      cameraTransitionTimeline = null;
+      useGameStore.getState().setCinematicPlaying(false);
+      onComplete?.();
+    },
+  });
+
+  cameraTransitionTimeline.to(camera.position, {
+    x: targetPosition[0],
+    y: targetPosition[1],
+    z: targetPosition[2],
+    duration,
+    ease: "power2.inOut",
+  });
+
+  cameraTransitionTimeline.to(
+    transitionObj,
+    {
+      progress: 1,
+      duration,
+      ease: "power2.inOut",
+    },
+    0,
+  );
+}
