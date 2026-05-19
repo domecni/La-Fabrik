@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
@@ -40,21 +40,18 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   const model = useClonedObject(scene);
   const movementMode = useGameStore((state) => state.player.movementMode);
 
-  useFrame(() => {
-    if (groupRef.current) {
-      if (movementMode === "ebike") {
-        // Follow player physical position (capsule end)
-        const playerPos = (window as any).playerPos || [0, 10, 0];
-        groupRef.current.position.set(playerPos[0], playerPos[1] - PLAYER_EYE_HEIGHT, playerPos[2]);
+  useEffect(() => {
+    (window as any).ebikeVisualGroup = groupRef;
+    return () => {
+      (window as any).ebikeVisualGroup = null;
+    };
+  }, []);
 
-        // Match the e-bike's actual physical steering heading
-        const angle = (window as any).ebikeAngle || 0;
-        groupRef.current.rotation.set(0, angle, 0);
-      } else {
-        // Reset to original position
-        groupRef.current.position.set(...position);
-        groupRef.current.rotation.set(0, 0, 0);
-      }
+  useFrame(() => {
+    if (groupRef.current && movementMode !== "ebike") {
+      // Reset to original position
+      groupRef.current.position.set(...position);
+      groupRef.current.rotation.set(0, 0, 0);
     }
   });
 

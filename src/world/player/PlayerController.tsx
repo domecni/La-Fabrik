@@ -357,6 +357,17 @@ export function PlayerController({
       const yawRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[1]) + ebikeAngle.current;
       const rollRad = THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[2]);
       camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
+
+      // Synchronize visual e-bike mesh position and rotation instantly to eliminate 1-frame follow latency jitter!
+      const ebikeVisual = (window as any).ebikeVisualGroup?.current;
+      if (ebikeVisual) {
+        ebikeVisual.position.set(
+          capsule.current.end.x,
+          capsule.current.end.y - PLAYER_EYE_HEIGHT,
+          capsule.current.end.z
+        );
+        ebikeVisual.rotation.set(0, ebikeAngle.current, 0);
+      }
     } else {
       camera.position.copy(capsule.current.end);
     }
