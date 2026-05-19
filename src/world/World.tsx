@@ -28,6 +28,7 @@ import { GameMap } from "@/world/GameMap";
 import { GameStageContent } from "@/world/GameStageContent";
 import { Player } from "@/world/player/Player";
 import { TestMap } from "@/world/debug/TestMap";
+import { NetTest } from "@/components/three/debug/NetTest";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 
 interface WorldProps {
@@ -99,6 +100,7 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
         </>
       ) : (
         <TestMap onOctreeReady={handleOctreeReady} />
+        <NetTest />
       )}
 
       {sceneMode !== "game" && spawnPlayer ? (
