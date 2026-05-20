@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { HomePage } from "@/pages/page";
 import { EditorPage } from "@/pages/editor/page";
+import { WaypointEditorPage } from "@/pages/waypoint/page";
 import {
   DocsAnimationRoute,
   DocsAudioRoute,
@@ -43,6 +44,12 @@ const editorRoute = createRoute({
   component: EditorPage,
 });
 
+const waypointRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/waypoint",
+  component: WaypointEditorPage,
+});
+
 const docsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/docs",
@@ -78,6 +85,7 @@ const docsChildRoutes = [
 const routeTree = rootRoute.addChildren([
   indexRoute,
   editorRoute,
+  waypointRoute,
   docsRoute.addChildren(docsChildRoutes),
 ]);
 
