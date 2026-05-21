@@ -12,6 +12,8 @@ import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { GameMapCollision } from "@/world/GameMapCollision";
+import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
+import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
 import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
@@ -274,11 +276,21 @@ function MapNodeInstance({
   modelUrl: string | null;
   onSettled: () => void;
 }): React.JSX.Element {
+  const isGeneratedModel = isGeneratedMapModelName(node.name);
+
   useEffect(() => {
-    if (modelUrl !== null) return;
+    if (modelUrl !== null || isGeneratedModel) return;
 
     onSettled();
-  }, [modelUrl, onSettled]);
+  }, [isGeneratedModel, modelUrl, onSettled]);
+
+  if (isGeneratedModel) {
+    return (
+      <Suspense fallback={<FallbackMapNode node={node} />}>
+        <GeneratedMapNodeInstance node={node} onLoaded={onSettled} />
+      </Suspense>
+    );
+  }
 
   if (!modelUrl) {
     return <FallbackMapNode node={node} />;
