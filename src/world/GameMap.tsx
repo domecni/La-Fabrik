@@ -12,6 +12,8 @@ import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { GameMapCollision } from "@/world/GameMapCollision";
+import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
+import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
@@ -225,6 +227,7 @@ export function GameMap({
           </ModelErrorBoundary>
         ))}
       </group>
+      <MapInstancingSystem />
       <VegetationSystem />
       <TerrainModel />
       <GameMapCollision
@@ -256,7 +259,10 @@ function liteMap(node: MapNode): boolean {
     return false;
   }
 
-  return !LITE_MAP_SKIPPED_NODE_NAMES.has(node.name);
+  return (
+    !LITE_MAP_SKIPPED_NODE_NAMES.has(node.name) &&
+    !isInstancedMapNodeName(node.name)
+  );
 }
 
 function MapNodeInstance({

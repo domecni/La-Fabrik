@@ -3,7 +3,6 @@ import { useGLTF } from "@react-three/drei";
 import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
-import { disposeObject3D } from "@/utils/three/dispose";
 
 interface SkyModelProps {
   modelPath: string;
@@ -28,6 +27,7 @@ interface SkyModelErrorBoundaryState {
 
 const SKY_MODEL_SCALE = 1;
 const SKY_MODEL_RENDER_ORDER = -1000;
+const SKYBOX_MODEL_PATH = "/models/skybox/skybox.glb";
 const LEGACY_SKY_MODEL_PATH = "/models/sky/model.glb";
 
 class SkyModelErrorBoundary extends Component<
@@ -83,7 +83,7 @@ function SkyModelContent({
 
   useEffect(() => {
     return () => {
-      disposeObject3D(model);
+      disposeSkyModelMaterials(model);
     };
   }, [model]);
 
@@ -129,5 +129,20 @@ function createSkyMaterial<T extends THREE.Material>(material: T): T {
   return skyMaterial as T;
 }
 
-useGLTF.preload("/models/skybox/model.gltf");
+function disposeSkyModelMaterials(model: THREE.Object3D): void {
+  model.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+
+    if (Array.isArray(object.material)) {
+      for (const material of object.material) {
+        material.dispose();
+      }
+      return;
+    }
+
+    object.material.dispose();
+  });
+}
+
+useGLTF.preload(SKYBOX_MODEL_PATH);
 useGLTF.preload(LEGACY_SKY_MODEL_PATH);
