@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
 
 interface InstancedMapAssetProps {
@@ -12,6 +13,11 @@ interface InstancedMapAssetProps {
 
 interface MeshData {
   geometry: THREE.BufferGeometry;
+  material: THREE.Material | THREE.Material[];
+}
+
+interface MeshMergeGroup {
+  geometries: THREE.BufferGeometry[];
   material: THREE.Material | THREE.Material[];
 }
 
@@ -42,8 +48,29 @@ function disposeInstancedMapMesh(mesh: THREE.InstancedMesh): void {
   mesh.dispose();
 }
 
+function createGeometrySignature(geometry: THREE.BufferGeometry): string {
+  const attributes = Object.entries(geometry.attributes)
+    .map(([name, attribute]) => {
+      return `${name}:${attribute.itemSize}:${attribute.normalized}`;
+    })
+    .sort()
+    .join("|");
+
+  return `${geometry.index ? "indexed" : "non-indexed"}:${attributes}`;
+}
+
+function createMaterialKey(
+  material: THREE.Material | THREE.Material[],
+): string {
+  if (Array.isArray(material)) {
+    return material.map((item) => item.uuid).join("|");
+  }
+
+  return material.uuid;
+}
+
 function extractMeshes(scene: THREE.Group): MeshData[] {
-  const meshes: MeshData[] = [];
+  const groups = new Map<string, MeshMergeGroup>();
 
   scene.updateMatrixWorld(true);
   scene.traverse((child) => {
@@ -51,14 +78,40 @@ function extractMeshes(scene: THREE.Group): MeshData[] {
 
     const geometry = child.geometry.clone();
     geometry.applyMatrix4(child.matrixWorld);
+    const material = child.material;
+    const key = `${createMaterialKey(material)}:${createGeometrySignature(geometry)}`;
+    const group = groups.get(key);
 
-    meshes.push({
-      geometry,
-      material: cloneMaterial(child.material),
+    if (group) {
+      group.geometries.push(geometry);
+      return;
+    }
+
+    groups.set(key, {
+      geometries: [geometry],
+      material: cloneMaterial(material),
     });
   });
 
-  return meshes;
+  return [...groups.values()].map((group) => {
+    if (group.geometries.length === 1) {
+      return {
+        geometry: group.geometries[0] as THREE.BufferGeometry,
+        material: group.material,
+      };
+    }
+
+    const mergedGeometry = mergeGeometries(group.geometries, false);
+
+    for (const geometry of group.geometries) {
+      geometry.dispose();
+    }
+
+    return {
+      geometry: mergedGeometry,
+      material: group.material,
+    };
+  });
 }
 
 function setInstanceMatrices(
