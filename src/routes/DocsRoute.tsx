@@ -99,6 +99,10 @@ const LazyDocsThreeDebuggingPage = lazyNamed(
   () => import("@/pages/docs/three-debugging/page"),
   "DocsThreeDebuggingPage",
 );
+const LazyDocsMapPerformancePage = lazyNamed(
+  () => import("@/pages/docs/map-performance/page"),
+  "DocsMapPerformancePage",
+);
 
 export const DocsLayoutRoute = createDocsRoute(LazyDocsLayout);
 export const DocsReadmeRoute = createDocsRoute(LazyDocsReadmePage);
@@ -123,4 +127,7 @@ export const DocsCodeReviewRoute = createDocsRoute(LazyDocsCodeReviewPage);
 export const DocsMissionFlowRoute = createDocsRoute(LazyDocsMissionFlowPage);
 export const DocsThreeDebuggingRoute = createDocsRoute(
   LazyDocsThreeDebuggingPage,
+);
+export const DocsMapPerformanceRoute = createDocsRoute(
+  LazyDocsMapPerformancePage,
 );

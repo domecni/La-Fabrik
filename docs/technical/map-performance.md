@@ -137,6 +137,44 @@ Once the expensive model families are isolated, the real triangle fixes are:
 
 Chunked instancing is especially important. A single `InstancedMesh` containing every bush has one global bounding sphere. If that bounding sphere is visible, Three.js may keep the whole batch visible. Splitting instances into grid chunks allows entire offscreen chunks to be skipped.
 
+## Player-Only Vegetation Streaming
+
+The first distance-streaming pass is intentionally limited to vegetation and crop instances:
+
+- `arbre`
+- `sapin`
+- `buisson`
+- `champdeble`
+- `champdesoja`
+- `champsdetournesol`
+
+The behavior is configured in:
+
+```txt
+src/data/world/fogConfig.ts
+```
+
+Current runtime values:
+
+```txt
+chunkSize: 35
+loadRadius: 45
+unloadRadius: 58
+updateInterval: 350ms
+fog near: 34
+fog far: 58
+```
+
+The streaming and fog are scoped to the production game scene with the player camera only:
+
+```txt
+sceneMode === "game" && cameraMode === "player"
+```
+
+This matters for debugging. In debug camera mode there is no fog and no distance streaming, so the developer can inspect the full map freely. In player mode, chunks mount and unmount around the camera to reduce visible triangle count while fog hides vegetation pop-in.
+
+Chunk cleanup is handled through React unmounting. `VegetationSystem` removes chunks from the tree, and `InstancedVegetation` removes its `THREE.InstancedMesh` objects from the group while disposing the locally created merged geometries/material clones in its own cleanup path.
+
 ## Current Code-Side Optimization
 
 Repeated static assets are configured in:

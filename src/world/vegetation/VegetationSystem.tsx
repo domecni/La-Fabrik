@@ -1,6 +1,8 @@
 import { Suspense, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { CHUNK_CONFIG } from "@/data/world/fogConfig";
+import { useCameraMode } from "@/hooks/debug/useCameraMode";
+import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import {
   isMapModelVisible,
   useMapPerformanceStore,
@@ -75,6 +77,8 @@ function createVegetationChunks(
 
 export function VegetationSystem(): React.JSX.Element | null {
   const camera = useThree((state) => state.camera);
+  const cameraMode = useCameraMode();
+  const sceneMode = useSceneMode();
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
   const { data, isLoading } = useVegetationData();
@@ -82,6 +86,8 @@ export function VegetationSystem(): React.JSX.Element | null {
   const [activeChunkKeys, setActiveChunkKeys] = useState<Set<string>>(
     () => new Set(),
   );
+  const streamingEnabled =
+    CHUNK_CONFIG.enabled && sceneMode === "game" && cameraMode === "player";
 
   const chunks = useMemo(() => {
     if (!data) return [];
@@ -98,7 +104,7 @@ export function VegetationSystem(): React.JSX.Element | null {
   }, [data, groups, models]);
 
   useFrame(({ clock }) => {
-    if (!CHUNK_CONFIG.enabled) return;
+    if (!streamingEnabled) return;
 
     const now = clock.elapsedTime * 1000;
     if (now - lastUpdateRef.current < CHUNK_CONFIG.updateInterval) return;
@@ -137,7 +143,7 @@ export function VegetationSystem(): React.JSX.Element | null {
     return null;
   }
 
-  const visibleChunks = CHUNK_CONFIG.enabled
+  const visibleChunks = streamingEnabled
     ? chunks.filter((chunk) => activeChunkKeys.has(chunk.key))
     : chunks;
 

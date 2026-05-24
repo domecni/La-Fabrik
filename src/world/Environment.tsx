@@ -7,6 +7,7 @@ import {
   PHYSICS_SCENE_BACKGROUND_COLOR,
 } from "@/data/world/environmentConfig";
 import { FOG_CONFIG } from "@/data/world/fogConfig";
+import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import {
   isMapModelVisible,
@@ -15,6 +16,7 @@ import {
 import { SkyModel } from "@/components/three/world/SkyModel";
 
 export function Environment(): React.JSX.Element {
+  const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
@@ -28,7 +30,7 @@ export function Environment(): React.JSX.Element {
 
   return (
     <>
-      {FOG_CONFIG.enabled ? (
+      {FOG_CONFIG.enabled && sceneMode === "game" && cameraMode === "player" ? (
         <fog
           attach="fog"
           args={[FOG_CONFIG.color, FOG_CONFIG.near, FOG_CONFIG.far]}
