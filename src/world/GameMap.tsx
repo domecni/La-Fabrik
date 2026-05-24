@@ -111,10 +111,13 @@ export function GameMap({
   const settledMapNodesRef = useRef(new Set<number>());
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
-  const [mapNodes, setMapNodes] = useState<LoadedMapNode[]>([]);
+  const [renderMapNodes, setRenderMapNodes] = useState<LoadedMapNode[]>([]);
+  const [collisionMapNodes, setCollisionMapNodes] = useState<LoadedMapNode[]>(
+    [],
+  );
   const [mapLoaded, setMapLoaded] = useState(false);
   const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
-  const mapReady = mapLoaded && settledMapNodeCount >= mapNodes.length;
+  const mapReady = mapLoaded && settledMapNodeCount >= renderMapNodes.length;
 
   const handleMapNodeSettled = useCallback((index: number) => {
     if (settledMapNodesRef.current.has(index)) return;
@@ -125,7 +128,8 @@ export function GameMap({
 
   const showEmptyMap = useCallback(
     (currentStep: string) => {
-      setMapNodes([]);
+      setRenderMapNodes([]);
+      setCollisionMapNodes([]);
       setMapLoaded(true);
       settledMapNodesRef.current.clear();
       setSettledMapNodeCount(0);
@@ -174,6 +178,12 @@ export function GameMap({
           const modelUrl = sceneData.models.get(node.name);
           return { node, modelUrl: modelUrl ?? null };
         });
+        const loadedCollisionNodes = sceneData.mapNodes
+          .filter((node) => node.name === "terrain")
+          .map((node) => {
+            const modelUrl = sceneData.models.get(node.name);
+            return { node, modelUrl: modelUrl ?? null };
+          });
         const missingModelCount = loadedMapNodes.filter(
           (mapNode) => mapNode.modelUrl === null,
         ).length;
@@ -188,7 +198,8 @@ export function GameMap({
           );
         }
 
-        setMapNodes(loadedMapNodes);
+        setRenderMapNodes(loadedMapNodes);
+        setCollisionMapNodes(loadedCollisionNodes);
         setMapLoaded(true);
         settledMapNodesRef.current.clear();
         setSettledMapNodeCount(0);
@@ -209,21 +220,23 @@ export function GameMap({
   }, [onLoadingStateChange, showEmptyMap]);
 
   useEffect(() => {
-    if (mapNodes.length === 0) return;
+    if (renderMapNodes.length === 0) return;
 
     const renderProgress =
-      mapNodes.length === 0 ? 1 : settledMapNodeCount / mapNodes.length;
+      renderMapNodes.length === 0
+        ? 1
+        : settledMapNodeCount / renderMapNodes.length;
     onLoadingStateChange?.({
       currentStep: "Chargement des modèles de la map",
       progress: 0.25 + renderProgress * 0.45,
       status: "loading",
     });
-  }, [mapNodes.length, onLoadingStateChange, settledMapNodeCount]);
+  }, [renderMapNodes.length, onLoadingStateChange, settledMapNodeCount]);
 
   return (
     <>
       <group>
-        {mapNodes.map((mapNode, index) => (
+        {renderMapNodes.map((mapNode, index) => (
           <ModelErrorBoundary
             key={index}
             fallback={<FallbackMapNode node={mapNode.node} />}
@@ -251,7 +264,7 @@ export function GameMap({
       <GameMapCollision
         buildOctree={buildOctree}
         mapReady={mapReady}
-        nodes={mapNodes}
+        nodes={collisionMapNodes}
         onLoaded={onLoaded}
         onLoadingStateChange={onLoadingStateChange}
         onOctreeReady={onOctreeReady}
