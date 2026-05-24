@@ -466,6 +466,16 @@ canvas {
   text-transform: uppercase;
 }
 
+.scene-loading-overlay p {
+  max-width: 290px;
+  margin: -8px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .scene-loading-overlay__track {
   position: relative;
   overflow: hidden;

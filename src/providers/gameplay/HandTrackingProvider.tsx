@@ -24,9 +24,6 @@ export function HandTrackingProvider({
   children: ReactNode;
 }): React.JSX.Element {
   const sceneMode = useSceneMode();
-  const handTrackingSource = useDebugStore((debug) =>
-    debug.getHandTrackingSource(),
-  );
   const repairNeedsHands = useGameStore((state) => {
     switch (state.mainState) {
       case "bike":
@@ -44,20 +41,34 @@ export function HandTrackingProvider({
   const enabled =
     repairNeedsHands ||
     (sceneMode === "physics" && (nearby || holding || handHolding));
+
+  if (!enabled) {
+    return (
+      <HandTrackingContext value={HAND_TRACKING_IDLE_SNAPSHOT}>
+        {children}
+      </HandTrackingContext>
+    );
+  }
+
+  return <ActiveHandTrackingProvider>{children}</ActiveHandTrackingProvider>;
+}
+
+function ActiveHandTrackingProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
+  const handTrackingSource = useDebugStore((debug) =>
+    debug.getHandTrackingSource(),
+  );
   const backendSnapshot = useRemoteHandTracking({
-    enabled: enabled && handTrackingSource === "backend",
+    enabled: handTrackingSource === "backend",
   });
   const browserSnapshot = useBrowserHandTracking({
-    enabled: enabled && handTrackingSource === "browser",
+    enabled: handTrackingSource === "browser",
   });
   const snapshot =
     handTrackingSource === "browser" ? browserSnapshot : backendSnapshot;
 
-  return (
-    <HandTrackingContext
-      value={enabled ? snapshot : HAND_TRACKING_IDLE_SNAPSHOT}
-    >
-      {children}
-    </HandTrackingContext>
-  );
+  return <HandTrackingContext value={snapshot}>{children}</HandTrackingContext>;
 }

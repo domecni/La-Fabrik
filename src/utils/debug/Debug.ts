@@ -103,7 +103,6 @@ export class Debug {
 
     if (this.gui) {
       this.gui.open();
-      this.createOrderedFolders();
 
       this.gui
         .add(this.controls, "cameraMode", { Player: "player", Debug: "debug" })
@@ -136,6 +135,8 @@ export class Debug {
           this.controls.showDebugOverlay = value;
           this.emit();
         });
+
+      this.createOrderedFolders();
 
       const handTrackingFolder = this.createFolder("Hand Tracking");
 
