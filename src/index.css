@@ -662,6 +662,7 @@ canvas {
 }
 
 .game-settings-menu__choice-group button,
+.game-settings-menu__restart,
 .game-settings-menu__quit {
   width: 100%;
   padding: 11px 12px;
@@ -678,6 +679,16 @@ canvas {
   border-color: #ffffff;
   background: #ffffff;
   color: #050505;
+}
+
+.game-settings-menu__restart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #bfdbfe;
 }
 
 .game-settings-menu__quit {

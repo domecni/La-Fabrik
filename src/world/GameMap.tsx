@@ -11,17 +11,22 @@ import * as THREE from "three";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { TerrainModel } from "@/components/three/world/TerrainModel";
+import {
+  isMapModelVisible,
+  useMapPerformanceStore,
+} from "@/managers/stores/useMapPerformanceStore";
 import { GameMapCollision } from "@/world/GameMapCollision";
+import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
+import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
+import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
+import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
-import { INSTANCED_MAP_EXCEPTIONS } from "@/world/vegetation/vegetationConfig";
 import type { MapNode } from "@/types/editor/editor";
 import type { OctreeReadyHandler } from "@/types/three/three";
-
-const MODEL_RENDER_SCALE: [number, number, number] = [1, 1, 1];
 
 interface LoadedMapNode {
   node: MapNode;
@@ -29,6 +34,15 @@ interface LoadedMapNode {
 }
 
 const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
+const LITE_MAP_SKIPPED_NODE_NAMES = new Set([
+  "arbre",
+  "buisson",
+  "champdeble",
+  "champdesoja",
+  "champsdetournesol",
+  "sapin",
+]);
+
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback: ReactNode;
@@ -91,6 +105,8 @@ export function GameMap({
   onOctreeReady,
 }: GameMapProps): React.JSX.Element {
   const settledMapNodesRef = useRef(new Set<number>());
+  const groups = useMapPerformanceStore((state) => state.groups);
+  const models = useMapPerformanceStore((state) => state.models);
   const [mapNodes, setMapNodes] = useState<LoadedMapNode[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
@@ -211,16 +227,23 @@ export function GameMap({
             node={mapNode.node}
             onSettled={() => handleMapNodeSettled(index)}
           >
-            <MapNodeInstance
-              node={mapNode.node}
-              modelUrl={mapNode.modelUrl}
-              onSettled={() => handleMapNodeSettled(index)}
-            />
+            {isMapModelVisible(mapNode.node.name, { groups, models }) ? (
+              <MapNodeInstance
+                node={mapNode.node}
+                modelUrl={mapNode.modelUrl}
+                onSettled={() => handleMapNodeSettled(index)}
+              />
+            ) : (
+              <HiddenMapNode onSettled={() => handleMapNodeSettled(index)} />
+            )}
           </ModelErrorBoundary>
         ))}
       </group>
+      <MapInstancingSystem />
       <VegetationSystem />
-      <TerrainModel />
+      {isMapModelVisible("terrain", { groups, models }) ? (
+        <TerrainModel />
+      ) : null}
       <GameMapCollision
         buildOctree={buildOctree}
         mapReady={mapReady}
@@ -231,6 +254,14 @@ export function GameMap({
       />
     </>
   );
+}
+
+function HiddenMapNode({ onSettled }: { onSettled: () => void }): null {
+  useEffect(() => {
+    onSettled();
+  }, [onSettled]);
+
+  return null;
 }
 
 /**
@@ -250,7 +281,10 @@ function liteMap(node: MapNode): boolean {
     return false;
   }
 
-  return INSTANCED_MAP_EXCEPTIONS.has(node.name);
+  return (
+    !LITE_MAP_SKIPPED_NODE_NAMES.has(node.name) &&
+    !isInstancedMapNodeName(node.name)
+  );
 }
 
 function MapNodeInstance({
@@ -262,11 +296,21 @@ function MapNodeInstance({
   modelUrl: string | null;
   onSettled: () => void;
 }): React.JSX.Element {
+  const isGeneratedModel = isGeneratedMapModelName(node.name);
+
   useEffect(() => {
-    if (modelUrl !== null) return;
+    if (modelUrl !== null || isGeneratedModel) return;
 
     onSettled();
-  }, [modelUrl, onSettled]);
+  }, [isGeneratedModel, modelUrl, onSettled]);
+
+  if (isGeneratedModel) {
+    return (
+      <Suspense fallback={<FallbackMapNode node={node} />}>
+        <GeneratedMapNodeInstance node={node} onLoaded={onSettled} />
+      </Suspense>
+    );
+  }
 
   if (!modelUrl) {
     return <FallbackMapNode node={node} />;
@@ -288,12 +332,12 @@ function ModelInstance({
   modelUrl: string;
   onLoaded: () => void;
 }): React.JSX.Element {
-  const { position, rotation } = node;
+  const { position, rotation, scale } = node;
   const { scene } = useLoggedGLTF(modelUrl, {
     scope: "GameMap.ModelInstance",
     position,
     rotation,
-    scale: MODEL_RENDER_SCALE,
+    scale,
   });
   const sceneInstance = useClonedObject(scene);
 
@@ -312,7 +356,7 @@ function ModelInstance({
       object={sceneInstance}
       position={position}
       rotation={rotation}
-      scale={MODEL_RENDER_SCALE}
+      scale={scale}
     />
   );
 }

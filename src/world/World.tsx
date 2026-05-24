@@ -5,6 +5,7 @@ import {
   PLAYER_SPAWN_POSITION_PHYSICS,
 } from "@/data/player/playerConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
+import { useMapPerformanceDebug } from "@/hooks/debug/useMapPerformanceDebug";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { useWorldSceneLoading } from "@/hooks/world/useWorldSceneLoading";
@@ -35,6 +36,8 @@ interface WorldProps {
 }
 
 export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
+  useMapPerformanceDebug();
+
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
   const mainState = useGameStore((state) => state.mainState);

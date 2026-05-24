@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
+import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import type {
   RepairRuntime,
   SubtitleLanguage,
 } from "@/managers/stores/useSettingsStore";
+import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
@@ -52,6 +54,7 @@ function VolumeSlider({
 }
 
 export function GameSettingsMenu(): React.JSX.Element | null {
+  const resetGame = useGameStore((state) => state.resetGame);
   const {
     isSettingsMenuOpen,
     musicVolume,
@@ -92,6 +95,13 @@ export function GameSettingsMenu(): React.JSX.Element | null {
     clearCookies();
     window.location.assign("/");
   };
+
+  const handleRestart = (): void => {
+    resetGame();
+    window.location.reload();
+  };
+
+  const showDebugRestart = isDebugEnabled();
 
   return (
     <div className="game-settings-menu" role="dialog" aria-modal="true">
@@ -189,6 +199,17 @@ export function GameSettingsMenu(): React.JSX.Element | null {
             ))}
           </div>
         </section>
+
+        {showDebugRestart ? (
+          <button
+            className="game-settings-menu__restart"
+            type="button"
+            onClick={handleRestart}
+          >
+            <RotateCcw size={14} aria-hidden="true" />
+            Recommencer
+          </button>
+        ) : null}
 
         <button
           className="game-settings-menu__quit"

@@ -1,12 +1,19 @@
 import { create } from "zustand";
-import type { GameStep } from "@/types/game";
+import { GAME_STEPS, type GameStep } from "@/types/game";
 import {
   isRepairMissionId,
+  isMissionStep,
   getNextMissionStep,
   getPreviousMissionStep,
   type MissionStep,
   type RepairMissionId,
 } from "@/types/gameplay/repairMission";
+import {
+  clearDebugGameStateCookie,
+  readDebugGameStateCookie,
+  writeDebugGameStateCookie,
+} from "@/utils/debug/debugGameStateCookie";
+import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
 export type { MissionStep, RepairMissionId };
@@ -30,7 +37,7 @@ interface MissionFlowState {
   playerName: string;
 }
 
-interface GameState {
+export interface GameState {
   mainState: MainGameState;
   isCinematicPlaying: boolean;
   missionFlow: MissionFlowState;
@@ -78,6 +85,34 @@ interface GameActions {
 
 type GameStore = GameState & GameActions;
 type GameStateUpdate = Partial<GameState>;
+
+const MAIN_GAME_STATES: readonly MainGameState[] = [
+  "intro",
+  "bike",
+  "pylone",
+  "ferme",
+  "outro",
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isStringOrNull(value: unknown): value is string | null {
+  return typeof value === "string" || value === null;
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
+function isMainGameState(value: unknown): value is MainGameState {
+  return MAIN_GAME_STATES.includes(value as MainGameState);
+}
+
+function isGameStep(value: unknown): value is GameStep {
+  return GAME_STEPS.includes(value as GameStep);
+}
 
 function completeIntroState(state: GameState): GameStateUpdate {
   return {
@@ -237,8 +272,139 @@ function createInitialGameState(): GameState {
   };
 }
 
+function hydrateIntroState(initial: IntroState, value: unknown): IntroState {
+  if (!isRecord(value)) return initial;
+
+  return {
+    currentStep: isGameStep(value.currentStep)
+      ? value.currentStep
+      : initial.currentStep,
+    dialogueAudio: isStringOrNull(value.dialogueAudio)
+      ? value.dialogueAudio
+      : initial.dialogueAudio,
+    hasCompleted: isBoolean(value.hasCompleted)
+      ? value.hasCompleted
+      : initial.hasCompleted,
+    isBikeUnlocked: isBoolean(value.isBikeUnlocked)
+      ? value.isBikeUnlocked
+      : initial.isBikeUnlocked,
+  };
+}
+
+function hydrateMissionState(
+  initial: MissionState,
+  value: unknown,
+): MissionState {
+  if (!isRecord(value)) return initial;
+
+  return {
+    currentStep:
+      typeof value.currentStep === "string" && isMissionStep(value.currentStep)
+        ? value.currentStep
+        : initial.currentStep,
+    dialogueAudio: isStringOrNull(value.dialogueAudio)
+      ? value.dialogueAudio
+      : initial.dialogueAudio,
+  };
+}
+
+function hydrateMissionFlowState(
+  initial: MissionFlowState,
+  value: unknown,
+): MissionFlowState {
+  if (!isRecord(value)) return initial;
+
+  return {
+    activityCity: isBoolean(value.activityCity)
+      ? value.activityCity
+      : initial.activityCity,
+    canMove: isBoolean(value.canMove) ? value.canMove : initial.canMove,
+    dialogMessage: isStringOrNull(value.dialogMessage)
+      ? value.dialogMessage
+      : initial.dialogMessage,
+    playerName:
+      typeof value.playerName === "string"
+        ? value.playerName
+        : initial.playerName,
+  };
+}
+
+function hydrateDebugGameState(initial: GameState, value: unknown): GameState {
+  if (!isRecord(value)) return initial;
+
+  const bike = hydrateMissionState(initial.bike, value.bike);
+  const pylone = hydrateMissionState(initial.pylone, value.pylone);
+  const ferme = hydrateMissionState(initial.ferme, value.ferme);
+  const outro = isRecord(value.outro) ? value.outro : null;
+
+  return {
+    mainState: isMainGameState(value.mainState)
+      ? value.mainState
+      : initial.mainState,
+    isCinematicPlaying: isBoolean(value.isCinematicPlaying)
+      ? value.isCinematicPlaying
+      : initial.isCinematicPlaying,
+    missionFlow: hydrateMissionFlowState(
+      initial.missionFlow,
+      value.missionFlow,
+    ),
+    intro: hydrateIntroState(initial.intro, value.intro),
+    bike: {
+      ...bike,
+      isRepaired:
+        isRecord(value.bike) && isBoolean(value.bike.isRepaired)
+          ? value.bike.isRepaired
+          : initial.bike.isRepaired,
+    },
+    pylone: {
+      ...pylone,
+      isPowered:
+        isRecord(value.pylone) && isBoolean(value.pylone.isPowered)
+          ? value.pylone.isPowered
+          : initial.pylone.isPowered,
+    },
+    ferme: {
+      ...ferme,
+      irrigationFixed:
+        isRecord(value.ferme) && isBoolean(value.ferme.irrigationFixed)
+          ? value.ferme.irrigationFixed
+          : initial.ferme.irrigationFixed,
+    },
+    outro: {
+      dialogueAudio:
+        outro && isStringOrNull(outro.dialogueAudio)
+          ? outro.dialogueAudio
+          : initial.outro.dialogueAudio,
+      hasStarted:
+        outro && isBoolean(outro.hasStarted)
+          ? outro.hasStarted
+          : initial.outro.hasStarted,
+    },
+  };
+}
+
+function createInitialDebugGameState(): GameState {
+  const initialState = createInitialGameState();
+  if (!isDebugEnabled()) return initialState;
+
+  return hydrateDebugGameState(initialState, readDebugGameStateCookie());
+}
+
+function pickGameState(state: GameStore): GameState {
+  return {
+    mainState: state.mainState,
+    isCinematicPlaying: state.isCinematicPlaying,
+    missionFlow: state.missionFlow,
+    intro: state.intro,
+    bike: state.bike,
+    pylone: state.pylone,
+    ferme: state.ferme,
+    outro: state.outro,
+  };
+}
+
 export const useGameStore = create<GameStore>()((set) => ({
-  ...createInitialGameState(),
+  ...createInitialDebugGameState(),
   setMainState: (mainState) => set({ mainState }),
   setCinematicPlaying: (isCinematicPlaying) => set({ isCinematicPlaying }),
   hideDialog: () =>
@@ -302,9 +468,18 @@ export const useGameStore = create<GameStore>()((set) => ({
 
       return { outro: { ...state.outro, hasStarted: false } };
     }),
-  resetGame: () => set(createInitialGameState()),
+  resetGame: () => {
+    set(createInitialGameState());
+    clearDebugGameStateCookie();
+  },
   showDialog: (dialogMessage) =>
     set((state) => ({
       missionFlow: { ...state.missionFlow, dialogMessage },
     })),
 }));
+
+if (isDebugEnabled()) {
+  useGameStore.subscribe((state) => {
+    writeDebugGameStateCookie(pickGameState(state));
+  });
+}

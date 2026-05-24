@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import type { Vector3Tuple } from "@/types/three/three";
-import { disposeObject3D } from "@/utils/three/dispose";
 
 const TERRAIN_MODEL_PATH = "/models/terrain/model.gltf";
 const TERRAIN_DEFAULT_POSITION: Vector3Tuple = [0, 0, 0];
@@ -46,12 +45,6 @@ export function TerrainModel({
     applyTerrainMaterialSettings(model, receiveShadow);
     return model;
   }, [scene, receiveShadow]);
-
-  useEffect(() => {
-    return () => {
-      disposeObject3D(terrainModel);
-    };
-  }, [terrainModel]);
 
   useEffect(() => {
     onLoaded?.();
