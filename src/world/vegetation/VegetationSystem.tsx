@@ -21,6 +21,7 @@ interface VegetationChunk {
   key: string;
   type: VegetationType;
   modelPath: string;
+  scaleMultiplier: number;
   castShadow: boolean;
   receiveShadow: boolean;
   centerX: number;
@@ -66,6 +67,7 @@ function createVegetationChunks(
       key: `${type}:${chunkKey}`,
       type,
       modelPath: config.modelPath,
+      scaleMultiplier: config.scaleMultiplier,
       castShadow: config.castShadow,
       receiveShadow: config.receiveShadow,
       centerX: center.x / chunkInstances.length,
@@ -102,6 +104,10 @@ export function VegetationSystem(): React.JSX.Element | null {
       return createVegetationChunks(type as VegetationType, entry.instances);
     });
   }, [data, groups, models]);
+
+  const visibleChunks = streamingEnabled
+    ? chunks.filter((chunk) => activeChunkKeys.has(chunk.key))
+    : chunks;
 
   useFrame(({ clock }) => {
     if (!streamingEnabled) return;
@@ -143,10 +149,6 @@ export function VegetationSystem(): React.JSX.Element | null {
     return null;
   }
 
-  const visibleChunks = streamingEnabled
-    ? chunks.filter((chunk) => activeChunkKeys.has(chunk.key))
-    : chunks;
-
   return (
     <group name="vegetation-system">
       {visibleChunks.map((chunk) => (
@@ -154,6 +156,7 @@ export function VegetationSystem(): React.JSX.Element | null {
           <InstancedVegetation
             modelPath={chunk.modelPath}
             instances={chunk.instances}
+            scaleMultiplier={chunk.scaleMultiplier}
             castShadow={chunk.castShadow}
             receiveShadow={chunk.receiveShadow}
           />

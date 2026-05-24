@@ -8,6 +8,7 @@ export const VEGETATION_TYPES = {
   buissons: {
     mapName: "buisson",
     modelPath: "/models/buisson/model.gltf",
+    scaleMultiplier: 2,
     castShadow: true,
     receiveShadow: true,
     enabled: true,
@@ -15,6 +16,7 @@ export const VEGETATION_TYPES = {
   sapin: {
     mapName: "sapin",
     modelPath: "/models/sapin/model.gltf",
+    scaleMultiplier: 2,
     castShadow: true,
     receiveShadow: true,
     enabled: true,
@@ -22,6 +24,7 @@ export const VEGETATION_TYPES = {
   arbre: {
     mapName: "arbre",
     modelPath: "/models/arbre/model.gltf",
+    scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
     enabled: true,
@@ -29,6 +32,7 @@ export const VEGETATION_TYPES = {
   champdeble: {
     mapName: "champdeble",
     modelPath: "/models/champdeble/model.gltf",
+    scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
     enabled: true,
@@ -36,6 +40,7 @@ export const VEGETATION_TYPES = {
   champdesoja: {
     mapName: "champdesoja",
     modelPath: "/models/champdesoja/model.gltf",
+    scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
     enabled: true,
@@ -43,6 +48,7 @@ export const VEGETATION_TYPES = {
   champsdetournesol: {
     mapName: "champsdetournesol",
     modelPath: "/models/champsdetournesol/model.gltf",
+    scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
     enabled: true,

@@ -1,25 +1,4 @@
 export const MAP_INSTANCING_ASSETS = {
-  generateur: {
-    mapName: "generateur",
-    modelPath: "/models/generateur/model.gltf",
-    castShadow: true,
-    receiveShadow: true,
-    enabled: true,
-  },
-  lafabrik: {
-    mapName: "lafabrik",
-    modelPath: "/models/lafabrik/model.gltf",
-    castShadow: true,
-    receiveShadow: true,
-    enabled: true,
-  },
-  fermeverticale: {
-    mapName: "fermeverticale",
-    modelPath: "/models/fermeverticale/model.gltf",
-    castShadow: true,
-    receiveShadow: true,
-    enabled: true,
-  },
   boiteauxlettres: {
     mapName: "boiteauxlettres",
     modelPath: "/models/boiteauxlettres/model.gltf",

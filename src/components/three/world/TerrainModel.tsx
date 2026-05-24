@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import type { Vector3Tuple } from "@/types/three/three";
+import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
 
 const TERRAIN_MODEL_PATH = "/models/terrain/model.gltf";
 const TERRAIN_DEFAULT_POSITION: Vector3Tuple = [0, 0, 0];
@@ -39,12 +41,16 @@ export function TerrainModel({
   const internalRef = useRef<THREE.Group>(null);
   const ref = groupRef ?? internalRef;
   const { scene } = useGLTF(TERRAIN_MODEL_PATH);
+  const maxAnisotropy = useThree((state) =>
+    state.gl.capabilities.getMaxAnisotropy(),
+  );
 
   const terrainModel = useMemo(() => {
+    optimizeGLTFSceneTextures(scene, maxAnisotropy);
     const model = scene.clone(true);
     applyTerrainMaterialSettings(model, receiveShadow);
     return model;
-  }, [scene, receiveShadow]);
+  }, [maxAnisotropy, scene, receiveShadow]);
 
   useEffect(() => {
     onLoaded?.();

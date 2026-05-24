@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
+import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
 import type { VegetationInstance } from "@/world/vegetation/useVegetationData";
 
 interface InstancedVegetationProps {
   modelPath: string;
   instances: VegetationInstance[];
+  scaleMultiplier: number;
   castShadow: boolean;
   receiveShadow: boolean;
 }
@@ -70,12 +74,17 @@ function extractMeshes(scene: THREE.Group): MeshData[] {
 
 function createInstanceMatrices(
   instances: VegetationInstance[],
+  scaleMultiplier: number,
 ): THREE.Matrix4[] {
   const matrices: THREE.Matrix4[] = [];
   const position = new THREE.Vector3();
   const rotation = new THREE.Euler();
   const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3(1, 1, 1);
+  const scale = new THREE.Vector3(
+    scaleMultiplier,
+    scaleMultiplier,
+    scaleMultiplier,
+  );
 
   for (const instance of instances) {
     const matrix = new THREE.Matrix4();
@@ -93,16 +102,36 @@ function createInstanceMatrices(
 export function InstancedVegetation({
   modelPath,
   instances,
+  scaleMultiplier,
   castShadow,
   receiveShadow,
 }: InstancedVegetationProps): React.JSX.Element | null {
   const { scene } = useGLTF(modelPath);
+  const terrainHeight = useTerrainHeightSampler();
+  const maxAnisotropy = useThree((state) =>
+    state.gl.capabilities.getMaxAnisotropy(),
+  );
   const groupRef = useRef<THREE.Group>(null);
 
-  const meshDataList = useMemo(() => extractMeshes(scene), [scene]);
+  const meshDataList = useMemo(() => {
+    optimizeGLTFSceneTextures(scene, maxAnisotropy);
+    return extractMeshes(scene);
+  }, [maxAnisotropy, scene]);
+  const groundedInstances = useMemo(
+    () =>
+      instances.map((instance) => {
+        const [x, y, z] = instance.position;
+        const height = terrainHeight.getHeight(x, z);
+        return {
+          ...instance,
+          position: [x, height ?? y, z] as VegetationInstance["position"],
+        };
+      }),
+    [instances, terrainHeight],
+  );
   const matrices = useMemo(
-    () => createInstanceMatrices(instances),
-    [instances],
+    () => createInstanceMatrices(groundedInstances, scaleMultiplier),
+    [groundedInstances, scaleMultiplier],
   );
 
   const instancedMeshes = useMemo(() => {
@@ -110,7 +139,7 @@ export function InstancedVegetation({
       const instancedMesh = new THREE.InstancedMesh(
         meshData.geometry,
         meshData.material,
-        instances.length,
+        groundedInstances.length,
       );
 
       for (let i = 0; i < matrices.length; i++) {
@@ -129,7 +158,13 @@ export function InstancedVegetation({
 
       return instancedMesh;
     });
-  }, [meshDataList, matrices, instances.length, castShadow, receiveShadow]);
+  }, [
+    meshDataList,
+    matrices,
+    groundedInstances.length,
+    castShadow,
+    receiveShadow,
+  ]);
 
   useEffect(() => {
     const group = groupRef.current;
@@ -162,7 +197,7 @@ export function InstancedVegetation({
     };
   }, [meshDataList]);
 
-  if (instances.length === 0) {
+  if (groundedInstances.length === 0) {
     return null;
   }
 

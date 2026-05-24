@@ -10,6 +10,10 @@ import {
 import * as THREE from "three";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
+import {
+  normalizeMapScale,
+  useTerrainSnappedPosition,
+} from "@/hooks/three/useTerrainHeight";
 import { TerrainModel } from "@/components/three/world/TerrainModel";
 import {
   isMapModelVisible,
@@ -33,7 +37,7 @@ interface LoadedMapNode {
   modelUrl: string | null;
 }
 
-const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking"]);
+const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking", "terrain"]);
 const LITE_MAP_SKIPPED_NODE_NAMES = new Set([
   "arbre",
   "buisson",
@@ -333,11 +337,13 @@ function ModelInstance({
   onLoaded: () => void;
 }): React.JSX.Element {
   const { position, rotation, scale } = node;
+  const snappedPosition = useTerrainSnappedPosition(position);
+  const normalizedScale = normalizeMapScale(scale);
   const { scene } = useLoggedGLTF(modelUrl, {
     scope: "GameMap.ModelInstance",
-    position,
+    position: snappedPosition,
     rotation,
-    scale,
+    scale: normalizedScale,
   });
   const sceneInstance = useClonedObject(scene);
 
@@ -354,18 +360,19 @@ function ModelInstance({
   return (
     <primitive
       object={sceneInstance}
-      position={position}
+      position={snappedPosition}
       rotation={rotation}
-      scale={scale}
+      scale={normalizedScale}
     />
   );
 }
 
 function FallbackMapNode({ node }: { node: MapNode }): React.JSX.Element {
   const { position, rotation, scale } = node;
+  const normalizedScale = normalizeMapScale(scale);
 
   return (
-    <mesh position={position} rotation={rotation} scale={scale}>
+    <mesh position={position} rotation={rotation} scale={normalizedScale}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color="#64748b" wireframe />
     </mesh>

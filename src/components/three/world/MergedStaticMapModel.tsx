@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { Vector3Tuple } from "@/types/three/three";
+import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
 
-const ECOLE_MODEL_PATH = "/models/ecole/model.gltf";
-
-interface EcoleModelProps {
+interface MergedStaticMapModelProps {
+  modelPath: string;
   position: Vector3Tuple;
   rotation: Vector3Tuple;
   scale: Vector3Tuple;
@@ -117,21 +118,26 @@ function createMergedMeshes(scene: THREE.Group): MergedMeshData[] {
     .filter((meshData): meshData is MergedMeshData => meshData !== null);
 }
 
-export function EcoleModel({
+export function MergedStaticMapModel({
+  modelPath,
   position,
   rotation,
   scale,
   castShadow = true,
   receiveShadow = true,
   onLoaded,
-}: EcoleModelProps): React.JSX.Element {
-  const { scene } = useGLTF(ECOLE_MODEL_PATH);
+}: MergedStaticMapModelProps): React.JSX.Element {
+  const { scene } = useGLTF(modelPath);
+  const maxAnisotropy = useThree((state) =>
+    state.gl.capabilities.getMaxAnisotropy(),
+  );
   const groupRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
     const group = groupRef.current;
     if (!group) return;
 
+    optimizeGLTFSceneTextures(scene, maxAnisotropy);
     const mergedMeshes = createMergedMeshes(scene);
     const meshes = mergedMeshes.map((meshData) => {
       const mesh = new THREE.Mesh(meshData.geometry, meshData.material);
@@ -153,7 +159,7 @@ export function EcoleModel({
         disposeMaterial(mesh.material);
       }
     };
-  }, [castShadow, onLoaded, receiveShadow, scene]);
+  }, [castShadow, maxAnisotropy, modelPath, onLoaded, receiveShadow, scene]);
 
   return (
     <group
@@ -164,5 +170,3 @@ export function EcoleModel({
     />
   );
 }
-
-useGLTF.preload(ECOLE_MODEL_PATH);

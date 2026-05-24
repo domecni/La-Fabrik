@@ -1,7 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import {
+  normalizeMapScale,
+  useTerrainHeightSampler,
+} from "@/hooks/three/useTerrainHeight";
+import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
 import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
 
 interface InstancedMapAssetProps {
@@ -153,21 +159,40 @@ export function InstancedMapAsset({
   receiveShadow,
 }: InstancedMapAssetProps): React.JSX.Element | null {
   const { scene } = useGLTF(modelPath);
+  const terrainHeight = useTerrainHeightSampler();
+  const maxAnisotropy = useThree((state) =>
+    state.gl.capabilities.getMaxAnisotropy(),
+  );
   const groupRef = useRef<THREE.Group>(null);
+  const groundedInstances = useMemo(
+    () =>
+      instances.map((instance) => {
+        const [x, y, z] = instance.position;
+        const height = terrainHeight.getHeight(x, z);
+
+        return {
+          ...instance,
+          position: [x, height ?? y, z] as MapAssetInstance["position"],
+          scale: normalizeMapScale(instance.scale),
+        };
+      }),
+    [instances, terrainHeight],
+  );
 
   useEffect(() => {
     const group = groupRef.current;
-    if (!group || instances.length === 0) return;
+    if (!group || groundedInstances.length === 0) return;
 
+    optimizeGLTFSceneTextures(scene, maxAnisotropy);
     const meshDataList = extractMeshes(scene);
     const instancedMeshes = meshDataList.map((meshData, index) => {
       const instancedMesh = new THREE.InstancedMesh(
         meshData.geometry,
         meshData.material,
-        instances.length,
+        groundedInstances.length,
       );
 
-      setInstanceMatrices(instancedMesh, instances);
+      setInstanceMatrices(instancedMesh, groundedInstances);
       instancedMesh.castShadow = castShadow;
       instancedMesh.receiveShadow = receiveShadow;
       instancedMesh.name = `instanced-map-asset-${index}`;
@@ -187,7 +212,7 @@ export function InstancedMapAsset({
         disposeInstancedMapMesh(mesh);
       }
     };
-  }, [castShadow, instances, receiveShadow, scene]);
+  }, [castShadow, groundedInstances, maxAnisotropy, receiveShadow, scene]);
 
   if (instances.length === 0) {
     return null;
