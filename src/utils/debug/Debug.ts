@@ -17,12 +17,11 @@ interface DebugEvents {
 }
 
 const DEBUG_FOLDER_ORDER = [
-  "La Fabrik",
   "Lighting",
   "Game",
   "Interaction",
   "Hand Tracking",
-  "Performance / Map",
+  "Map",
 ] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -100,14 +99,13 @@ export class Debug {
       sceneMode: storedControls.sceneMode ?? "game",
     };
 
-    this.gui = this.active ? new GUI({ title: "Debug" }) : null;
+    this.gui = this.active ? new GUI({ title: "La Fabrik" }) : null;
 
     if (this.gui) {
-      const folder = this.createFolder("La Fabrik", { open: true });
+      this.gui.open();
+      this.createOrderedFolders();
 
-      if (!folder) return;
-
-      folder
+      this.gui
         .add(this.controls, "cameraMode", { Player: "player", Debug: "debug" })
         .name("Camera Mode")
         .onChange((value: CameraMode) => {
@@ -115,7 +113,7 @@ export class Debug {
           this.saveAndEmit();
         });
 
-      folder
+      this.gui
         .add(this.controls, "sceneMode", { Game: "game", Physics: "physics" })
         .name("Scene")
         .onChange((value: SceneMode) => {
@@ -123,7 +121,7 @@ export class Debug {
           this.saveAndEmit();
         });
 
-      folder
+      this.gui
         .add(this.controls, "showPerf")
         .name("R3F Perf")
         .onChange((value: boolean) => {
@@ -131,19 +129,11 @@ export class Debug {
           this.emit();
         });
 
-      folder
+      this.gui
         .add(this.controls, "showDebugOverlay")
         .name("Debug Overlay")
         .onChange((value: boolean) => {
           this.controls.showDebugOverlay = value;
-          this.emit();
-        });
-
-      folder
-        .add(this.controls, "fogEnabled")
-        .name("Fog")
-        .onChange((value: boolean) => {
-          this.controls.fogEnabled = value;
           this.emit();
         });
 
@@ -180,8 +170,15 @@ export class Debug {
     const existing = this.folders.get(name);
 
     if (existing) {
-      this.folderRefCounts.set(name, (this.folderRefCounts.get(name) ?? 0) + 1);
-      return null;
+      const refCount = this.folderRefCounts.get(name) ?? 0;
+
+      if (refCount > 0) {
+        this.folderRefCounts.set(name, refCount + 1);
+        return null;
+      }
+
+      this.folderRefCounts.set(name, 1);
+      return existing;
     }
 
     const folder = this.gui.addFolder(name);
@@ -196,6 +193,16 @@ export class Debug {
     }
 
     return folder;
+  }
+
+  addFogControl(folder: GUI): void {
+    folder
+      .add(this.controls, "fogEnabled")
+      .name("Fog")
+      .onChange((value: boolean) => {
+        this.controls.fogEnabled = value;
+        this.emit();
+      });
   }
 
   destroyFolder(name: string): void {
@@ -277,6 +284,27 @@ export class Debug {
     }
 
     this.emit();
+  }
+
+  private createOrderedFolders(): void {
+    for (const folderName of DEBUG_FOLDER_ORDER) {
+      this.ensureFolder(folderName);
+    }
+  }
+
+  private ensureFolder(name: string): GUI | null {
+    if (!this.gui) return null;
+
+    const existing = this.folders.get(name);
+    if (existing) return existing;
+
+    const folder = this.gui.addFolder(name);
+    folder.close();
+    this.folders.set(name, folder);
+    this.folderRefCounts.set(name, 0);
+    this.sortFolders();
+
+    return folder;
   }
 
   private sortFolders(): void {

@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { CHUNK_CONFIG } from "@/data/world/fogConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
@@ -106,16 +106,21 @@ export function VegetationSystem(): React.JSX.Element | null {
   }, [data, groups, models]);
 
   const visibleChunks = streamingEnabled
-    ? chunks.filter((chunk) => activeChunkKeys.has(chunk.key))
+    ? chunks.filter((chunk) => {
+        if (activeChunkKeys.size > 0) {
+          return activeChunkKeys.has(chunk.key);
+        }
+
+        return (
+          Math.hypot(
+            chunk.centerX - camera.position.x,
+            chunk.centerZ - camera.position.z,
+          ) <= CHUNK_CONFIG.loadRadius
+        );
+      })
     : chunks;
 
-  useFrame(({ clock }) => {
-    if (!streamingEnabled) return;
-
-    const now = clock.elapsedTime * 1000;
-    if (now - lastUpdateRef.current < CHUNK_CONFIG.updateInterval) return;
-    lastUpdateRef.current = now;
-
+  const updateActiveChunks = useCallback(() => {
     const nextKeys = new Set<string>();
     const cameraX = camera.position.x;
     const cameraZ = camera.position.z;
@@ -143,6 +148,16 @@ export function VegetationSystem(): React.JSX.Element | null {
     }
 
     setActiveChunkKeys(nextKeys);
+  }, [activeChunkKeys, camera, chunks]);
+
+  useFrame(({ clock }) => {
+    if (!streamingEnabled) return;
+
+    const now = clock.elapsedTime * 1000;
+    if (now - lastUpdateRef.current < CHUNK_CONFIG.updateInterval) return;
+    lastUpdateRef.current = now;
+
+    updateActiveChunks();
   });
 
   if (isLoading || !data) {

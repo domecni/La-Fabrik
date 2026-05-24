@@ -1,4 +1,5 @@
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
+import { Debug } from "@/utils/debug/Debug";
 import {
   MAP_PERFORMANCE_GROUP_NAMES,
   MAP_PERFORMANCE_MODEL_NAMES,
@@ -14,7 +15,9 @@ function toLabel(value: string): string {
 }
 
 export function useMapPerformanceDebug(): void {
-  useDebugFolder("Performance / Map", (folder) => {
+  useDebugFolder("Map", (folder) => {
+    Debug.getInstance().addFogControl(folder);
+
     const {
       groups,
       models,
