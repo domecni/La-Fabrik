@@ -14,6 +14,7 @@ import {
   DocsCodeReviewRoute,
   DocsEditorRoute,
   DocsFeaturesRoute,
+  DocsGalleryRoute,
   DocsHandTrackingRoute,
   DocsInteractionRoute,
   DocsLayoutRoute,
@@ -73,6 +74,7 @@ const docsChildRoutes = [
   { path: "main-feature", component: DocsMainFeatureRoute },
   { path: "editor", component: DocsEditorRoute },
   { path: "animation", component: DocsAnimationRoute },
+  { path: "gallery", component: DocsGalleryRoute },
   { path: "code-review", component: DocsCodeReviewRoute },
 ].map(({ path, component }) =>
   createRoute({

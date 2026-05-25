@@ -87,6 +87,10 @@ const LazyDocsAnimationPage = lazyNamed(
   () => import("@/pages/docs/animation/page"),
   "DocsAnimationPage",
 );
+const LazyDocsGalleryPage = lazyNamed(
+  () => import("@/pages/docs/gallery/page"),
+  "DocsGalleryPage",
+);
 const LazyDocsCodeReviewPage = lazyNamed(
   () => import("@/pages/docs/code-review/page"),
   "DocsCodeReviewPage",
@@ -119,6 +123,7 @@ export const DocsFeaturesRoute = createDocsRoute(LazyDocsFeaturesPage);
 export const DocsMainFeatureRoute = createDocsRoute(LazyDocsMainFeaturePage);
 export const DocsEditorRoute = createDocsRoute(LazyDocsEditorPage);
 export const DocsAnimationRoute = createDocsRoute(LazyDocsAnimationPage);
+export const DocsGalleryRoute = createDocsRoute(LazyDocsGalleryPage);
 export const DocsCodeReviewRoute = createDocsRoute(LazyDocsCodeReviewPage);
 export const DocsMissionFlowRoute = createDocsRoute(LazyDocsMissionFlowPage);
 export const DocsThreeDebuggingRoute = createDocsRoute(

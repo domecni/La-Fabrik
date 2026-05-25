@@ -109,6 +109,12 @@ export const docGroups: DocGroup[] = [
         subtitle: "Components and usage",
         meta: "15",
       },
+      {
+        path: "/docs/gallery",
+        title: "Model Gallery",
+        subtitle: "Browsing 3D assets",
+        meta: "16",
+      },
     ],
   },
   {
@@ -118,7 +124,7 @@ export const docGroups: DocGroup[] = [
         path: "/docs/code-review",
         title: "Code Review Prep",
         subtitle: "Presentation support",
-        meta: "16",
+        meta: "17",
       },
     ],
   },

@@ -25,12 +25,13 @@ The current prototype puts the player in a repair-oriented world where they prog
 
 ## Routes
 
-| Route     | Purpose                                             |
-| --------- | --------------------------------------------------- |
-| `/`       | Playable 3D experience                              |
-| `/?debug` | Playable scene with debug GUI and overlays          |
-| `/editor` | Local map, dialogue, subtitle, and cinematic editor |
-| `/docs`   | In-app documentation index                          |
+| Route      | Purpose                                             |
+| ---------- | --------------------------------------------------- |
+| `/`        | Playable 3D experience                              |
+| `/?debug`  | Playable scene with debug GUI and overlays          |
+| `/editor`  | Local map, dialogue, subtitle, and cinematic editor |
+| `/galerie` | 3D model gallery for browsing project assets        |
+| `/docs`    | In-app documentation index                          |
 
 ## Tech Stack
 
@@ -98,6 +99,7 @@ Useful local URLs:
 ```txt
 http://localhost:5173/?debug
 http://localhost:5173/editor
+http://localhost:5173/galerie
 http://localhost:5173/docs
 ```
 
@@ -148,6 +150,7 @@ WS  ws://localhost:8000/ws
 | `docs/user/features.md`                 | Implemented feature inventory                              |
 | `docs/user/main-feature.md`             | User-facing repair-game walkthrough                        |
 | `docs/user/editor.md`                   | Editor user guide                                          |
+| `docs/user/gallery.md`                  | Model gallery user guide                                   |
 | `docs/code-review-preparation.md`       | French code-review preparation support                     |
 
 ## Current Caveats
