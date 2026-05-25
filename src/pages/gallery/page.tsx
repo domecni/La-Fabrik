@@ -143,8 +143,14 @@ function GalleryModelPreview({
 }: GalleryModelPreviewProps): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null);
   const { animations, scene } = useGLTF(model.path);
-  const modelScene = useMemo(() => scene.clone(true), [scene]);
+  const modelScene = useMemo(() => createGalleryModelScene(scene), [scene]);
   const { actions } = useAnimations(animations, groupRef);
+
+  useEffect(() => {
+    return () => {
+      disposeGalleryModelMaterials(modelScene);
+    };
+  }, [modelScene]);
 
   useEffect(() => {
     onTextureDiagnosticReady(getTextureDiagnostic(model.id, modelScene));
@@ -171,6 +177,51 @@ function GalleryModelPreview({
       <primitive object={modelScene} />
     </group>
   );
+}
+
+function createGalleryModelScene(scene: THREE.Object3D): THREE.Object3D {
+  const modelScene = scene.clone(true);
+
+  modelScene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+
+    object.material = Array.isArray(object.material)
+      ? object.material.map(createGalleryMaterial)
+      : createGalleryMaterial(object.material);
+  });
+
+  return modelScene;
+}
+
+function createGalleryMaterial(material: THREE.Material): THREE.Material {
+  const galleryMaterial = material.clone();
+  const materialWithNormalMap = galleryMaterial as THREE.Material & {
+    normalMap?: THREE.Texture | null;
+  };
+
+  galleryMaterial.side = THREE.DoubleSide;
+
+  if (materialWithNormalMap.normalMap) {
+    materialWithNormalMap.normalMap = null;
+    galleryMaterial.needsUpdate = true;
+  }
+
+  return galleryMaterial;
+}
+
+function disposeGalleryModelMaterials(modelScene: THREE.Object3D): void {
+  modelScene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+
+    if (Array.isArray(object.material)) {
+      for (const material of object.material) {
+        material.dispose();
+      }
+      return;
+    }
+
+    object.material.dispose();
+  });
 }
 
 function GalleryScene({

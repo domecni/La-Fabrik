@@ -23,6 +23,7 @@ Cette page sert à remercier et valoriser le travail des designers du projet La 
 - `SkyModel` réutilise la skybox du jeu, avec un matériau non éclairé uniquement dans la galerie pour éviter que certaines faces deviennent noires avec une caméra orbitale libre.
 - Les lumières reprennent les valeurs par défaut du jeu, puis peuvent être ajustées dans le panneau latéral.
 - `OrbitControls` autorise une orbite verticale complète pour inspecter le dessous des modèles.
+- Le viewer désactive les normal maps dans la preview pour limiter les coutures visibles sur certains exports découpés en plusieurs meshes.
 - Les animations GLTF présentes dans un modèle sont lancées automatiquement.
 - Un diagnostic simple inspecte les matériaux chargés pour signaler les textures absentes ou non exploitables.
 
