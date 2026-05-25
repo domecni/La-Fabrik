@@ -32,126 +32,31 @@ canvas {
 
 /* Model gallery */
 .gallery-page {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
-  gap: clamp(18px, 4vw, 54px);
+  position: relative;
   width: 100vw;
   height: 100vh;
-  padding: clamp(18px, 4vw, 56px);
-  box-sizing: border-box;
-  overflow: auto;
-  background:
-    radial-gradient(
-      circle at 22% 18%,
-      rgba(96, 165, 250, 0.2),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 86% 8%,
-      rgba(52, 211, 153, 0.16),
-      transparent 28%
-    ),
-    #05070c;
-  color: #f8fafc;
-}
-
-.gallery-hero {
-  align-self: center;
-  max-width: 580px;
-}
-
-.gallery-eyebrow,
-.gallery-model-count {
-  margin: 0 0 12px;
-  color: #7dd3fc;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.gallery-hero h1 {
-  margin: 0;
-  font-size: clamp(44px, 8vw, 92px);
-  line-height: 0.94;
-  letter-spacing: -0.075em;
-}
-
-.gallery-hero p:last-child {
-  max-width: 44rem;
-  margin: 24px 0 0;
-  color: #cbd5e1;
-  font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.65;
-}
-
-.gallery-viewer-panel {
-  display: grid;
-  grid-template-rows: auto minmax(360px, 1fr) auto;
-  min-height: min(760px, calc(100vh - 112px));
   overflow: hidden;
-  border: 1px solid rgba(226, 232, 240, 0.18);
-  border-radius: 28px;
-  background: rgba(8, 13, 24, 0.74);
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(18px);
-}
-
-.gallery-viewer-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 22px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.14);
-}
-
-.gallery-viewer-header h2 {
-  margin: 0 0 8px;
-  font-size: clamp(26px, 3vw, 42px);
-  line-height: 1;
-  letter-spacing: -0.055em;
-}
-
-.gallery-viewer-header code {
-  color: #94a3b8;
-  font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  word-break: break-word;
-}
-
-.gallery-controls {
-  display: flex;
-  gap: 10px;
-}
-
-.gallery-controls button {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(248, 250, 252, 0.24);
-  border-radius: 999px;
-  background: rgba(248, 250, 252, 0.08);
+  background: #05070c;
   color: #f8fafc;
-  cursor: pointer;
-  font-size: 24px;
-  transition:
-    background 160ms ease,
-    transform 160ms ease;
 }
 
-.gallery-controls button:hover,
-.gallery-controls button:focus-visible {
-  background: rgba(125, 211, 252, 0.24);
-  outline: none;
-  transform: translateY(-1px);
+.gallery-title {
+  position: absolute;
+  top: clamp(18px, 3vw, 34px);
+  right: clamp(18px, 3vw, 38px);
+  z-index: 2;
+  margin: 0;
+  color: rgba(248, 250, 252, 0.92);
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  line-height: 1;
 }
 
 .gallery-canvas-frame {
   position: relative;
-  min-height: 360px;
+  width: 100%;
+  height: 100%;
 }
 
 .gallery-viewer-error {
@@ -164,43 +69,132 @@ canvas {
   text-align: center;
 }
 
-.gallery-help-text {
-  margin: 0;
-  padding: 16px 22px 20px;
-  border-top: 1px solid rgba(226, 232, 240, 0.14);
-  color: #cbd5e1;
+.gallery-bottom-bar {
+  position: absolute;
+  right: 50%;
+  bottom: clamp(18px, 4vw, 44px);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 54px minmax(190px, 340px) 54px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(248, 250, 252, 0.18);
+  border-radius: 999px;
+  background: rgba(3, 7, 18, 0.72);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.32);
+  transform: translateX(50%);
+  backdrop-filter: blur(18px);
+}
+
+.gallery-bottom-bar button {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 0;
+  background: transparent;
+  color: rgba(248, 250, 252, 0.82);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.gallery-bottom-bar button:hover,
+.gallery-bottom-bar button:focus-visible {
+  background: rgba(248, 250, 252, 0.1);
+  color: #f8fafc;
+  outline: none;
+}
+
+.gallery-model-info {
+  display: grid;
+  place-items: center;
+  min-height: 54px;
+  padding: 0 20px;
+  border-right: 1px solid rgba(248, 250, 252, 0.14);
+  border-left: 1px solid rgba(248, 250, 252, 0.14);
+  text-align: center;
+}
+
+.gallery-model-info span {
+  max-width: 100%;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gallery-model-info small {
+  margin-top: 2px;
+  color: rgba(203, 213, 225, 0.62);
   font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-@media (max-width: 900px) {
-  .gallery-page {
-    grid-template-columns: 1fr;
-    min-height: 100vh;
-    height: auto;
-  }
-
-  .gallery-hero {
-    align-self: start;
-  }
-
-  .gallery-viewer-panel {
-    min-height: 620px;
-  }
+.gallery-texture-status {
+  position: absolute;
+  left: clamp(18px, 3vw, 38px);
+  bottom: clamp(22px, 4vw, 50px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 36px));
+  padding: 10px 13px;
+  border: 1px solid rgba(248, 250, 252, 0.14);
+  border-radius: 999px;
+  background: rgba(3, 7, 18, 0.58);
+  color: rgba(226, 232, 240, 0.86);
+  font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(16px);
 }
 
-@media (max-width: 560px) {
-  .gallery-viewer-header {
-    flex-direction: column;
+.gallery-texture-status--ok {
+  color: #bbf7d0;
+}
+
+.gallery-texture-status--warning {
+  color: #fde68a;
+}
+
+.gallery-texture-status--loading {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+@media (max-width: 720px) {
+  .gallery-title {
+    right: 50%;
+    transform: translateX(50%);
   }
 
-  .gallery-controls {
-    width: 100%;
+  .gallery-bottom-bar {
+    grid-template-columns: 48px minmax(150px, 1fr) 48px;
+    width: calc(100vw - 36px);
   }
 
-  .gallery-controls button {
-    flex: 1;
+  .gallery-bottom-bar button,
+  .gallery-model-info {
+    min-height: 50px;
+  }
+
+  .gallery-bottom-bar button {
+    width: 48px;
+    height: 50px;
+  }
+
+  .gallery-texture-status {
+    right: 50%;
+    bottom: calc(clamp(18px, 4vw, 44px) + 66px);
+    left: auto;
+    transform: translateX(50%);
   }
 }
 

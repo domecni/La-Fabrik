@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { HomePage } from "@/pages/page";
 import { EditorPage } from "@/pages/editor/page";
-import { GalleryPage } from "@/pages/galerie/page";
+import { GalleryPage } from "@/pages/gallery/page";
 import {
   DocsAnimationRoute,
   DocsAudioRoute,
@@ -47,7 +47,7 @@ const editorRoute = createRoute({
 
 const galleryRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/galerie",
+  path: "/gallery",
   component: GalleryPage,
 });
 

@@ -1,6 +1,6 @@
 # Galerie des modèles
 
-La galerie est disponible sur `/galerie`. Elle permet de parcourir les modèles 3D présents dans `public/models/` sans lancer la boucle de gameplay principale.
+La galerie est disponible sur `/gallery`. Elle permet de parcourir les modèles 3D présents dans `public/models/` sans lancer la boucle de gameplay principale.
 
 ## Objectif
 
@@ -8,10 +8,10 @@ Cette page sert à remercier et valoriser le travail des designers du projet La 
 
 ## Utilisation
 
-1. Ouvrir `/galerie`.
-2. Utiliser les flèches pour passer au modèle précédent ou suivant.
+1. Ouvrir `/gallery`.
+2. Utiliser les flèches en bas de l'écran pour passer au modèle précédent ou suivant.
 3. Tourner autour du modèle avec la souris ou le doigt.
-4. Lire le chemin affiché pour retrouver le fichier source dans `public/models/`.
+4. Lire le diagnostic texture discret pour savoir si le modèle chargé semble correct côté textures.
 
 ## Fonctionnement
 
@@ -21,6 +21,7 @@ Cette page sert à remercier et valoriser le travail des designers du projet La 
 - `Bounds` et `Center` recadrent automatiquement le modèle actif.
 - `SkyModel` réutilise la skybox du jeu.
 - Les animations GLTF présentes dans un modèle sont lancées automatiquement.
+- Un diagnostic simple inspecte les matériaux chargés pour signaler les textures absentes ou non exploitables.
 
 ## Ajouter un modèle
 

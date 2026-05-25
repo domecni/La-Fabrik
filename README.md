@@ -30,7 +30,7 @@ The current prototype puts the player in a repair-oriented world where they prog
 | `/`        | Playable 3D experience                              |
 | `/?debug`  | Playable scene with debug GUI and overlays          |
 | `/editor`  | Local map, dialogue, subtitle, and cinematic editor |
-| `/galerie` | 3D model gallery for browsing project assets        |
+| `/gallery` | 3D model gallery for browsing project assets        |
 | `/docs`    | In-app documentation index                          |
 
 ## Tech Stack
@@ -99,7 +99,7 @@ Useful local URLs:
 ```txt
 http://localhost:5173/?debug
 http://localhost:5173/editor
-http://localhost:5173/galerie
+http://localhost:5173/gallery
 http://localhost:5173/docs
 ```
 
