@@ -62,7 +62,11 @@ function PathDebugPreview({
       const instance = instances[i];
       if (!instance) continue;
 
-      position.set(instance.position[0], 0.08, instance.position[2]);
+      position.set(
+        instance.position[0],
+        instance.position[1] + 0.08,
+        instance.position[2],
+      );
       matrix.compose(position, quaternion, scale);
       instancedMesh.setMatrixAt(i, matrix);
     }

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { TERRAIN_SURFACE_PROJECTION } from "@/data/world/terrainConfig";
+import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
 import { useTerrainSurfaceData } from "@/hooks/world/useTerrainSurfaceData";
 import type { Vector3Tuple } from "@/types/three/three";
 import { sampleTerrainSurfaceAtXZ } from "@/utils/world/terrainSurfaceSampler";
@@ -25,6 +26,7 @@ function createSampleCenters(min: number, max: number, step: number): number[] {
 
 export function usePathTileData(): MapAssetInstance[] {
   const terrainSurfaceData = useTerrainSurfaceData();
+  const terrainHeight = useTerrainHeightSampler();
 
   return useMemo(() => {
     if (!terrainSurfaceData) return [];
@@ -55,8 +57,10 @@ export function usePathTileData(): MapAssetInstance[] {
 
         if (sample.key !== PATH_SURFACE_KEY) continue;
 
+        const height = terrainHeight.getHeight(x, z) ?? 0;
+
         instances.push({
-          position: [x, 0, z],
+          position: [x, height, z],
           rotation: [...PATH_TILE_ROTATION] as Vector3Tuple,
           scale: [...PATH_TILE_SCALE] as Vector3Tuple,
         });
@@ -64,5 +68,5 @@ export function usePathTileData(): MapAssetInstance[] {
     }
 
     return instances;
-  }, [terrainSurfaceData]);
+  }, [terrainHeight, terrainSurfaceData]);
 }

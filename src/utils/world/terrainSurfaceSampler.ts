@@ -91,8 +91,8 @@ export function terrainSurfaceUvFromXZ(
 ): TerrainSurfaceUv {
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
-  let u = width === 0 ? 0 : (x - bounds.minX) / width;
-  let v = depth === 0 ? 0 : (z - bounds.minZ) / depth;
+  let u = width === 0 ? 0 : x / width + 0.5;
+  let v = depth === 0 ? 0 : z / depth + 0.5;
 
   if (projection?.flipX) {
     u = 1 - u;
