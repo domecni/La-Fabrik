@@ -10,6 +10,13 @@ const MESH_NAME_MAPPINGS = {
   eoliennes: "eolienne",
   immeuble_1: "immeuble1",
   buissons: "buisson",
+  panneauxcentre: "panneauclassique",
+  panneauxdomaine: "panneauclassique",
+  panneaudircentre: "panneaufleche",
+  panneaudirdomaine: "panneaufleche",
+  panneaudirfabrik: "panneaufleche",
+  panneaudirresidences1: "panneaufleche",
+  panneaudirresidences2: "panneaufleche",
   panneauxquartier: "panneauaffichage",
 };
 
