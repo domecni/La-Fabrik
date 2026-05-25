@@ -19,25 +19,51 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  SlidersHorizontal,
   TriangleAlert,
 } from "lucide-react";
 import * as THREE from "three";
 import { SkyModel } from "@/components/three/world/SkyModel";
 import { galleryModels, type GalleryModel } from "@/data/galleryModels";
 import {
+  AMBIENT_LIGHT_COLOR,
+  LIGHTING_DEFAULTS,
+  SUN_LIGHT_COLOR,
+} from "@/data/world/lightingConfig";
+import {
   GAME_SCENE_FALLBACK_SKY_MODEL_PATH,
   GAME_SCENE_FALLBACK_SKY_MODEL_SCALE,
   GAME_SCENE_SKY_MODEL_PATH,
   GAME_SCENE_SKY_MODEL_SCALE,
 } from "@/data/world/environmentConfig";
-import { Lighting } from "@/world/Lighting";
 
 interface GalleryModelProps {
   model: GalleryModel;
 }
 
 interface GallerySceneProps extends GalleryModelProps {
+  lighting: GalleryLightingConfig;
   onTextureDiagnosticReady: (diagnostic: TextureDiagnostic) => void;
+}
+
+interface GalleryModelPreviewProps extends GalleryModelProps {
+  onTextureDiagnosticReady: (diagnostic: TextureDiagnostic) => void;
+}
+
+interface GalleryLightingConfig {
+  ambientIntensity: number;
+  sunIntensity: number;
+  sunX: number;
+  sunY: number;
+  sunZ: number;
+}
+
+interface GalleryLightControl {
+  key: keyof GalleryLightingConfig;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
 }
 
 interface TextureDiagnostic {
@@ -70,6 +96,14 @@ const LOADING_TEXTURE_DIAGNOSTIC: TextureDiagnostic = {
   status: "loading",
   summary: "Analyse des textures...",
 };
+
+const GALLERY_LIGHT_CONTROLS: GalleryLightControl[] = [
+  { key: "ambientIntensity", label: "Ambiance", min: 0, max: 5, step: 0.1 },
+  { key: "sunIntensity", label: "Soleil", min: 0, max: 8, step: 0.1 },
+  { key: "sunX", label: "Soleil X", min: -100, max: 100, step: 1 },
+  { key: "sunY", label: "Soleil Y", min: -100, max: 150, step: 1 },
+  { key: "sunZ", label: "Soleil Z", min: -100, max: 100, step: 1 },
+];
 
 class GalleryViewerErrorBoundary extends Component<
   GalleryViewerErrorBoundaryProps,
@@ -106,7 +140,7 @@ class GalleryViewerErrorBoundary extends Component<
 function GalleryModelPreview({
   model,
   onTextureDiagnosticReady,
-}: GallerySceneProps): React.JSX.Element {
+}: GalleryModelPreviewProps): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null);
   const { animations, scene } = useGLTF(model.path);
   const modelScene = useMemo(() => scene.clone(true), [scene]);
@@ -140,6 +174,7 @@ function GalleryModelPreview({
 }
 
 function GalleryScene({
+  lighting,
   model,
   onTextureDiagnosticReady,
 }: GallerySceneProps): React.JSX.Element {
@@ -153,7 +188,7 @@ function GalleryScene({
         scale={GAME_SCENE_SKY_MODEL_SCALE}
         unlit
       />
-      <Lighting />
+      <GalleryLighting lighting={lighting} />
       <Bounds fit clip observe margin={1.35}>
         <Center>
           <GalleryModelPreview
@@ -167,8 +202,28 @@ function GalleryScene({
         enableDamping
         autoRotate
         autoRotateSpeed={0.5}
-        minPolarAngle={Math.PI * 0.18}
-        maxPolarAngle={Math.PI * 0.48}
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI}
+      />
+    </>
+  );
+}
+
+function GalleryLighting({
+  lighting,
+}: {
+  lighting: GalleryLightingConfig;
+}): React.JSX.Element {
+  return (
+    <>
+      <ambientLight
+        intensity={lighting.ambientIntensity}
+        color={AMBIENT_LIGHT_COLOR}
+      />
+      <directionalLight
+        position={[lighting.sunX, lighting.sunY, lighting.sunZ]}
+        intensity={lighting.sunIntensity}
+        color={SUN_LIGHT_COLOR}
       />
     </>
   );
@@ -189,6 +244,62 @@ function TextureStatusBadge({
       <Icon aria-hidden="true" size={15} strokeWidth={2.1} />
       <span>{diagnostic.summary}</span>
     </div>
+  );
+}
+
+function GalleryLightingPanel({
+  lighting,
+  onChange,
+  onReset,
+  onToggle,
+  open,
+}: {
+  lighting: GalleryLightingConfig;
+  onChange: (key: keyof GalleryLightingConfig, value: number) => void;
+  onReset: () => void;
+  onToggle: () => void;
+  open: boolean;
+}): React.JSX.Element {
+  return (
+    <aside className={`gallery-light-panel ${open ? "is-open" : ""}`}>
+      <button
+        type="button"
+        className="gallery-light-panel-toggle"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-label={
+          open ? "Fermer les réglages lumière" : "Ouvrir les réglages lumière"
+        }
+      >
+        <SlidersHorizontal aria-hidden="true" size={18} strokeWidth={1.8} />
+      </button>
+      <div className="gallery-light-panel-content" aria-hidden={!open}>
+        <header>
+          <span>LIGHTS</span>
+          <button type="button" onClick={onReset}>
+            Reset
+          </button>
+        </header>
+        {GALLERY_LIGHT_CONTROLS.map((control) => (
+          <label key={control.key} className="gallery-light-control">
+            <span>
+              {control.label}
+              <strong>{lighting[control.key].toFixed(1)}</strong>
+            </span>
+            <input
+              type="range"
+              min={control.min}
+              max={control.max}
+              step={control.step}
+              value={lighting[control.key]}
+              onChange={(event) =>
+                onChange(control.key, Number(event.currentTarget.value))
+              }
+            />
+          </label>
+        ))}
+      </div>
+    </aside>
   );
 }
 
@@ -247,6 +358,10 @@ function getTextureDiagnostic(
 
 export function GalleryPage(): React.JSX.Element {
   const [activeModelIndex, setActiveModelIndex] = useState(0);
+  const [lightPanelOpen, setLightPanelOpen] = useState(false);
+  const [lighting, setLighting] = useState<GalleryLightingConfig>({
+    ...LIGHTING_DEFAULTS,
+  });
   const [textureDiagnostic, setTextureDiagnostic] = useState<TextureDiagnostic>(
     LOADING_TEXTURE_DIAGNOSTIC,
   );
@@ -269,6 +384,20 @@ export function GalleryPage(): React.JSX.Element {
     );
   };
 
+  const handleLightChange = (
+    key: keyof GalleryLightingConfig,
+    value: number,
+  ): void => {
+    setLighting((currentLighting) => ({
+      ...currentLighting,
+      [key]: value,
+    }));
+  };
+
+  const resetLighting = (): void => {
+    setLighting({ ...LIGHTING_DEFAULTS });
+  };
+
   return (
     <main className="gallery-page">
       <h1 className="gallery-title">GALERIE</h1>
@@ -278,6 +407,7 @@ export function GalleryPage(): React.JSX.Element {
           <Canvas camera={{ position: [3.5, 2.4, 4.5], fov: 45 }} dpr={[1, 2]}>
             <Suspense fallback={null}>
               <GalleryScene
+                lighting={lighting}
                 model={activeModel}
                 onTextureDiagnosticReady={setTextureDiagnostic}
               />
@@ -310,6 +440,13 @@ export function GalleryPage(): React.JSX.Element {
       </nav>
 
       <TextureStatusBadge diagnostic={activeTextureDiagnostic} />
+      <GalleryLightingPanel
+        lighting={lighting}
+        onChange={handleLightChange}
+        onReset={resetLighting}
+        onToggle={() => setLightPanelOpen((open) => !open)}
+        open={lightPanelOpen}
+      />
     </main>
   );
 }

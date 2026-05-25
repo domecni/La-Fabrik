@@ -11,7 +11,8 @@ Cette page sert à remercier et valoriser le travail des designers du projet La 
 1. Ouvrir `/gallery`.
 2. Utiliser les flèches en bas de l'écran pour passer au modèle précédent ou suivant.
 3. Tourner autour du modèle avec la souris ou le doigt.
-4. Lire le diagnostic texture discret pour savoir si le modèle chargé semble correct côté textures.
+4. Utiliser le bouton de réglages à droite pour ouvrir ou fermer le panneau lumière.
+5. Lire le diagnostic texture discret pour savoir si le modèle chargé semble correct côté textures.
 
 ## Fonctionnement
 
@@ -20,6 +21,8 @@ Cette page sert à remercier et valoriser le travail des designers du projet La 
 - `OrbitControls` permet de manipuler la caméra autour du modèle.
 - `Bounds` et `Center` recadrent automatiquement le modèle actif.
 - `SkyModel` réutilise la skybox du jeu, avec un matériau non éclairé uniquement dans la galerie pour éviter que certaines faces deviennent noires avec une caméra orbitale libre.
+- Les lumières reprennent les valeurs par défaut du jeu, puis peuvent être ajustées dans le panneau latéral.
+- `OrbitControls` autorise une orbite verticale complète pour inspecter le dessous des modèles.
 - Les animations GLTF présentes dans un modèle sont lancées automatiquement.
 - Un diagnostic simple inspecte les matériaux chargés pour signaler les textures absentes ou non exploitables.
 
