@@ -40,8 +40,6 @@ function createTerrainSurfaceBounds(
   return {
     minX: box.min.x,
     maxX: box.max.x,
-    minY: box.min.y,
-    maxY: box.max.y,
     minZ: box.min.z,
     maxZ: box.max.z,
   };

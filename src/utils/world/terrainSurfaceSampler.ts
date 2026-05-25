@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { TERRAIN_COLORS } from "@/data/world/terrainConfig";
 import type {
   TerrainSurfaceBounds,
+  TerrainSurfaceProjectionConfig,
   TerrainSurfaceRgb,
   TerrainSurfaceSample,
   TerrainSurfaceUv,
@@ -14,10 +15,12 @@ type TerrainSurfaceImageSource =
   | ImageBitmap;
 
 const imageDataCache = new WeakMap<TerrainSurfaceImageSource, ImageData>();
-const DOWN = new THREE.Vector3(0, -1, 0);
-
 function clamp01(value: number): number {
   return Math.min(Math.max(value, 0), 1);
+}
+
+function wrap01(value: number): number {
+  return ((value % 1) + 1) % 1;
 }
 
 function isTerrainSurfaceImageSource(
@@ -84,13 +87,27 @@ export function terrainSurfaceUvFromXZ(
   x: number,
   z: number,
   bounds: TerrainSurfaceBounds,
+  projection?: TerrainSurfaceProjectionConfig,
 ): TerrainSurfaceUv {
   const width = bounds.maxX - bounds.minX;
   const depth = bounds.maxZ - bounds.minZ;
+  let u = width === 0 ? 0 : (x - bounds.minX) / width;
+  let v = depth === 0 ? 0 : (z - bounds.minZ) / depth;
+
+  if (projection?.flipX) {
+    u = 1 - u;
+  }
+
+  if (projection?.flipZ) {
+    v = 1 - v;
+  }
+
+  u = wrap01(u + (projection?.offsetX ?? 0));
+  v = wrap01(v + (projection?.offsetZ ?? 0));
 
   return {
-    u: width === 0 ? 0 : (x - bounds.minX) / width,
-    v: depth === 0 ? 0 : (z - bounds.minZ) / depth,
+    u,
+    v,
   };
 }
 
@@ -99,31 +116,10 @@ export function sampleTerrainSurfaceAtXZ(
   x: number,
   z: number,
   bounds: TerrainSurfaceBounds,
+  projection?: TerrainSurfaceProjectionConfig,
 ): TerrainSurfaceSample {
   return sampleTerrainSurfaceAtUv(
     imageData,
-    terrainSurfaceUvFromXZ(x, z, bounds),
+    terrainSurfaceUvFromXZ(x, z, bounds, projection),
   );
-}
-
-export function sampleTerrainSurfaceAtXZFromRaycast(
-  imageData: ImageData,
-  raycastTarget: THREE.Object3D,
-  x: number,
-  z: number,
-  raycastY: number,
-): TerrainSurfaceSample | null {
-  const raycaster = new THREE.Raycaster(
-    new THREE.Vector3(x, raycastY, z),
-    DOWN,
-  );
-  const intersections = raycaster.intersectObject(raycastTarget, true);
-  const intersection = intersections.find((item) => item.uv !== undefined);
-
-  if (!intersection?.uv) return null;
-
-  return sampleTerrainSurfaceAtUv(imageData, {
-    u: intersection.uv.x,
-    v: intersection.uv.y,
-  });
 }

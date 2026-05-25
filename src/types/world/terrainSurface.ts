@@ -18,10 +18,15 @@ export interface TerrainSurfaceUv {
 export interface TerrainSurfaceBounds {
   minX: number;
   maxX: number;
-  minY: number;
-  maxY: number;
   minZ: number;
   maxZ: number;
+}
+
+export interface TerrainSurfaceProjectionConfig {
+  flipX: boolean;
+  flipZ: boolean;
+  offsetX: number;
+  offsetZ: number;
 }
 
 export interface TerrainSurfaceColorConfig {

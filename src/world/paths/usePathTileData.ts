@@ -1,7 +1,8 @@
 import { useMemo } from "react";
+import { TERRAIN_SURFACE_PROJECTION } from "@/data/world/terrainConfig";
 import { useTerrainSurfaceData } from "@/hooks/world/useTerrainSurfaceData";
 import type { Vector3Tuple } from "@/types/three/three";
-import { sampleTerrainSurfaceAtXZFromRaycast } from "@/utils/world/terrainSurfaceSampler";
+import { sampleTerrainSurfaceAtXZ } from "@/utils/world/terrainSurfaceSampler";
 import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
 import {
   PATH_TILE_MAX_COUNT,
@@ -39,21 +40,20 @@ export function usePathTileData(): MapAssetInstance[] {
       terrainSurfaceData.bounds.maxZ,
       PATH_TILE_SAMPLE_STEP,
     );
-    const raycastY = terrainSurfaceData.bounds.maxY + 10;
 
     for (const x of xCenters) {
       for (const z of zCenters) {
         if (instances.length >= PATH_TILE_MAX_COUNT) return instances;
 
-        const sample = sampleTerrainSurfaceAtXZFromRaycast(
+        const sample = sampleTerrainSurfaceAtXZ(
           terrainSurfaceData.imageData,
-          terrainSurfaceData.raycastTarget,
           x,
           z,
-          raycastY,
+          terrainSurfaceData.bounds,
+          TERRAIN_SURFACE_PROJECTION,
         );
 
-        if (sample?.key !== PATH_SURFACE_KEY) continue;
+        if (sample.key !== PATH_SURFACE_KEY) continue;
 
         instances.push({
           position: [x, 0, z],
