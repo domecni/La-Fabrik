@@ -72,6 +72,12 @@ interface TextureDiagnostic {
   summary: string;
 }
 
+interface GalleryModelScene extends THREE.Object3D {
+  userData: THREE.Object3D["userData"] & {
+    hiddenExportPlaneCount?: number;
+  };
+}
+
 interface GalleryViewerErrorBoundaryProps {
   children: ReactNode;
   resetKey: string;
@@ -180,17 +186,47 @@ function GalleryModelPreview({
 }
 
 function createGalleryModelScene(scene: THREE.Object3D): THREE.Object3D {
-  const modelScene = scene.clone(true);
+  const modelScene = scene.clone(true) as GalleryModelScene;
+  const exportPlaneMeshes: THREE.Mesh[] = [];
 
   modelScene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
+
+    if (isExportPlaneMesh(object)) {
+      exportPlaneMeshes.push(object);
+      return;
+    }
 
     object.material = Array.isArray(object.material)
       ? object.material.map(createGalleryMaterial)
       : createGalleryMaterial(object.material);
   });
 
+  for (const mesh of exportPlaneMeshes) {
+    mesh.parent?.remove(mesh);
+  }
+
+  modelScene.userData.hiddenExportPlaneCount = exportPlaneMeshes.length;
+
   return modelScene;
+}
+
+function isExportPlaneMesh(mesh: THREE.Mesh): boolean {
+  const name = mesh.name.toLowerCase();
+  if (name !== "plan" && name !== "plane") return false;
+
+  mesh.geometry.computeBoundingBox();
+  const boundingBox = mesh.geometry.boundingBox;
+  if (!boundingBox) return false;
+
+  const size = new THREE.Vector3();
+  boundingBox.getSize(size);
+
+  const dimensions = [size.x, size.y, size.z];
+  const flatDimensions = dimensions.filter((dimension) => dimension <= 0.001);
+  const largestDimension = Math.max(...dimensions);
+
+  return flatDimensions.length > 0 && largestDimension > 1;
 }
 
 function createGalleryMaterial(material: THREE.Material): THREE.Material {
@@ -360,6 +396,8 @@ function getTextureDiagnostic(
 ): TextureDiagnostic {
   let textureCount = 0;
   let missingTextureImageCount = 0;
+  const hiddenExportPlaneCount =
+    (modelScene as GalleryModelScene).userData.hiddenExportPlaneCount ?? 0;
 
   modelScene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
@@ -389,6 +427,14 @@ function getTextureDiagnostic(
       modelId,
       status: "warning",
       summary: `${missingTextureImageCount} texture(s) à vérifier`,
+    };
+  }
+
+  if (hiddenExportPlaneCount > 0) {
+    return {
+      modelId,
+      status: "warning",
+      summary: `${hiddenExportPlaneCount} plan(s) d'export masqué(s)`,
     };
   }
 
