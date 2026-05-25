@@ -1,4 +1,4 @@
-import type * as THREE from "three";
+import * as THREE from "three";
 import { TERRAIN_COLORS } from "@/data/world/terrainConfig";
 import type {
   TerrainSurfaceBounds,
@@ -14,6 +14,7 @@ type TerrainSurfaceImageSource =
   | ImageBitmap;
 
 const imageDataCache = new WeakMap<TerrainSurfaceImageSource, ImageData>();
+const DOWN = new THREE.Vector3(0, -1, 0);
 
 function clamp01(value: number): number {
   return Math.min(Math.max(value, 0), 1);
@@ -103,4 +104,26 @@ export function sampleTerrainSurfaceAtXZ(
     imageData,
     terrainSurfaceUvFromXZ(x, z, bounds),
   );
+}
+
+export function sampleTerrainSurfaceAtXZFromRaycast(
+  imageData: ImageData,
+  raycastTarget: THREE.Object3D,
+  x: number,
+  z: number,
+  raycastY: number,
+): TerrainSurfaceSample | null {
+  const raycaster = new THREE.Raycaster(
+    new THREE.Vector3(x, raycastY, z),
+    DOWN,
+  );
+  const intersections = raycaster.intersectObject(raycastTarget, true);
+  const intersection = intersections.find((item) => item.uv !== undefined);
+
+  if (!intersection?.uv) return null;
+
+  return sampleTerrainSurfaceAtUv(imageData, {
+    u: intersection.uv.x,
+    v: intersection.uv.y,
+  });
 }

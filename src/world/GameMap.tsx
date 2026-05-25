@@ -24,6 +24,7 @@ import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNode
 import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
 import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
+import { PathSystem } from "@/world/paths/PathSystem";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
@@ -257,6 +258,7 @@ export function GameMap({
         ))}
       </group>
       <MapInstancingSystem />
+      <PathSystem />
       <VegetationSystem />
       {isMapModelVisible("terrain", { groups, models }) ? (
         <TerrainModel />

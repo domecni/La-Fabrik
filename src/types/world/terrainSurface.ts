@@ -1,3 +1,5 @@
+import type * as THREE from "three";
+
 export type TerrainSurfaceKind =
   | "grass"
   | "path"
@@ -16,6 +18,8 @@ export interface TerrainSurfaceUv {
 export interface TerrainSurfaceBounds {
   minX: number;
   maxX: number;
+  minY: number;
+  maxY: number;
   minZ: number;
   maxZ: number;
 }
@@ -38,4 +42,5 @@ export interface TerrainSurfaceSample {
 export interface TerrainSurfaceData {
   bounds: TerrainSurfaceBounds;
   imageData: ImageData;
+  raycastTarget: THREE.Object3D;
 }
