@@ -1,6 +1,7 @@
 import { TERRAIN_COLORS, TERRAIN_TILE_SIZE } from "@/data/world/terrainConfig";
 
 export const PATH_SURFACE_KEY = "chemin";
+export const PATH_SYSTEM_ENABLED = false;
 export const PATH_TILE_MODEL_PATH = TERRAIN_COLORS.chemin.modelPath;
 export const PATH_TILE_SIZE =
   TERRAIN_COLORS.chemin.tileSize ?? TERRAIN_TILE_SIZE;
