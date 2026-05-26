@@ -20,6 +20,7 @@ import {
   useMapPerformanceStore,
 } from "@/managers/stores/useMapPerformanceStore";
 import { GameMapCollision } from "@/world/GameMapCollision";
+import { CloudSystem } from "@/world/clouds/CloudSystem";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
 import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
@@ -261,6 +262,7 @@ export function GameMap({
       <MapInstancingSystem />
       <WorldPlane />
       <WaterSystem />
+      <CloudSystem />
       <VegetationSystem />
       {isMapModelVisible("terrain", { groups, models }) ? (
         <TerrainModel />

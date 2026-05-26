@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { CLOUD_DEFAULTS, type CloudState } from "@/data/world/cloudConfig";
 import { WIND_DEFAULTS, type WindState } from "@/data/world/windConfig";
 import {
   GRAPHICS_DEFAULTS,
@@ -6,11 +7,13 @@ import {
 } from "@/data/world/graphicsConfig";
 
 interface WorldSettingsState {
+  clouds: CloudState;
   wind: WindState;
   graphics: GraphicsState;
 }
 
 interface WorldSettingsActions {
+  setClouds: (clouds: Partial<CloudState>) => void;
   setWind: (wind: Partial<WindState>) => void;
   setWindSpeed: (speed: number) => void;
   setWindDirection: (direction: number) => void;
@@ -27,12 +30,18 @@ interface WorldSettingsActions {
 type WorldSettingsStore = WorldSettingsState & WorldSettingsActions;
 
 const DEFAULT_STATE: WorldSettingsState = {
+  clouds: { ...CLOUD_DEFAULTS },
   wind: { ...WIND_DEFAULTS },
   graphics: { ...GRAPHICS_DEFAULTS },
 };
 
 export const useWorldSettingsStore = create<WorldSettingsStore>()((set) => ({
   ...DEFAULT_STATE,
+
+  setClouds: (cloudsUpdate) =>
+    set((state) => ({
+      clouds: { ...state.clouds, ...cloudsUpdate },
+    })),
 
   setWind: (windUpdate) =>
     set((state) => ({
