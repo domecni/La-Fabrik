@@ -1,10 +1,12 @@
 export const WATER_VERTEX_SHADER = /* glsl */ `
   varying vec2 vUv;
+  varying vec3 vWorldPosition;
   varying vec2 vWorldPos;
 
   void main() {
     vUv = uv;
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    vWorldPosition = worldPosition.xyz;
     vWorldPos = worldPosition.xz;
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
   }
@@ -30,8 +32,13 @@ export const WATER_FRAGMENT_SHADER = /* glsl */ `
   uniform vec3 uHighlight;
   uniform float uOpacity;
   uniform float uDeepOpacity;
+  uniform float uFogEnabled;
+  uniform float uFogNear;
+  uniform float uFogFar;
+  uniform vec3 uFogColor;
 
   varying vec2 vUv;
+  varying vec3 vWorldPosition;
   varying vec2 vWorldPos;
 
   float roundedBoxMask(vec2 uv, float radius, float softness) {
@@ -141,6 +148,13 @@ export const WATER_FRAGMENT_SHADER = /* glsl */ `
     );
     float alpha = mix(uDeepOpacity, 1.0, ramp) * uOpacity;
     alpha *= roundedBoxMask(vUv, uBorderRadius, uBorderSoftness);
+
+    if (uFogEnabled > 0.5) {
+      float fogDistance = distance(cameraPosition, vWorldPosition);
+      float fogFactor = smoothstep(uFogNear, uFogFar, fogDistance);
+      color = mix(color, uFogColor, fogFactor);
+      alpha *= 1.0 - fogFactor;
+    }
 
     if (alpha < 0.01) {
       discard;

@@ -32,6 +32,13 @@ export const WATER_SHADER_CONFIG = {
   deepOpacity: 0.45,
 };
 
+export const WATER_STREAMING_CONFIG = {
+  enabled: true,
+  loadDistance: 40,
+  unloadDistance: 35,
+  updateInterval: 250,
+};
+
 export const WATER_SURFACES: WaterSurfaceConfig[] = [
   {
     position: [40, TERRAIN_WATER_HEIGHT, -102],

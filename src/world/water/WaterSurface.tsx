@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
+import { FOG_CONFIG } from "@/data/world/fogConfig";
 import { getWindVector } from "@/data/world/windConfig";
 import { WATER_SHADER_CONFIG } from "@/data/world/waterConfig";
 import type { WaterSurfaceConfig } from "@/data/world/waterConfig";
@@ -16,6 +17,7 @@ export function WaterSurface({
   rotation,
   size,
 }: WaterSurfaceConfig): React.JSX.Element {
+  const scene = useThree((state) => state.scene);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const wind = useWind();
   const uniforms = useMemo(
@@ -41,6 +43,10 @@ export function WaterSurface({
       },
       uOpacity: { value: WATER_SHADER_CONFIG.opacity },
       uDeepOpacity: { value: WATER_SHADER_CONFIG.deepOpacity },
+      uFogEnabled: { value: 0 },
+      uFogNear: { value: FOG_CONFIG.near },
+      uFogFar: { value: FOG_CONFIG.far },
+      uFogColor: { value: new THREE.Color(FOG_CONFIG.color) },
     }),
     [],
   );
@@ -51,13 +57,31 @@ export function WaterSurface({
 
     const windVector = getWindVector(wind);
 
-    const { uFlowX, uFlowZ, uNoiseScale, uTime } = material.uniforms;
+    const {
+      uFlowX,
+      uFlowZ,
+      uFogColor,
+      uFogEnabled,
+      uFogFar,
+      uFogNear,
+      uNoiseScale,
+      uTime,
+    } = material.uniforms;
 
     if (uTime) uTime.value = clock.getElapsedTime();
     if (uFlowX) uFlowX.value = WATER_SHADER_CONFIG.flowX + windVector.x;
     if (uFlowZ) uFlowZ.value = WATER_SHADER_CONFIG.flowZ + windVector.z;
     if (uNoiseScale) {
       uNoiseScale.value = WATER_SHADER_CONFIG.noiseScale * wind.noiseScale;
+    }
+
+    if (scene.fog instanceof THREE.Fog) {
+      if (uFogEnabled) uFogEnabled.value = 1;
+      if (uFogNear) uFogNear.value = scene.fog.near;
+      if (uFogFar) uFogFar.value = scene.fog.far;
+      if (uFogColor) uFogColor.value.copy(scene.fog.color);
+    } else if (uFogEnabled) {
+      uFogEnabled.value = 0;
     }
   });
 
