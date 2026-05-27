@@ -266,7 +266,7 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
               "minZ": -142,
               "maxZ": 138
             }}
-            zoom={0.1}
+            zoom={1}
             canvasSize={900}
           />
         </group>
