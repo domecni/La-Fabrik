@@ -4,7 +4,7 @@ export const GRASS_CONFIG = {
   loadRadius: 30,
   unloadRadius: 34,
   updateInterval: 250,
-  baseBladesPerChunk: 2600,
+  baseBladesPerChunk: 420,
   bladeWidth: 0.08,
   maxBladeHeight: 0.36,
   randomHeightAmount: 0.25,
