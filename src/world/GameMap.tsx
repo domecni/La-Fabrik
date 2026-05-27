@@ -23,13 +23,9 @@ import {
 } from "@/managers/stores/useMapPerformanceStore";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { GameMapCollision } from "@/world/GameMapCollision";
-import { CloudSystem } from "@/world/clouds/CloudSystem";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
 import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
-import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
-import { WaterSystem } from "@/world/water/WaterSystem";
-import { WorldPlane } from "@/world/WorldPlane";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
@@ -262,10 +258,6 @@ export function GameMap({
         ))}
       </group>
       <MapInstancingSystem />
-      <WorldPlane />
-      <WaterSystem />
-      <CloudSystem />
-      <VegetationSystem />
       {isMapModelVisible("terrain", { groups, models }) ? (
         terrainNode ? (
           <TerrainModel
