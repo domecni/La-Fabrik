@@ -24,6 +24,7 @@ interface VegetationChunk {
   scaleMultiplier: number;
   castShadow: boolean;
   receiveShadow: boolean;
+  windStrength: number;
   centerX: number;
   centerZ: number;
   instances: VegetationInstance[];
@@ -70,6 +71,7 @@ function createVegetationChunks(
       scaleMultiplier: config.scaleMultiplier,
       castShadow: config.castShadow,
       receiveShadow: config.receiveShadow,
+      windStrength: config.windStrength,
       centerX: center.x / chunkInstances.length,
       centerZ: center.z / chunkInstances.length,
       instances: chunkInstances,
@@ -174,6 +176,7 @@ export function VegetationSystem(): React.JSX.Element | null {
             scaleMultiplier={chunk.scaleMultiplier}
             castShadow={chunk.castShadow}
             receiveShadow={chunk.receiveShadow}
+            windStrength={chunk.windStrength}
           />
         </Suspense>
       ))}

@@ -11,6 +11,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 2,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.08,
     enabled: true,
   },
   sapin: {
@@ -19,6 +20,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 5,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.04,
     enabled: true,
   },
   arbre: {
@@ -27,6 +29,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.06,
     enabled: true,
   },
   champdeble: {
@@ -35,6 +38,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.18,
     enabled: true,
   },
   champdesoja: {
@@ -43,6 +47,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.16,
     enabled: true,
   },
   champsdetournesol: {
@@ -51,6 +56,7 @@ export const VEGETATION_TYPES = {
     scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
+    windStrength: 0.14,
     enabled: true,
   },
 } as const;
