@@ -118,6 +118,7 @@ export function GameMap({
   const [collisionMapNodes, setCollisionMapNodes] = useState<LoadedMapNode[]>(
     [],
   );
+  const [terrainNode, setTerrainNode] = useState<MapNode | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
   const mapReady = mapLoaded && settledMapNodeCount >= renderMapNodes.length;
@@ -133,6 +134,7 @@ export function GameMap({
     (currentStep: string) => {
       setRenderMapNodes([]);
       setCollisionMapNodes([]);
+      setTerrainNode(null);
       setMapLoaded(true);
       settledMapNodesRef.current.clear();
       setSettledMapNodeCount(0);
@@ -187,6 +189,7 @@ export function GameMap({
             const modelUrl = sceneData.models.get(node.name);
             return { node, modelUrl: modelUrl ?? null };
           });
+        const loadedTerrainNode = loadedCollisionNodes[0]?.node ?? null;
         const missingModelCount = loadedMapNodes.filter(
           (mapNode) => mapNode.modelUrl === null,
         ).length;
@@ -203,6 +206,7 @@ export function GameMap({
 
         setRenderMapNodes(loadedMapNodes);
         setCollisionMapNodes(loadedCollisionNodes);
+        setTerrainNode(loadedTerrainNode);
         setMapLoaded(true);
         settledMapNodesRef.current.clear();
         setSettledMapNodeCount(0);
@@ -265,7 +269,15 @@ export function GameMap({
       <CloudSystem />
       <VegetationSystem />
       {isMapModelVisible("terrain", { groups, models }) ? (
-        <TerrainModel />
+        terrainNode ? (
+          <TerrainModel
+            position={terrainNode.position}
+            rotation={terrainNode.rotation}
+            scale={terrainNode.scale}
+          />
+        ) : (
+          <TerrainModel />
+        )
       ) : null}
       <GameMapCollision
         buildOctree={buildOctree}
