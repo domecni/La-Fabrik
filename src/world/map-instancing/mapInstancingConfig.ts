@@ -41,6 +41,34 @@ export const MAP_INSTANCING_ASSETS = {
     receiveShadow: true,
     enabled: true,
   },
+  panneauaffichage: {
+    mapName: "panneauaffichage",
+    modelPath: "/models/panneauaffichage/model.gltf",
+    castShadow: true,
+    receiveShadow: true,
+    enabled: true,
+  },
+  panneauclassique: {
+    mapName: "panneauclassique",
+    modelPath: "/models/panneauclassique/model.gltf",
+    castShadow: true,
+    receiveShadow: true,
+    enabled: true,
+  },
+  panneaufleche: {
+    mapName: "panneaufleche",
+    modelPath: "/models/panneaufleche/model.gltf",
+    castShadow: true,
+    receiveShadow: true,
+    enabled: true,
+  },
+  panneausolaire: {
+    mapName: "panneausolaire",
+    modelPath: "/models/panneausolaire/model.gltf",
+    castShadow: true,
+    receiveShadow: true,
+    enabled: true,
+  },
 } as const;
 
 export type MapInstancingAssetType = keyof typeof MAP_INSTANCING_ASSETS;
