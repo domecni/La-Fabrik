@@ -1,5 +1,9 @@
-import type { MapNode, SceneData } from "@/types/editor/editor";
-import { parseMapNodes } from "@/utils/map/mapNodeValidation";
+import type {
+  HierarchicalMapNode,
+  MapNode,
+  SceneData,
+} from "@/types/editor/editor";
+import { parseMapData } from "@/utils/map/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];
@@ -21,8 +25,12 @@ export async function loadMapSceneData(): Promise<SceneData | null> {
   }
 
   loadingPromise = loadMapSceneDataInternal();
-  cachedSceneData = await loadingPromise;
-  loadingPromise = null;
+
+  try {
+    cachedSceneData = await loadingPromise;
+  } finally {
+    loadingPromise = null;
+  }
 
   return cachedSceneData;
 }
@@ -45,9 +53,9 @@ async function loadMapSceneDataInternal(): Promise<SceneData | null> {
   }
 
   const mapPayload: unknown = await response.json();
-  const mapNodes = parseMapNodes(mapPayload);
+  const { mapNodes, mapTree } = parseMapData(mapPayload);
   const deduplicatedNodes = deduplicateMapNodes(mapNodes);
-  return createSceneData(deduplicatedNodes);
+  return createSceneData(deduplicatedNodes, mapTree);
 }
 
 function createPositionKey(node: MapNode): string {
@@ -84,9 +92,12 @@ function deduplicateMapNodes(nodes: MapNode[]): MapNode[] {
   return result;
 }
 
-async function createSceneData(mapNodes: MapNode[]): Promise<SceneData> {
+async function createSceneData(
+  mapNodes: MapNode[],
+  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
+): Promise<SceneData> {
   const models = await loadMapModelUrls(mapNodes);
-  return { mapNodes, models };
+  return { mapNodes, models, mapTree };
 }
 
 async function loadMapModelUrls(

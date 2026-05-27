@@ -9,7 +9,12 @@ import { Subtitles } from "@/components/ui/Subtitles";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
-import type { MapNode, SceneData, TransformMode } from "@/types/editor/editor";
+import type {
+  HierarchicalMapNode,
+  MapNode,
+  SceneData,
+  TransformMode,
+} from "@/types/editor/editor";
 import {
   INITIAL_SCENE_LOADING_STATE,
   type SceneLoadingChangeHandler,
@@ -24,7 +29,74 @@ interface EditorSceneLoadingTrackerProps {
 }
 
 function serializeMapNodes(sceneData: SceneData): string {
-  return JSON.stringify(sceneData.mapNodes, null, 2);
+  const mapPayload = sceneData.mapTree
+    ? mergeFlatNodeTransformsIntoTree(sceneData)
+    : sceneData.mapNodes.map(removeEditorMetadata);
+
+  return JSON.stringify(mapPayload, null, 2);
+}
+
+function createSourcePathKey(sourcePath: readonly number[]): string {
+  return sourcePath.join(".");
+}
+
+function removeEditorMetadata(node: MapNode): MapNode {
+  return {
+    name: node.name,
+    type: node.type,
+    position: node.position,
+    rotation: node.rotation,
+    scale: node.scale,
+  };
+}
+
+function mergeFlatNodeTransformsIntoTree(
+  sceneData: SceneData,
+): HierarchicalMapNode | HierarchicalMapNode[] {
+  const nodesBySourcePath = new Map<string, MapNode>();
+
+  for (const node of sceneData.mapNodes) {
+    if (!node.sourcePath) continue;
+    nodesBySourcePath.set(createSourcePathKey(node.sourcePath), node);
+  }
+
+  const cloneNode = (
+    node: HierarchicalMapNode,
+    path: number[],
+  ): HierarchicalMapNode => {
+    const updatedNode = nodesBySourcePath.get(createSourcePathKey(path));
+    const nextNode: HierarchicalMapNode = {
+      name: node.name,
+      type: node.type,
+      position: updatedNode?.position ?? node.position,
+      rotation: updatedNode?.rotation ?? node.rotation,
+      scale: updatedNode?.scale ?? node.scale,
+    };
+
+    if (node.role) {
+      nextNode.role = node.role;
+    }
+
+    if (node.children) {
+      nextNode.children = node.children.map((child, index) =>
+        cloneNode(child, [...path, index]),
+      );
+    }
+
+    return nextNode;
+  };
+
+  const mapTree = sceneData.mapTree;
+
+  if (!mapTree) {
+    return sceneData.mapNodes.map(removeEditorMetadata);
+  }
+
+  if (Array.isArray(mapTree)) {
+    return mapTree.map((node, index) => cloneNode(node, [index]));
+  }
+
+  return cloneNode(mapTree, []);
 }
 
 function EditorSceneLoadingTracker({

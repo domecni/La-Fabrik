@@ -6,6 +6,7 @@ export interface MapNode {
   position: Vector3Tuple;
   rotation: Vector3Tuple;
   scale: Vector3Tuple;
+  sourcePath?: number[];
 }
 
 export interface HierarchicalMapNode extends MapNode {
@@ -16,6 +17,7 @@ export interface HierarchicalMapNode extends MapNode {
 export interface SceneData {
   mapNodes: MapNode[];
   models: Map<string, string>;
+  mapTree?: HierarchicalMapNode | HierarchicalMapNode[];
 }
 
 export type TransformMode = "translate" | "rotate" | "scale";
