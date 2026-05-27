@@ -29,6 +29,7 @@ interface EditorControlsProps {
   transformMode: TransformMode;
   onTransformModeChange: (mode: TransformMode) => void;
   selectedNodeIndex: number | null;
+  selectedNodeIndexes: number[];
   mapNodes: MapNode[];
   nodesCount: number;
   selectedNodeName: string | null;
@@ -66,6 +67,7 @@ const TRANSFORM_OPTIONS = [
 
 const EDITOR_SHORTCUTS = [
   ["Click", "Select object"],
+  ["Shift + Right click", "Toggle multi-selection"],
   ["T / R / S", "Transform mode"],
   ["Ctrl Z / Y", "Undo / redo"],
   ["Esc", "Deselect"],
@@ -103,6 +105,7 @@ export function EditorControls({
   transformMode,
   onTransformModeChange,
   selectedNodeIndex,
+  selectedNodeIndexes,
   mapNodes,
   nodesCount,
   selectedNodeName,
@@ -135,6 +138,7 @@ export function EditorControls({
   const jsonPreview = getJsonPreview(mapNodes, selectedNodeIndex);
   const selectedNode =
     selectedNodeIndex !== null ? mapNodes[selectedNodeIndex] : null;
+  const selectionCount = selectedNodeIndexes.length;
   const transformValues = getTransformValues(selectedNode ?? null);
 
   return (
@@ -240,10 +244,14 @@ export function EditorControls({
                 <Box size={17} aria-hidden="true" />
                 <div>
                   <strong>
-                    {selectedNodeName || `Node ${selectedNodeIndex + 1}`}
+                    {selectionCount > 1
+                      ? `${selectionCount} selected nodes`
+                      : selectedNodeName || `Node ${selectedNodeIndex + 1}`}
                   </strong>
                   <span>
-                    Index {selectedNodeIndex + 1} of {nodesCount}
+                    {selectionCount > 1
+                      ? `Primary index ${selectedNodeIndex + 1} of ${nodesCount}`
+                      : `Index ${selectedNodeIndex + 1} of ${nodesCount}`}
                   </span>
                 </div>
                 <div className="editor-selected-actions">

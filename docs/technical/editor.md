@@ -52,7 +52,7 @@ src/
 
 ## Responsibilities
 
-`src/pages/editor/page.tsx` is the route-level composition component. It owns route-specific state such as selected object, hovered object, transform mode, selection lock, player-mode toggle, cinematic preview requests, and editor scene loading state.
+`src/pages/editor/page.tsx` is the route-level composition component. It owns route-specific state such as primary selected object, selected object indexes, hovered object, transform mode, selection lock, player-mode toggle, cinematic preview requests, and editor scene loading state.
 
 `src/hooks/editor/useEditorSceneData.ts` loads the default map data and handles folder uploads.
 
@@ -60,7 +60,7 @@ src/
 
 `src/components/editor/scene/EditorScene.tsx` composes the editor canvas scene, camera controls, lights, keyboard shortcuts, and `EditorMap`.
 
-`src/components/editor/scene/EditorMap.tsx` renders map nodes, fallback cubes, selection highlighting, and transform controls.
+`src/components/editor/scene/EditorMap.tsx` renders map nodes, fallback cubes, selection highlighting, and transform controls. For multi-selection, it attaches `TransformControls` to a temporary group centered on the selected nodes, then decomposes the group delta back into each selected node transform.
 
 `src/components/editor/EditorControls.tsx` renders the HTML control panel outside the canvas. The panel is organized into top-level `details` groups: `Editor`, `Cinematics`, `Dialogues`, and `SRT`.
 
@@ -115,11 +115,12 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 4. If `/map.json` is missing, the page displays a folder-upload flow.
 5. `EditorSceneLoadingTracker` uses drei `useProgress()` to update the fullscreen editor loading overlay while models load.
 6. `EditorScene` renders the grid, lights, camera controls, and map nodes inside `Suspense`.
-7. `EditorControls` exposes transform mode, terrain snap, terrain-selection lock, add/delete node, precise scale inputs, history actions, camera focus/reset, export, save, JSON preview, selection lock, and the cinematic/dialogue/SRT editors.
+7. `EditorControls` exposes transform mode, terrain snap, terrain-selection lock, add/delete node, precise scale inputs, history actions, camera focus/reset, export, save, JSON preview, selection lock, multi-selection status, and the cinematic/dialogue/SRT editors.
 
 ## Controls
 
 - Click: select a node.
+- `Shift` + right click: add or remove a node from the multi-selection.
 - `Esc`: clear selection.
 - Click empty space: clear selection.
 - Selection lock button: prevent object clicks, empty-space clicks, and `Esc` from changing the current selection.
@@ -128,6 +129,7 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 - `R`: rotate mode.
 - `S`: scale mode.
 - Snap terrain on move: enabled by default and applied while translating an object.
+- Multi-selection transforms use a temporary centered group and write the resulting position, rotation, and scale back to every selected map node.
 - Lock terrain: enabled by default so terrain remains visible but ignores selection clicks.
 - Camera action: centers on the selected object or resets to the editor home view.
 - Add node: creates a fallback cube under `blocking` using the requested model folder name.

@@ -5,7 +5,6 @@ import gsap from "gsap";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
-import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { FlyController } from "@/controls/editor/FlyController";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
@@ -21,7 +20,9 @@ export interface EditorCinematicPreviewRequest {
 interface EditorSceneProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
+  selectedNodeIndexes: number[];
   onSelectNode: (index: number | null) => void;
+  onToggleNodeSelection: (index: number) => void;
   isSelectionLocked: boolean;
   hoveredNodeIndex: number | null;
   onHoverNode: (index: number | null) => void;
@@ -44,7 +45,9 @@ interface EditorSceneProps {
 export function EditorScene({
   sceneData,
   selectedNodeIndex,
+  selectedNodeIndexes,
   onSelectNode,
+  onToggleNodeSelection,
   isSelectionLocked,
   hoveredNodeIndex,
   onHoverNode,
@@ -209,7 +212,9 @@ export function EditorScene({
       <EditorMap
         sceneData={sceneData}
         selectedNodeIndex={selectedNodeIndex}
+        selectedNodeIndexes={selectedNodeIndexes}
         onSelectNode={onSelectNode}
+        onToggleNodeSelection={onToggleNodeSelection}
         isSelectionLocked={isSelectionLocked}
         hoveredNodeIndex={hoveredNodeIndex}
         onHoverNode={onHoverNode}
@@ -220,8 +225,6 @@ export function EditorScene({
         onTransformEnd={onTransformEnd}
         onNodeTransform={onNodeTransform}
       />
-
-      <TerrainModel />
 
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />

@@ -313,6 +313,7 @@ export function EditorPage(): React.JSX.Element {
   const [selectedNodeIndex, setSelectedNodeIndex] = useState<number | null>(
     null,
   );
+  const [selectedNodeIndexes, setSelectedNodeIndexes] = useState<number[]>([]);
   const [hoveredNodeIndex, setHoveredNodeIndex] = useState<number | null>(null);
   const [transformMode, setTransformMode] =
     useState<TransformMode>("translate");
@@ -370,13 +371,31 @@ export function EditorPage(): React.JSX.Element {
 
   const handleSelectNode = useCallback((index: number | null) => {
     setSelectedNodeIndex(index);
+    setSelectedNodeIndexes(index === null ? [] : [index]);
     if (index !== null) {
       setCameraViewMode("object");
     }
   }, []);
 
+  const handleToggleNodeSelection = useCallback((index: number) => {
+    setSelectedNodeIndexes((currentIndexes) => {
+      const isSelected = currentIndexes.includes(index);
+      const nextIndexes = isSelected
+        ? currentIndexes.filter((item) => item !== index)
+        : [...currentIndexes, index];
+
+      setSelectedNodeIndex(nextIndexes.at(-1) ?? null);
+      if (nextIndexes.length > 0) {
+        setCameraViewMode("object");
+      }
+
+      return nextIndexes;
+    });
+  }, []);
+
   const handleClearSelection = useCallback(() => {
     setSelectedNodeIndex(null);
+    setSelectedNodeIndexes([]);
   }, []);
 
   const handleSelectionLockToggle = useCallback(() => {
@@ -401,7 +420,21 @@ export function EditorPage(): React.JSX.Element {
         if (currentIndex === null) return null;
 
         const selectedNode = sceneData?.mapNodes[currentIndex];
-        return selectedNode?.name === "terrain" ? null : currentIndex;
+        if (selectedNode?.name === "terrain") {
+          setSelectedNodeIndexes((indexes) =>
+            indexes.filter(
+              (index) => sceneData?.mapNodes[index]?.name !== "terrain",
+            ),
+          );
+          return null;
+        }
+
+        setSelectedNodeIndexes((indexes) =>
+          indexes.filter(
+            (index) => sceneData?.mapNodes[index]?.name !== "terrain",
+          ),
+        );
+        return currentIndex;
       });
     },
     [sceneData],
@@ -544,12 +577,14 @@ export function EditorPage(): React.JSX.Element {
         const newNode = createNewMapNode(newNodeName);
         const mapNodes = [...prev.mapNodes, removeEditorMetadata(newNode)];
         setSelectedNodeIndex(mapNodes.length - 1);
+        setSelectedNodeIndexes([mapNodes.length - 1]);
         return { ...prev, mapNodes };
       }
 
       const mapTree = addTreeNode(prev.mapTree, createNewMapNode(newNodeName));
       const nextSceneData = updateSceneDataTree(prev, mapTree);
       setSelectedNodeIndex(nextSceneData.mapNodes.length - 1);
+      setSelectedNodeIndexes([nextSceneData.mapNodes.length - 1]);
       return nextSceneData;
     });
   }, [newNodeName, setSceneData]);
@@ -563,6 +598,7 @@ export function EditorPage(): React.JSX.Element {
       if (!currentNode) return prev;
       if (!prev.mapTree || !currentNode.sourcePath) {
         setSelectedNodeIndex(null);
+        setSelectedNodeIndexes([]);
         return {
           ...prev,
           mapNodes: prev.mapNodes.filter(
@@ -576,6 +612,7 @@ export function EditorPage(): React.JSX.Element {
         currentNode.sourcePath,
       );
       setSelectedNodeIndex(null);
+      setSelectedNodeIndexes([]);
       return updateSceneDataTree(prev, mapTree);
     });
   }, [selectedNodeIndex, setSceneData]);
@@ -660,7 +697,9 @@ export function EditorPage(): React.JSX.Element {
           <EditorScene
             sceneData={sceneData!}
             selectedNodeIndex={selectedNodeIndex}
+            selectedNodeIndexes={selectedNodeIndexes}
             onSelectNode={handleSelectNode}
+            onToggleNodeSelection={handleToggleNodeSelection}
             isSelectionLocked={isSelectionLocked}
             hoveredNodeIndex={hoveredNodeIndex}
             onHoverNode={handleHoverNode}
@@ -689,6 +728,7 @@ export function EditorPage(): React.JSX.Element {
           transformMode={transformMode}
           onTransformModeChange={handleTransformModeChange}
           selectedNodeIndex={selectedNodeIndex}
+          selectedNodeIndexes={selectedNodeIndexes}
           mapNodes={sceneData.mapNodes}
           nodesCount={sceneData.mapNodes.length}
           selectedNodeName={

@@ -45,14 +45,15 @@ Only the `Editor` group is open by default. Open the other groups when you need 
 
 1. Open `/editor` in the local app.
 2. Click an object in the scene to select it.
-3. Choose a transform mode: translate, rotate, or scale.
-4. Drag the transform gizmo in the 3D view.
-5. Keep `Snap terrain on move` enabled when placing objects on the terrain.
-6. Use `Center on object` or `Reset camera` from the `View` section when navigating large maps.
-7. Adjust scale numerically from the `Selection` section if the gizmo is not precise enough.
-8. Check the JSON inspector if you need exact values.
-9. Use undo or redo if the transform is not correct.
-10. Export the JSON or save it to the dev server.
+3. Use `Shift + right click` on other objects to add or remove them from the current multi-selection.
+4. Choose a transform mode: translate, rotate, or scale.
+5. Drag the transform gizmo in the 3D view. With multiple objects selected, the gizmo transforms the selected group and writes each object transform back to `map.json`.
+6. Keep `Snap terrain on move` enabled when placing objects on the terrain.
+7. Use `Center on object` or `Reset camera` from the `View` section when navigating large maps.
+8. Adjust scale numerically from the `Selection` section if the gizmo is not precise enough.
+9. Check the JSON inspector if you need exact values.
+10. Use undo or redo if the transform is not correct.
+11. Export the JSON or save it to the dev server.
 
 ## Adding And Deleting Nodes
 
@@ -70,6 +71,7 @@ Use the trash button in `Selection` to delete the selected node from the map tre
 | Action               | Input                      |
 | -------------------- | -------------------------- |
 | Select object        | Click object               |
+| Toggle multi-select  | `Shift` + right click      |
 | Deselect             | `Esc` or click empty space |
 | Lock selection       | `Lock` button in Selection |
 | Clear selection      | `X` button in Selection    |
@@ -87,6 +89,8 @@ Use the trash button in `Selection` to delete the selected node from the map tre
 The `Selection` section shows the selected object name and its index in `public/map.json`.
 
 - Click an object to select it.
+- Use `Shift + right click` on objects to add or remove them from a multi-selection.
+- When several objects are selected, the gizmo appears on the selection group and applies translate, rotate, or scale to each selected node.
 - Click empty space or press `Esc` to clear the selection.
 - Use the `X` button to clear the selection explicitly.
 - Use the `Lock` button to protect the current selection while editing.

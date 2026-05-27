@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { Grid, TransformControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
@@ -16,7 +16,9 @@ import {
 interface EditorMapProps {
   sceneData: SceneData;
   selectedNodeIndex: number | null;
+  selectedNodeIndexes: number[];
   onSelectNode: (index: number | null) => void;
+  onToggleNodeSelection: (index: number) => void;
   isSelectionLocked: boolean;
   hoveredNodeIndex: number | null;
   onHoverNode: (index: number | null) => void;
@@ -37,15 +39,30 @@ interface EditorNodeCommonProps {
   isHovered: boolean;
   objectsMapRef: EditorNodeObjectRef;
   onSelectNode: (index: number | null) => void;
+  onToggleNodeSelection: (index: number) => void;
   isSelectionLocked: boolean;
   onHoverNode: (index: number | null) => void;
 }
 
 interface EditorNodePointerHandlers {
   onClick: (event: ThreeEvent<MouseEvent>) => void;
+  onContextMenu: (event: ThreeEvent<MouseEvent>) => void;
   onPointerEnter: (event: ThreeEvent<PointerEvent>) => void;
   onPointerLeave: (event: ThreeEvent<PointerEvent>) => void;
 }
+
+interface TransformSnapshot {
+  groupMatrix: THREE.Matrix4;
+  objects: Map<number, THREE.Matrix4>;
+}
+
+const TEMP_BOX = new THREE.Box3();
+const TEMP_CENTER = new THREE.Vector3();
+const TEMP_DELTA_MATRIX = new THREE.Matrix4();
+const TEMP_INVERSE_GROUP_MATRIX = new THREE.Matrix4();
+const TEMP_POSITION = new THREE.Vector3();
+const TEMP_QUATERNION = new THREE.Quaternion();
+const TEMP_SCALE = new THREE.Vector3();
 
 function applyNodeTransform(object: THREE.Object3D, node: MapNode): void {
   object.position.set(...node.position);
@@ -118,6 +135,7 @@ function getNodeHighlightColor(
 function createEditorNodePointerHandlers(
   index: number,
   onSelectNode: (index: number | null) => void,
+  onToggleNodeSelection: (index: number) => void,
   isSelectionLocked: boolean,
   onHoverNode: (index: number | null) => void,
 ): EditorNodePointerHandlers {
@@ -126,6 +144,12 @@ function createEditorNodePointerHandlers(
       event.stopPropagation();
       if (isSelectionLocked) return;
       onSelectNode(index);
+    },
+    onContextMenu: (event) => {
+      event.stopPropagation();
+      event.nativeEvent.preventDefault();
+      if (!event.nativeEvent.shiftKey || isSelectionLocked) return;
+      onToggleNodeSelection(index);
     },
     onPointerEnter: (event) => {
       event.stopPropagation();
@@ -141,7 +165,9 @@ function createEditorNodePointerHandlers(
 export function EditorMap({
   sceneData,
   selectedNodeIndex,
+  selectedNodeIndexes,
   onSelectNode,
+  onToggleNodeSelection,
   isSelectionLocked,
   hoveredNodeIndex,
   onHoverNode,
@@ -153,18 +179,110 @@ export function EditorMap({
   onNodeTransform,
 }: EditorMapProps): React.JSX.Element {
   const objectsMapRef = useRef<Map<number, THREE.Object3D>>(new Map());
+  const transformGroupRef = useRef<THREE.Group>(null);
+  const transformSnapshotRef = useRef<TransformSnapshot | null>(null);
   const terrainHeight = useTerrainHeightSampler();
 
-  const handleTransformMouseDown = () => {
-    onTransformStart();
-  };
+  const selectedIndexSet = new Set(selectedNodeIndexes);
+  const isMultiSelection = selectedNodeIndexes.length > 1;
 
-  const handleTransformMouseUp = () => {
-    syncSelectedObjectTransform();
-    onTransformEnd();
-  };
+  const getTransformObject = useCallback(() => {
+    if (isMultiSelection) {
+      return transformGroupRef.current;
+    }
+
+    if (selectedNodeIndex !== null) {
+      return objectsMapRef.current.get(selectedNodeIndex) ?? null;
+    }
+
+    return null;
+  }, [isMultiSelection, selectedNodeIndex]);
+
+  const prepareTransformGroup = useCallback(() => {
+    if (!isMultiSelection || !transformGroupRef.current) return;
+
+    const selectedObjects = selectedNodeIndexes
+      .map((index) => objectsMapRef.current.get(index))
+      .filter((object): object is THREE.Object3D => Boolean(object));
+
+    if (selectedObjects.length === 0) return;
+
+    TEMP_BOX.makeEmpty();
+    for (const object of selectedObjects) {
+      object.updateWorldMatrix(true, false);
+      TEMP_BOX.expandByPoint(object.getWorldPosition(TEMP_CENTER));
+    }
+
+    TEMP_BOX.getCenter(TEMP_CENTER);
+    transformGroupRef.current.position.copy(TEMP_CENTER);
+    transformGroupRef.current.rotation.set(0, 0, 0);
+    transformGroupRef.current.scale.set(1, 1, 1);
+    transformGroupRef.current.updateMatrixWorld(true);
+  }, [isMultiSelection, selectedNodeIndexes]);
+
+  const createTransformSnapshot = useCallback((): TransformSnapshot | null => {
+    const transformGroup = transformGroupRef.current;
+
+    if (!isMultiSelection || !transformGroup) return null;
+
+    const objects = new Map<number, THREE.Matrix4>();
+    for (const index of selectedNodeIndexes) {
+      const object = objectsMapRef.current.get(index);
+      if (!object) continue;
+
+      object.updateMatrixWorld(true);
+      objects.set(index, object.matrix.clone());
+    }
+
+    transformGroup.updateMatrixWorld(true);
+    return {
+      groupMatrix: transformGroup.matrix.clone(),
+      objects,
+    };
+  }, [isMultiSelection, selectedNodeIndexes]);
 
   const syncSelectedObjectTransform = () => {
+    if (isMultiSelection) {
+      const transformGroup = transformGroupRef.current;
+      const snapshot = transformSnapshotRef.current;
+      if (!transformGroup || !snapshot) return;
+
+      transformGroup.updateMatrix();
+      TEMP_INVERSE_GROUP_MATRIX.copy(snapshot.groupMatrix).invert();
+      TEMP_DELTA_MATRIX.multiplyMatrices(
+        transformGroup.matrix,
+        TEMP_INVERSE_GROUP_MATRIX,
+      );
+
+      for (const [index, startMatrix] of snapshot.objects) {
+        const obj = objectsMapRef.current.get(index);
+        const node = sceneData.mapNodes[index];
+        if (!obj || !node) continue;
+
+        const nextMatrix = TEMP_DELTA_MATRIX.clone().multiply(startMatrix);
+        nextMatrix.decompose(TEMP_POSITION, TEMP_QUATERNION, TEMP_SCALE);
+        obj.position.copy(TEMP_POSITION);
+        obj.quaternion.copy(TEMP_QUATERNION);
+        obj.scale.copy(TEMP_SCALE);
+
+        const terrainY = snapToTerrain
+          ? terrainHeight.getHeight(obj.position.x, obj.position.z)
+          : null;
+        if (terrainY !== null && transformMode === "translate") {
+          obj.position.y = terrainY;
+        }
+
+        onNodeTransform(index, {
+          ...node,
+          position: [obj.position.x, obj.position.y, obj.position.z],
+          rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+          scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+        });
+      }
+
+      return;
+    }
+
     if (selectedNodeIndex !== null) {
       const obj = objectsMapRef.current.get(selectedNodeIndex);
       if (!obj) return;
@@ -194,25 +312,30 @@ export function EditorMap({
     }
   };
 
-  const [selectedObject, setSelectedObject] = useState<THREE.Object3D | null>(
-    null,
-  );
+  const handleTransformMouseDown = () => {
+    prepareTransformGroup();
+    transformSnapshotRef.current = createTransformSnapshot();
+    onTransformStart();
+  };
+
+  const handleTransformMouseUp = () => {
+    syncSelectedObjectTransform();
+    transformSnapshotRef.current = null;
+    prepareTransformGroup();
+    onTransformEnd();
+  };
+
   const terrainNode = getTerrainMapNode(sceneData.mapNodes);
   const terrainNodeIndex = terrainNode
     ? sceneData.mapNodes.indexOf(terrainNode)
     : -1;
-  const selectedNode =
-    selectedNodeIndex !== null ? sceneData.mapNodes[selectedNodeIndex] : null;
-  const selectedModelName = selectedNode?.name ?? null;
+  useLayoutEffect(() => {
+    prepareTransformGroup();
+  }, [prepareTransformGroup]);
 
-  useEffect(() => {
-    if (selectedNodeIndex !== null) {
-      const obj = objectsMapRef.current.get(selectedNodeIndex);
-      setSelectedObject(obj || null);
-    } else {
-      setSelectedObject(null);
-    }
-  }, [selectedNodeIndex]);
+  // TransformControls needs the current Three object; editor refs are managed outside React rendering.
+  // eslint-disable-next-line react-hooks/refs
+  const selectedObject = getTransformObject();
 
   return (
     <>
@@ -236,21 +359,18 @@ export function EditorMap({
           <EditorTerrainNode
             index={terrainNodeIndex}
             node={terrainNode}
-            isSelected={selectedNodeIndex === terrainNodeIndex}
+            isSelected={selectedIndexSet.has(terrainNodeIndex)}
             isHovered={hoveredNodeIndex === terrainNodeIndex}
             lockTerrainSelection={lockTerrainSelection}
             objectsMapRef={objectsMapRef}
             onSelectNode={onSelectNode}
+            onToggleNodeSelection={onToggleNodeSelection}
             isSelectionLocked={isSelectionLocked}
             onHoverNode={onHoverNode}
           />
         ) : null}
         {sceneData.mapNodes.map((node, index) => {
           if (!isEditorVisibleMapNode(node)) {
-            return null;
-          }
-
-          if (selectedModelName && node.name !== selectedModelName) {
             return null;
           }
 
@@ -263,10 +383,11 @@ export function EditorMap({
                 index={index}
                 node={node}
                 modelUrl={modelUrl}
-                isSelected={selectedNodeIndex === index}
+                isSelected={selectedIndexSet.has(index)}
                 isHovered={hoveredNodeIndex === index}
                 objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
+                onToggleNodeSelection={onToggleNodeSelection}
                 isSelectionLocked={isSelectionLocked}
                 onHoverNode={onHoverNode}
               />
@@ -277,10 +398,11 @@ export function EditorMap({
                 key={index}
                 index={index}
                 node={node}
-                isSelected={selectedNodeIndex === index}
+                isSelected={selectedIndexSet.has(index)}
                 isHovered={hoveredNodeIndex === index}
                 objectsMapRef={objectsMapRef}
                 onSelectNode={onSelectNode}
+                onToggleNodeSelection={onToggleNodeSelection}
                 isSelectionLocked={isSelectionLocked}
                 onHoverNode={onHoverNode}
               />
@@ -288,6 +410,8 @@ export function EditorMap({
           }
         })}
       </group>
+
+      <group ref={transformGroupRef} />
 
       {selectedObject && (
         <TransformControls
@@ -310,6 +434,7 @@ function EditorModelNode({
   isHovered,
   objectsMapRef,
   onSelectNode,
+  onToggleNodeSelection,
   isSelectionLocked,
   onHoverNode,
 }: EditorNodeCommonProps & {
@@ -329,6 +454,7 @@ function EditorModelNode({
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
+    onToggleNodeSelection,
     isSelectionLocked,
     onHoverNode,
   );
@@ -403,6 +529,7 @@ function EditorTerrainNode({
   lockTerrainSelection,
   objectsMapRef,
   onSelectNode,
+  onToggleNodeSelection,
   isSelectionLocked,
   onHoverNode,
 }: EditorNodeCommonProps & { lockTerrainSelection: boolean }) {
@@ -410,6 +537,7 @@ function EditorTerrainNode({
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
+    onToggleNodeSelection,
     isSelectionLocked,
     onHoverNode,
   );
@@ -435,6 +563,7 @@ function EditorFallbackNode({
   isHovered,
   objectsMapRef,
   onSelectNode,
+  onToggleNodeSelection,
   isSelectionLocked,
   onHoverNode,
 }: EditorNodeCommonProps) {
@@ -442,6 +571,7 @@ function EditorFallbackNode({
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
+    onToggleNodeSelection,
     isSelectionLocked,
     onHoverNode,
   );
