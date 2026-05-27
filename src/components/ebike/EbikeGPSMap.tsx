@@ -42,6 +42,21 @@ export interface EbikeGPSMapProps {
    * Optional world position for the GPS screen (defaults to origin)
    */
   position?: [number, number, number];
+
+  /**
+   * Resolution of the offscreen canvas used for the map texture.
+   * Higher values yield sharper rendering at the cost of GPU memory.
+   * Default: 1024 (1024×1024 px)
+   */
+  canvasSize?: number;
+
+  /**
+   * Zoom level applied to the map view.
+   * 1 = full world bounds, 2 = 2× zoom-in centred on the player, etc.
+   * Values < 1 zoom out beyond the calculated world bounds.
+   * Default: 1
+   */
+  zoom?: number;
 }
 
 /**
@@ -58,6 +73,8 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
   width = 1,
   height = 1,
   position = [0, 0, 0],
+  canvasSize = 1024,
+  zoom = 1,
 }) => {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [mapImage, setMapImage] = useState<HTMLImageElement | HTMLCanvasElement | null>(null);
@@ -65,10 +82,19 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
   // Offscreen high-res canvas for crystal clear rendering
   const [offscreenCanvas] = useState(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
     return canvas;
   });
+
+  // Resize the canvas whenever canvasSize changes
+  useEffect(() => {
+    offscreenCanvas.width = canvasSize;
+    offscreenCanvas.height = canvasSize;
+    if (textureRef.current) {
+      textureRef.current.needsUpdate = true;
+    }
+  }, [canvasSize, offscreenCanvas]);
 
   const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const animTimeRef = useRef<number>(0);
@@ -123,8 +149,8 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
     img.src = mapImageUrl;
   }, [mapImageUrl]);
 
-  // Determine grid boundaries
-  const bounds = useMemo(() => {
+  // Determine grid boundaries (before zoom)
+  const baseBounds = useMemo(() => {
     if (worldBounds) return worldBounds;
 
     if (waypoints.length === 0) {
@@ -149,6 +175,24 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
       maxZ: maxZ + padZ,
     };
   }, [waypoints, worldBounds]);
+
+  // Apply zoom: shrink the view window around the player position
+  const bounds = useMemo(() => {
+    const clampedZoom = Math.max(0.1, zoom);
+    if (clampedZoom === 1) return baseBounds;
+
+    const centerX = startPos.x;
+    const centerZ = startPos.z;
+    const halfW = (baseBounds.maxX - baseBounds.minX) / 2 / clampedZoom;
+    const halfH = (baseBounds.maxZ - baseBounds.minZ) / 2 / clampedZoom;
+
+    return {
+      minX: centerX - halfW,
+      maxX: centerX + halfW,
+      minZ: centerZ - halfH,
+      maxZ: centerZ + halfH,
+    };
+  }, [baseBounds, zoom, startPos]);
 
   // Snapped positions
   const startPosSnapped = useMemo(() => {

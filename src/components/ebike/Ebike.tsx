@@ -250,6 +250,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
               minZ: -142,
               maxZ: 138,
             }}
+            zoom={4}
           />
         </group>
       </group>
