@@ -26,14 +26,17 @@ export const grassVertexShader = /* glsl */ `
   uniform float uClumpThreshold;
   uniform float uClumpSoftness;
   uniform float uZoneFrequency;
+  uniform float uNoGrassZoneThreshold;
   uniform float uSparseZoneThreshold;
-  uniform float uTallZoneThreshold;
+  uniform float uMediumZoneThreshold;
   uniform float uZoneSoftness;
+  uniform float uNoGrassZoneHeight;
   uniform float uSparseZoneHeight;
-  uniform float uLowZoneHeight;
+  uniform float uMediumZoneHeight;
   uniform float uTallZoneHeight;
+  uniform float uNoGrassZoneDensity;
   uniform float uSparseZoneDensity;
-  uniform float uLowZoneDensity;
+  uniform float uMediumZoneDensity;
   uniform float uTallZoneDensity;
   uniform float uMaxBendAngle;
   uniform float uMaxBladeHeight;
@@ -88,16 +91,23 @@ export const grassVertexShader = /* glsl */ `
     float clumpNoise = texture2D(uNoiseTexture, clumpUv).r;
     float clumpMask = smoothstep(uClumpThreshold, uClumpThreshold + uClumpSoftness, clumpNoise);
     float zoneNoise = texture2D(uNoiseTexture, worldPos.xz * uZoneFrequency).r;
-    float sparseZone = 1.0 - smoothstep(uSparseZoneThreshold, uSparseZoneThreshold + uZoneSoftness, zoneNoise);
-    float tallZone = smoothstep(uTallZoneThreshold, uTallZoneThreshold + uZoneSoftness, zoneNoise);
-    float midZone = clamp(1.0 - sparseZone - tallZone, 0.0, 1.0);
+    float noGrassZone = 1.0 - smoothstep(uNoGrassZoneThreshold, uNoGrassZoneThreshold + uZoneSoftness, zoneNoise);
+    float sparseZone =
+      smoothstep(uNoGrassZoneThreshold, uNoGrassZoneThreshold + uZoneSoftness, zoneNoise) *
+      (1.0 - smoothstep(uSparseZoneThreshold, uSparseZoneThreshold + uZoneSoftness, zoneNoise));
+    float mediumZone =
+      smoothstep(uSparseZoneThreshold, uSparseZoneThreshold + uZoneSoftness, zoneNoise) *
+      (1.0 - smoothstep(uMediumZoneThreshold, uMediumZoneThreshold + uZoneSoftness, zoneNoise));
+    float tallZone = smoothstep(uMediumZoneThreshold, uMediumZoneThreshold + uZoneSoftness, zoneNoise);
     float zoneHeight =
+      noGrassZone * uNoGrassZoneHeight +
       sparseZone * uSparseZoneHeight +
-      midZone * uLowZoneHeight +
+      mediumZone * uMediumZoneHeight +
       tallZone * uTallZoneHeight;
     float zoneDensity =
+      noGrassZone * uNoGrassZoneDensity +
       sparseZone * uSparseZoneDensity +
-      midZone * uLowZoneDensity +
+      mediumZone * uMediumZoneDensity +
       tallZone * uTallZoneDensity;
     float bladeVisibility = step(random(worldPos.xz), zoneDensity);
     float heightModifier = uMaxBladeHeight * mix(0.35, 1.0, heightNoiseAverage) * uHeightNoiseAmplitude;
