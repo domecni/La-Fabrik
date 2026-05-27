@@ -56,12 +56,19 @@ export function HomePage(): React.JSX.Element {
     ({ gl }: { gl: THREE.WebGLRenderer }) => {
       const canvas = gl.domElement;
 
+      gl.shadowMap.enabled = true;
+      gl.shadowMap.type = THREE.PCFShadowMap;
+      gl.shadowMap.autoUpdate = true;
+
       const handleContextLost = (event: Event) => {
         event.preventDefault();
         logger.error("WebGL", "Context lost - GPU resources exhausted");
       };
 
       const handleContextRestored = () => {
+        gl.shadowMap.enabled = true;
+        gl.shadowMap.type = THREE.PCFShadowMap;
+        gl.shadowMap.autoUpdate = true;
         logger.info("WebGL", "Context restored");
       };
 
