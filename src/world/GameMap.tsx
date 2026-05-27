@@ -21,18 +21,22 @@ import {
   isMapModelVisible,
   useMapPerformanceStore,
 } from "@/managers/stores/useMapPerformanceStore";
+import { useGameStore } from "@/managers/stores/useGameStore";
 import { GameMapCollision } from "@/world/GameMapCollision";
 import { CloudSystem } from "@/world/clouds/CloudSystem";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
 import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
-import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
 import { WaterSystem } from "@/world/water/WaterSystem";
 import { WorldPlane } from "@/world/WorldPlane";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 import { loadMapSceneData } from "@/utils/map/loadMapSceneData";
+import {
+  getTerrainMapNode,
+  isRuntimeSingleMapNode,
+} from "@/utils/map/mapRuntimeClassification";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 import type { MapNode } from "@/types/editor/editor";
 import type { OctreeReadyHandler } from "@/types/three/three";
@@ -41,16 +45,6 @@ interface LoadedMapNode {
   node: MapNode;
   modelUrl: string | null;
 }
-
-const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking", "terrain"]);
-const LITE_MAP_SKIPPED_NODE_NAMES = new Set([
-  "arbre",
-  "buisson",
-  "champdeble",
-  "champdesoja",
-  "champsdetournesol",
-  "sapin",
-]);
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -120,9 +114,10 @@ export function GameMap({
   const [collisionMapNodes, setCollisionMapNodes] = useState<LoadedMapNode[]>(
     [],
   );
+  const [terrainNode, setTerrainNode] = useState<MapNode | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
-  const mapReady = mapLoaded && settledMapNodeCount >= renderMapNodes.length;
+  const mapReady = mapLoaded;
 
   const handleMapNodeSettled = useCallback((index: number) => {
     if (settledMapNodesRef.current.has(index)) return;
@@ -135,6 +130,7 @@ export function GameMap({
     (currentStep: string) => {
       setRenderMapNodes([]);
       setCollisionMapNodes([]);
+      setTerrainNode(null);
       setMapLoaded(true);
       settledMapNodesRef.current.clear();
       setSettledMapNodeCount(0);
@@ -169,7 +165,9 @@ export function GameMap({
           status: "loading",
         });
 
-        const visibleMapNodes = sceneData.mapNodes.filter(liteMap);
+        const visibleMapNodes = sceneData.mapNodes.filter(
+          isRuntimeSingleMapNode,
+        );
         const skippedMapNodeCount =
           sceneData.mapNodes.length - visibleMapNodes.length;
 
@@ -189,6 +187,7 @@ export function GameMap({
             const modelUrl = sceneData.models.get(node.name);
             return { node, modelUrl: modelUrl ?? null };
           });
+        const loadedTerrainNode = getTerrainMapNode(sceneData.mapNodes);
         const missingModelCount = loadedMapNodes.filter(
           (mapNode) => mapNode.modelUrl === null,
         ).length;
@@ -205,6 +204,7 @@ export function GameMap({
 
         setRenderMapNodes(loadedMapNodes);
         setCollisionMapNodes(loadedCollisionNodes);
+        setTerrainNode(loadedTerrainNode);
         setMapLoaded(true);
         settledMapNodesRef.current.clear();
         setSettledMapNodeCount(0);
@@ -267,7 +267,15 @@ export function GameMap({
       <CloudSystem />
       <VegetationSystem />
       {isMapModelVisible("terrain", { groups, models }) ? (
-        <TerrainModel />
+        terrainNode ? (
+          <TerrainModel
+            position={terrainNode.position}
+            rotation={terrainNode.rotation}
+            scale={terrainNode.scale}
+          />
+        ) : (
+          <TerrainModel />
+        )
       ) : null}
       <GameMapCollision
         buildOctree={buildOctree}
@@ -289,29 +297,6 @@ function HiddenMapNode({ onSettled }: { onSettled: () => void }): null {
   return null;
 }
 
-/**
- * Temporary development-only map reducer.
- *
- * TODO: replace this with a real map performance pass: merged static geometry,
- * instancing for repeated props, LOD, and/or zone-based loading. For now this
- * keeps the app usable on local machines by not rendering the densest exported
- * nodes from map.json.
- */
-function liteMap(node: MapNode): boolean {
-  if (MAP_STRUCTURE_NODE_NAMES.has(node.name)) {
-    return false;
-  }
-
-  if (node.type === "Mesh") {
-    return false;
-  }
-
-  return (
-    !LITE_MAP_SKIPPED_NODE_NAMES.has(node.name) &&
-    !isInstancedMapNodeName(node.name)
-  );
-}
-
 function MapNodeInstance({
   node,
   modelUrl,
@@ -320,14 +305,28 @@ function MapNodeInstance({
   node: MapNode;
   modelUrl: string | null;
   onSettled: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const isGeneratedModel = isGeneratedMapModelName(node.name);
+  const mainState = useGameStore((state) => state.mainState);
+  const bikeStep = useGameStore((state) => state.bike.currentStep);
+  const hideEbikeMapModel =
+    node.name === "ebike" && mainState === "bike" && bikeStep !== "locked";
 
   useEffect(() => {
     if (modelUrl !== null || isGeneratedModel) return;
 
     onSettled();
   }, [isGeneratedModel, modelUrl, onSettled]);
+
+  useEffect(() => {
+    if (!hideEbikeMapModel) return;
+
+    onSettled();
+  }, [hideEbikeMapModel, onSettled]);
+
+  if (hideEbikeMapModel) {
+    return null;
+  }
 
   if (isGeneratedModel) {
     return (

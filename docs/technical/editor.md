@@ -72,7 +72,7 @@ src/
 
 `src/controls/editor/FlyController.tsx` provides editor movement controls for player-style navigation.
 
-`src/utils/map/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json`, validates the hierarchical payload, exposes editable nodes with their tree path, and resolves available `public/models/{name}/model.glb` files first, then falls back to `public/models/{name}/model.gltf`.
+`src/utils/map/loadMapSceneData.ts` is shared by the game map and editor. It loads `/map.json`, validates the hierarchical payload, exposes editable nodes with their `sourcePath` back to the tree, and resolves available `public/models/{name}/model.glb` files first, then falls back to `public/models/{name}/model.gltf`.
 
 `src/utils/editor/loadEditorScene.ts` contains editor-only upload handling for user-selected folders.
 
@@ -87,10 +87,11 @@ interface MapNode {
   position: [number, number, number];
   rotation: [number, number, number];
   scale: [number, number, number];
+  sourcePath?: number[];
 }
 ```
 
-`public/map.json` may be hierarchical. The editor keeps the hierarchy in `SceneData.mapTree` and stores editable entries in `SceneData.mapNodes` with a `path` back to the real tree node.
+`public/map.json` may be hierarchical. The editor keeps the hierarchy in `SceneData.mapTree` and stores editable entries in `SceneData.mapNodes` with a `sourcePath` back to the real tree node.
 
 Group nodes use `role: "group"`; editable nodes keep `name`, `type`, `position`, `rotation`, and `scale`.
 
@@ -114,7 +115,7 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 4. If `/map.json` is missing, the page displays a folder-upload flow.
 5. `EditorSceneLoadingTracker` uses drei `useProgress()` to update the fullscreen editor loading overlay while models load.
 6. `EditorScene` renders the grid, lights, camera controls, and map nodes inside `Suspense`.
-7. `EditorControls` exposes transform mode, terrain snap, add/delete node, precise scale inputs, history actions, export, save, JSON preview, selection lock, and the cinematic/dialogue/SRT editors.
+7. `EditorControls` exposes transform mode, terrain snap, terrain-selection lock, add/delete node, precise scale inputs, history actions, camera focus/reset, export, save, JSON preview, selection lock, and the cinematic/dialogue/SRT editors.
 
 ## Controls
 
@@ -126,7 +127,9 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 - `T`: translate mode.
 - `R`: rotate mode.
 - `S`: scale mode.
-- Snap terrain on move: enabled by default and applied when releasing a translated object.
+- Snap terrain on move: enabled by default and applied while translating an object.
+- Lock terrain: enabled by default so terrain remains visible but ignores selection clicks.
+- Camera action: centers on the selected object or resets to the editor home view.
 - Add node: creates a fallback cube under `blocking` using the requested model folder name.
 - Delete selected node: removes the editable node from the preserved map tree.
 - `Ctrl+Z` or `Cmd+Z`: undo.

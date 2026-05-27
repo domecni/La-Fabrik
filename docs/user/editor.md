@@ -48,10 +48,11 @@ Only the `Editor` group is open by default. Open the other groups when you need 
 3. Choose a transform mode: translate, rotate, or scale.
 4. Drag the transform gizmo in the 3D view.
 5. Keep `Snap terrain on move` enabled when placing objects on the terrain.
-6. Adjust scale numerically from the `Selection` section if the gizmo is not precise enough.
-7. Check the JSON inspector if you need exact values.
-8. Use undo or redo if the transform is not correct.
-9. Export the JSON or save it to the dev server.
+6. Use `Center on object` or `Reset camera` from the `View` section when navigating large maps.
+7. Adjust scale numerically from the `Selection` section if the gizmo is not precise enough.
+8. Check the JSON inspector if you need exact values.
+9. Use undo or redo if the transform is not correct.
+10. Export the JSON or save it to the dev server.
 
 ## Adding And Deleting Nodes
 
@@ -94,9 +95,11 @@ The `Selection` section shows the selected object name and its index in `public/
 
 ## Terrain Snapping
 
-`Snap terrain on move` is enabled by default. When you move an object and release the transform gizmo, the editor samples the terrain height at the object's X/Z position and updates its Y position.
+`Snap terrain on move` is enabled by default. When you move an object, the editor samples the terrain height at the object's X/Z position and updates its Y position.
 
 This is intended for map objects that should sit on the ground. Disable it when you intentionally need a floating object.
+
+`Lock terrain` is also enabled by default. The terrain stays visible, but terrain clicks are ignored so normal objects remain easier to select. Disable it only when you need to select or transform the terrain node itself.
 
 When selection is locked:
 
@@ -108,6 +111,8 @@ When selection is locked:
 ## View Mode
 
 The `Lock view` action switches the editor into a movement mode closer to the runtime player camera. Use it to navigate larger scenes while keeping the transform tools available.
+
+The camera action switches between `Center on object` and `Reset camera`. Selecting an object also focuses the camera on that object automatically.
 
 ## JSON Inspector
 

@@ -7,7 +7,7 @@ import type {
 
 interface ObjectTransform {
   uuid: string;
-  path: number[];
+  sourcePath?: number[];
   position: { x: number; y: number; z: number };
   rotation: { x: number; y: number; z: number };
   scale: { x: number; y: number; z: number };
@@ -166,12 +166,14 @@ export function useEditorHistory(
             scale: [transform.scale.x, transform.scale.y, transform.scale.z],
           } satisfies MapNode;
 
-          mapTree = updateTreeNodeAtPath(mapTree, node.path, transform);
+          if (mapTree && node.sourcePath) {
+            mapTree = updateTreeNodeAtPath(mapTree, node.sourcePath, transform);
+          }
 
           return nextNode;
         });
 
-        return { ...prev, mapNodes, mapTree };
+        return mapTree ? { ...prev, mapNodes, mapTree } : { ...prev, mapNodes };
       });
     },
     [setSceneData],
@@ -217,7 +219,7 @@ export function useEditorHistory(
 function createSnapshot(sceneData: SceneData): ObjectTransform[] {
   return sceneData.mapNodes.map((node, index) => ({
     uuid: `node-${index}`,
-    path: node.path,
+    ...(node.sourcePath ? { sourcePath: node.sourcePath } : {}),
     position: {
       x: node.position[0],
       y: node.position[1],

@@ -10,7 +10,6 @@ import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
 import type {
-  EditableMapNode,
   HierarchicalMapNode,
   MapNode,
   SceneData,
@@ -31,7 +30,74 @@ interface EditorSceneLoadingTrackerProps {
 }
 
 function serializeMapNodes(sceneData: SceneData): string {
-  return JSON.stringify(sceneData.mapTree, null, 2);
+  const mapPayload = sceneData.mapTree
+    ? mergeFlatNodeTransformsIntoTree(sceneData)
+    : sceneData.mapNodes.map(removeEditorMetadata);
+
+  return JSON.stringify(mapPayload, null, 2);
+}
+
+function createSourcePathKey(sourcePath: readonly number[]): string {
+  return sourcePath.join(".");
+}
+
+function removeEditorMetadata(node: MapNode): MapNode {
+  return {
+    name: node.name,
+    type: node.type,
+    position: node.position,
+    rotation: node.rotation,
+    scale: node.scale,
+  };
+}
+
+function mergeFlatNodeTransformsIntoTree(
+  sceneData: SceneData,
+): HierarchicalMapNode | HierarchicalMapNode[] {
+  const nodesBySourcePath = new Map<string, MapNode>();
+
+  for (const node of sceneData.mapNodes) {
+    if (!node.sourcePath) continue;
+    nodesBySourcePath.set(createSourcePathKey(node.sourcePath), node);
+  }
+
+  const cloneNode = (
+    node: HierarchicalMapNode,
+    path: number[],
+  ): HierarchicalMapNode => {
+    const updatedNode = nodesBySourcePath.get(createSourcePathKey(path));
+    const nextNode: HierarchicalMapNode = {
+      name: node.name,
+      type: node.type,
+      position: updatedNode?.position ?? node.position,
+      rotation: updatedNode?.rotation ?? node.rotation,
+      scale: updatedNode?.scale ?? node.scale,
+    };
+
+    if (node.role) {
+      nextNode.role = node.role;
+    }
+
+    if (node.children) {
+      nextNode.children = node.children.map((child, index) =>
+        cloneNode(child, [...path, index]),
+      );
+    }
+
+    return nextNode;
+  };
+
+  const mapTree = sceneData.mapTree;
+
+  if (!mapTree) {
+    return sceneData.mapNodes.map(removeEditorMetadata);
+  }
+
+  if (Array.isArray(mapTree)) {
+    return mapTree.map((node, index) => cloneNode(node, [index]));
+  }
+
+  return cloneNode(mapTree, []);
 }
 
 function cloneMapTree(
@@ -42,32 +108,21 @@ function cloneMapTree(
     | HierarchicalMapNode[];
 }
 
-function toEditableMapNode(
-  node: HierarchicalMapNode,
-  path: number[],
-): EditableMapNode | null {
-  if (node.name === "terrain" || node.role === "group") return null;
-
-  return {
-    name: node.name,
-    path,
-    position: node.position,
-    rotation: node.rotation,
-    scale: node.scale,
-    type: node.type,
-  };
-}
-
 function collectEditableMapNodes(
   mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-): EditableMapNode[] {
-  const nodes: EditableMapNode[] = [];
+): MapNode[] {
+  const nodes: MapNode[] = [];
 
   function visit(node: HierarchicalMapNode, path: number[]): void {
-    const editableNode = toEditableMapNode(node, path);
-    if (editableNode) {
-      nodes.push(editableNode);
-      return;
+    if (node.role !== "group" && node.type !== "Mesh") {
+      nodes.push({
+        name: node.name,
+        position: node.position,
+        rotation: node.rotation,
+        scale: node.scale,
+        sourcePath: path,
+        type: node.type,
+      });
     }
 
     node.children?.forEach((child, index) => visit(child, [...path, index]));
@@ -95,9 +150,10 @@ function updateTreeNodeAtPath(
     : path.length === 0;
 
   if (isRootTarget) {
-    rootNodes[targetIndex] = update(
-      rootNodes[targetIndex] as HierarchicalMapNode,
-    );
+    const targetNode = rootNodes[targetIndex];
+    if (targetNode) {
+      rootNodes[targetIndex] = update(targetNode);
+    }
     return nextTree;
   }
 
@@ -145,19 +201,6 @@ function removeTreeNodeAtPath(
   return nextTree;
 }
 
-function addTreeNode(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  node: HierarchicalMapNode,
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  const blockingPath = findNodePathByName(mapTree, "blocking");
-  if (!blockingPath) return mapTree;
-
-  return updateTreeNodeAtPath(mapTree, blockingPath, (blockingNode) => ({
-    ...blockingNode,
-    children: [...(blockingNode.children ?? []), node],
-  }));
-}
-
 function updateSceneDataTree(
   sceneData: SceneData,
   mapTree: HierarchicalMapNode | HierarchicalMapNode[],
@@ -197,6 +240,19 @@ function findNodePathByName(
   }
 
   return visit(mapTree, []);
+}
+
+function addTreeNode(
+  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
+  node: HierarchicalMapNode,
+): HierarchicalMapNode | HierarchicalMapNode[] {
+  const blockingPath = findNodePathByName(mapTree, "blocking");
+  if (!blockingPath) return mapTree;
+
+  return updateTreeNodeAtPath(mapTree, blockingPath, (blockingNode) => ({
+    ...blockingNode,
+    children: [...(blockingNode.children ?? []), node],
+  }));
 }
 
 function createNewMapNode(name: string): HierarchicalMapNode {
@@ -264,6 +320,13 @@ export function EditorPage(): React.JSX.Element {
   const [isSelectionLocked, setIsSelectionLocked] = useState(false);
   const [snapToTerrain, setSnapToTerrain] = useState(true);
   const [newNodeName, setNewNodeName] = useState(DEFAULT_NEW_NODE_NAME);
+  const [lockTerrainSelection, setLockTerrainSelection] = useState(true);
+  const [resetCameraRequest, setResetCameraRequest] = useState(0);
+  const [focusSelectedCameraRequest, setFocusSelectedCameraRequest] =
+    useState(0);
+  const [cameraViewMode, setCameraViewMode] = useState<"home" | "object">(
+    "home",
+  );
   const [sceneLoadingState, setSceneLoadingState] = useState<SceneLoadingState>(
     {
       ...INITIAL_SCENE_LOADING_STATE,
@@ -307,6 +370,9 @@ export function EditorPage(): React.JSX.Element {
 
   const handleSelectNode = useCallback((index: number | null) => {
     setSelectedNodeIndex(index);
+    if (index !== null) {
+      setCameraViewMode("object");
+    }
   }, []);
 
   const handleClearSelection = useCallback(() => {
@@ -324,6 +390,22 @@ export function EditorPage(): React.JSX.Element {
   const handleNewNodeNameChange = useCallback((value: string) => {
     setNewNodeName(value);
   }, []);
+
+  const handleTerrainSelectionLockChange = useCallback(
+    (locked: boolean) => {
+      setLockTerrainSelection(locked);
+
+      if (!locked) return;
+
+      setSelectedNodeIndex((currentIndex) => {
+        if (currentIndex === null) return null;
+
+        const selectedNode = sceneData?.mapNodes[currentIndex];
+        return selectedNode?.name === "terrain" ? null : currentIndex;
+      });
+    },
+    [sceneData],
+  );
 
   const handleHoverNode = useCallback((index: number | null) => {
     setHoveredNodeIndex(index);
@@ -371,6 +453,17 @@ export function EditorPage(): React.JSX.Element {
     setIsPlayerMode((prev) => !prev);
   }, []);
 
+  const handleCameraAction = useCallback(() => {
+    if (selectedNodeIndex !== null && cameraViewMode === "home") {
+      setFocusSelectedCameraRequest((request) => request + 1);
+      setCameraViewMode("object");
+      return;
+    }
+
+    setResetCameraRequest((request) => request + 1);
+    setCameraViewMode("home");
+  }, [cameraViewMode, selectedNodeIndex]);
+
   const handlePreviewCinematic = useCallback(
     (cinematic: CinematicDefinition) => {
       setCinematicPreviewRequest({
@@ -392,9 +485,15 @@ export function EditorPage(): React.JSX.Element {
         const currentNode = prev.mapNodes[nodeIndex];
         if (!currentNode) return prev;
 
+        if (!prev.mapTree || !currentNode.sourcePath) {
+          const mapNodes = [...prev.mapNodes];
+          mapNodes[nodeIndex] = updatedNode;
+          return { ...prev, mapNodes };
+        }
+
         const mapTree = updateTreeNodeAtPath(
           prev.mapTree,
-          currentNode.path,
+          currentNode.sourcePath,
           (node) => ({
             ...node,
             position: updatedNode.position,
@@ -402,7 +501,6 @@ export function EditorPage(): React.JSX.Element {
             scale: updatedNode.scale,
           }),
         );
-
         return updateSceneDataTree(prev, mapTree);
       });
     },
@@ -421,9 +519,15 @@ export function EditorPage(): React.JSX.Element {
         const nextScale = [...currentNode.scale] as [number, number, number];
         nextScale[axis] = value;
 
+        if (!prev.mapTree || !currentNode.sourcePath) {
+          const mapNodes = [...prev.mapNodes];
+          mapNodes[selectedNodeIndex] = { ...currentNode, scale: nextScale };
+          return { ...prev, mapNodes };
+        }
+
         const mapTree = updateTreeNodeAtPath(
           prev.mapTree,
-          currentNode.path,
+          currentNode.sourcePath,
           (node) => ({ ...node, scale: nextScale }),
         );
 
@@ -436,6 +540,13 @@ export function EditorPage(): React.JSX.Element {
   const handleAddNode = useCallback(() => {
     setSceneData((prev) => {
       if (!prev) return null;
+      if (!prev.mapTree) {
+        const newNode = createNewMapNode(newNodeName);
+        const mapNodes = [...prev.mapNodes, removeEditorMetadata(newNode)];
+        setSelectedNodeIndex(mapNodes.length - 1);
+        return { ...prev, mapNodes };
+      }
+
       const mapTree = addTreeNode(prev.mapTree, createNewMapNode(newNodeName));
       const nextSceneData = updateSceneDataTree(prev, mapTree);
       setSelectedNodeIndex(nextSceneData.mapNodes.length - 1);
@@ -450,7 +561,20 @@ export function EditorPage(): React.JSX.Element {
       if (!prev) return null;
       const currentNode = prev.mapNodes[selectedNodeIndex];
       if (!currentNode) return prev;
-      const mapTree = removeTreeNodeAtPath(prev.mapTree, currentNode.path);
+      if (!prev.mapTree || !currentNode.sourcePath) {
+        setSelectedNodeIndex(null);
+        return {
+          ...prev,
+          mapNodes: prev.mapNodes.filter(
+            (_node, index) => index !== selectedNodeIndex,
+          ),
+        };
+      }
+
+      const mapTree = removeTreeNodeAtPath(
+        prev.mapTree,
+        currentNode.sourcePath,
+      );
       setSelectedNodeIndex(null);
       return updateSceneDataTree(prev, mapTree);
     });
@@ -542,12 +666,15 @@ export function EditorPage(): React.JSX.Element {
             onHoverNode={handleHoverNode}
             transformMode={transformMode}
             snapToTerrain={snapToTerrain}
+            lockTerrainSelection={lockTerrainSelection}
             onTransformModeChange={handleTransformModeChange}
             onTransformStart={handleTransformStart}
             onTransformEnd={handleTransformEnd}
             onNodeTransform={handleNodeTransform}
             onUndo={handleUndo}
             onRedo={handleRedo}
+            resetCameraRequest={resetCameraRequest}
+            focusSelectedCameraRequest={focusSelectedCameraRequest}
             isPlayerMode={isPlayerMode}
             cinematicPreviewRequest={cinematicPreviewRequest}
             onCinematicPreviewComplete={handleCinematicPreviewComplete}
@@ -574,6 +701,8 @@ export function EditorPage(): React.JSX.Element {
               ? sceneData.mapNodes[selectedNodeIndex].scale
               : null
           }
+          lockTerrainSelection={lockTerrainSelection}
+          onLockTerrainSelectionChange={handleTerrainSelectionLockChange}
           isSelectionLocked={isSelectionLocked}
           onSelectionLockToggle={handleSelectionLockToggle}
           onClearSelection={handleClearSelection}
@@ -588,6 +717,12 @@ export function EditorPage(): React.JSX.Element {
           redoCount={redoCount}
           onUndo={handleUndo}
           onRedo={handleRedo}
+          cameraActionLabel={
+            selectedNodeIndex !== null && cameraViewMode === "home"
+              ? "Center on object"
+              : "Reset camera"
+          }
+          onCameraAction={handleCameraAction}
           onExportJson={handleExportJson}
           onSaveToServer={import.meta.env.DEV ? handleSaveToServer : undefined}
           onPlayerMode={handlePlayerMode}

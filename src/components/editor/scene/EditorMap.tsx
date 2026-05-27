@@ -3,10 +3,15 @@ import { Grid, TransformControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
+import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
 import type { SceneData, MapNode, TransformMode } from "@/types/editor/editor";
+import {
+  isEditorVisibleMapNode,
+  getTerrainMapNode,
+} from "@/utils/map/mapRuntimeClassification";
 
 interface EditorMapProps {
   sceneData: SceneData;
@@ -17,6 +22,7 @@ interface EditorMapProps {
   onHoverNode: (index: number | null) => void;
   transformMode: TransformMode;
   snapToTerrain: boolean;
+  lockTerrainSelection: boolean;
   onTransformStart: () => void;
   onTransformEnd: () => void;
   onNodeTransform: (nodeIndex: number, transform: MapNode) => void;
@@ -141,6 +147,7 @@ export function EditorMap({
   onHoverNode,
   transformMode,
   snapToTerrain,
+  lockTerrainSelection,
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
@@ -153,6 +160,11 @@ export function EditorMap({
   };
 
   const handleTransformMouseUp = () => {
+    syncSelectedObjectTransform();
+    onTransformEnd();
+  };
+
+  const syncSelectedObjectTransform = () => {
     if (selectedNodeIndex !== null) {
       const obj = objectsMapRef.current.get(selectedNodeIndex);
       if (!obj) return;
@@ -180,12 +192,18 @@ export function EditorMap({
         onNodeTransform(selectedNodeIndex, updatedNode);
       }
     }
-    onTransformEnd();
   };
 
   const [selectedObject, setSelectedObject] = useState<THREE.Object3D | null>(
     null,
   );
+  const terrainNode = getTerrainMapNode(sceneData.mapNodes);
+  const terrainNodeIndex = terrainNode
+    ? sceneData.mapNodes.indexOf(terrainNode)
+    : -1;
+  const selectedNode =
+    selectedNodeIndex !== null ? sceneData.mapNodes[selectedNodeIndex] : null;
+  const selectedModelName = selectedNode?.name ?? null;
 
   useEffect(() => {
     if (selectedNodeIndex !== null) {
@@ -213,14 +231,29 @@ export function EditorMap({
       />
       <axesHelper args={[10]} />
 
-      <group
-        onClick={(event: ThreeEvent<MouseEvent>) => {
-          event.stopPropagation();
-          if (isSelectionLocked) return;
-          onSelectNode(null);
-        }}
-      >
+      <group>
+        {terrainNode ? (
+          <EditorTerrainNode
+            index={terrainNodeIndex}
+            node={terrainNode}
+            isSelected={selectedNodeIndex === terrainNodeIndex}
+            isHovered={hoveredNodeIndex === terrainNodeIndex}
+            lockTerrainSelection={lockTerrainSelection}
+            objectsMapRef={objectsMapRef}
+            onSelectNode={onSelectNode}
+            isSelectionLocked={isSelectionLocked}
+            onHoverNode={onHoverNode}
+          />
+        ) : null}
         {sceneData.mapNodes.map((node, index) => {
+          if (!isEditorVisibleMapNode(node)) {
+            return null;
+          }
+
+          if (selectedModelName && node.name !== selectedModelName) {
+            return null;
+          }
+
           const modelUrl = sceneData.models.get(node.name);
 
           if (modelUrl) {
@@ -262,6 +295,7 @@ export function EditorMap({
           mode={transformMode}
           onMouseDown={handleTransformMouseDown}
           onMouseUp={handleTransformMouseUp}
+          onObjectChange={syncSelectedObjectTransform}
         />
       )}
     </>
@@ -360,6 +394,37 @@ function EditorModelNode({
       scale={node.scale}
       {...pointerHandlers}
     />
+  );
+}
+
+function EditorTerrainNode({
+  index,
+  node,
+  lockTerrainSelection,
+  objectsMapRef,
+  onSelectNode,
+  isSelectionLocked,
+  onHoverNode,
+}: EditorNodeCommonProps & { lockTerrainSelection: boolean }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const pointerHandlers = createEditorNodePointerHandlers(
+    index,
+    onSelectNode,
+    isSelectionLocked,
+    onHoverNode,
+  );
+  useRegisteredEditorNode(groupRef, index, node, objectsMapRef);
+
+  return (
+    <group
+      ref={groupRef}
+      position={node.position}
+      rotation={node.rotation}
+      scale={node.scale}
+      {...(lockTerrainSelection ? {} : pointerHandlers)}
+    >
+      <TerrainModel receiveShadow visible />
+    </group>
   );
 }
 

@@ -1,13 +1,9 @@
 import type {
-  EditableMapNode,
   HierarchicalMapNode,
   MapNode,
   SceneData,
 } from "@/types/editor/editor";
-import {
-  parseHierarchicalMapPayload,
-  parseMapNodes,
-} from "@/utils/map/mapNodeValidation";
+import { parseMapData } from "@/utils/map/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";
 const MODEL_FILE_NAMES = ["model.glb", "model.gltf"];
@@ -29,8 +25,12 @@ export async function loadMapSceneData(): Promise<SceneData | null> {
   }
 
   loadingPromise = loadMapSceneDataInternal();
-  cachedSceneData = await loadingPromise;
-  loadingPromise = null;
+
+  try {
+    cachedSceneData = await loadingPromise;
+  } finally {
+    loadingPromise = null;
+  }
 
   return cachedSceneData;
 }
@@ -59,53 +59,9 @@ async function loadMapSceneDataInternal(): Promise<SceneData | null> {
 export async function createSceneDataFromMapPayload(
   mapPayload: unknown,
 ): Promise<SceneData> {
-  const mapTree = parseHierarchicalMapPayload(mapPayload);
-  const mapNodes = parseMapNodes(mapTree);
-  const editableNodes = createEditableMapNodes(mapTree);
+  const { mapNodes, mapTree } = parseMapData(mapPayload);
   const deduplicatedNodes = deduplicateMapNodes(mapNodes);
-  const deduplicatedEditableNodes = deduplicateEditableMapNodes(editableNodes);
-  return createSceneData(mapTree, deduplicatedEditableNodes, deduplicatedNodes);
-}
-
-function toMapNode(node: HierarchicalMapNode): MapNode {
-  return {
-    name: node.name,
-    position: node.position,
-    rotation: node.rotation,
-    scale: node.scale,
-    type: node.type,
-  };
-}
-
-function flattenEditableMapNode(
-  node: HierarchicalMapNode,
-  path: number[],
-): EditableMapNode[] {
-  if (node.name === "terrain") {
-    return [];
-  }
-
-  if (node.role === "group") {
-    return (
-      node.children?.flatMap((child, index) =>
-        flattenEditableMapNode(child, [...path, index]),
-      ) ?? []
-    );
-  }
-
-  return [{ ...toMapNode(node), path }];
-}
-
-function createEditableMapNodes(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-): EditableMapNode[] {
-  if (Array.isArray(mapTree)) {
-    return mapTree.flatMap((node, index) =>
-      flattenEditableMapNode(node, [index]),
-    );
-  }
-
-  return flattenEditableMapNode(mapTree, []);
+  return createSceneData(deduplicatedNodes, mapTree);
 }
 
 function createPositionKey(node: MapNode): string {
@@ -142,36 +98,12 @@ function deduplicateMapNodes(nodes: MapNode[]): MapNode[] {
   return result;
 }
 
-function deduplicateEditableMapNodes(
-  nodes: EditableMapNode[],
-): EditableMapNode[] {
-  const seen = new Set<string>();
-  const result: EditableMapNode[] = [];
-
-  const sortedNodes = [...nodes].sort((a, b) => {
-    if (a.type === "Object3D" && b.type !== "Object3D") return -1;
-    if (a.type !== "Object3D" && b.type === "Object3D") return 1;
-    return 0;
-  });
-
-  for (const node of sortedNodes) {
-    const key = createPositionKey(node);
-    if (!seen.has(key)) {
-      seen.add(key);
-      result.push(node);
-    }
-  }
-
-  return result;
-}
-
 async function createSceneData(
+  mapNodes: MapNode[],
   mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  mapNodes: EditableMapNode[],
-  modelLookupNodes: MapNode[],
 ): Promise<SceneData> {
-  const models = await loadMapModelUrls(modelLookupNodes);
-  return { mapNodes, mapTree, models };
+  const models = await loadMapModelUrls(mapNodes);
+  return { mapNodes, models, mapTree };
 }
 
 async function loadMapModelUrls(

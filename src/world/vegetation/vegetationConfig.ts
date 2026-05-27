@@ -62,3 +62,11 @@ export const INSTANCED_MAP_EXCEPTIONS = new Set([
   "blocking",
   "terrain",
 ]);
+
+export function getVegetationScaleMultiplier(name: string): number | null {
+  const config = Object.values(VEGETATION_TYPES).find(
+    (vegetationConfig) => vegetationConfig.mapName === name,
+  );
+
+  return config?.scaleMultiplier ?? null;
+}

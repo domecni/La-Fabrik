@@ -1,5 +1,10 @@
 import type { HierarchicalMapNode, MapNode } from "../../types/editor/editor";
 
+export interface ParsedMapNodes {
+  mapNodes: MapNode[];
+  mapTree: HierarchicalMapNode | HierarchicalMapNode[];
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -48,19 +53,25 @@ export function isHierarchicalMapNode(
   );
 }
 
-function flattenMapNode(node: HierarchicalMapNode): MapNode[] {
+function flattenMapNode(node: HierarchicalMapNode, path: number[]): MapNode[] {
   const mapNode: MapNode = {
     name: node.name,
     type: node.type,
     position: node.position,
     rotation: node.rotation,
     scale: node.scale,
+    sourcePath: path,
   };
-  if (node.role === "group") {
-    return node.children?.flatMap(flattenMapNode) ?? [];
+  const childNodes =
+    node.children?.flatMap((child, index) =>
+      flattenMapNode(child, [...path, index]),
+    ) ?? [];
+
+  if (node.role === "group" || node.type === "Mesh") {
+    return childNodes;
   }
 
-  return [mapNode];
+  return [mapNode, ...childNodes];
 }
 
 export function parseHierarchicalMapPayload(
@@ -78,12 +89,22 @@ export function parseHierarchicalMapPayload(
 }
 
 export function parseMapNodes(value: unknown): MapNode[] {
+  return parseMapData(value).mapNodes;
+}
+
+export function parseMapData(value: unknown): ParsedMapNodes {
   if (Array.isArray(value) && value.every(isHierarchicalMapNode)) {
-    return value.flatMap(flattenMapNode);
+    return {
+      mapNodes: value.flatMap((node, index) => flattenMapNode(node, [index])),
+      mapTree: value,
+    };
   }
 
   if (isHierarchicalMapNode(value)) {
-    return flattenMapNode(value);
+    return {
+      mapNodes: flattenMapNode(value, []),
+      mapTree: value,
+    };
   }
 
   throw new Error("Invalid map node data");

@@ -124,7 +124,7 @@ function completeIntroState(state: GameState): GameStateUpdate {
     },
     bike: {
       ...state.bike,
-      currentStep: "waiting",
+      currentStep: "locked",
     },
   };
 }

@@ -1,13 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { OrbitControls } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import * as THREE from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
 import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { FlyController } from "@/controls/editor/FlyController";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
+
+const EDITOR_CAMERA_HOME_POSITION = new THREE.Vector3(0, 50, 100);
+const EDITOR_CAMERA_HOME_TARGET = new THREE.Vector3(0, 0, 0);
 
 export interface EditorCinematicPreviewRequest {
   id: string;
@@ -23,12 +27,15 @@ interface EditorSceneProps {
   onHoverNode: (index: number | null) => void;
   transformMode: TransformMode;
   snapToTerrain: boolean;
+  lockTerrainSelection: boolean;
   onTransformModeChange: (mode: TransformMode) => void;
   onTransformStart: () => void;
   onTransformEnd: () => void;
   onNodeTransform: (nodeIndex: number, transform: MapNode) => void;
   onUndo: () => void;
   onRedo: () => void;
+  resetCameraRequest: number;
+  focusSelectedCameraRequest: number;
   isPlayerMode?: boolean;
   cinematicPreviewRequest?: EditorCinematicPreviewRequest | null;
   onCinematicPreviewComplete?: (() => void) | undefined;
@@ -43,17 +50,94 @@ export function EditorScene({
   onHoverNode,
   transformMode,
   snapToTerrain,
+  lockTerrainSelection,
   onTransformModeChange,
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
   onUndo,
   onRedo,
+  resetCameraRequest,
+  focusSelectedCameraRequest,
   isPlayerMode = false,
   cinematicPreviewRequest = null,
   onCinematicPreviewComplete,
 }: EditorSceneProps): React.JSX.Element {
   const isCinematicPreviewing = cinematicPreviewRequest !== null;
+  const camera = useThree((state) => state.camera);
+  const orbitControlsRef = useRef<OrbitControlsImpl | null>(null);
+  const previousSelectedNodeIndexRef = useRef<number | null>(null);
+
+  const focusCameraOnNode = useCallback(
+    (node: MapNode): void => {
+      const controls = orbitControlsRef.current;
+      const target = new THREE.Vector3(...node.position);
+      const currentTarget = controls?.target ?? EDITOR_CAMERA_HOME_TARGET;
+      const cameraOffset = camera.position.clone().sub(currentTarget);
+
+      camera.position.copy(target).add(cameraOffset);
+      camera.lookAt(target);
+      controls?.target.copy(target);
+      controls?.update();
+    },
+    [camera],
+  );
+
+  useEffect(() => {
+    if (selectedNodeIndex === previousSelectedNodeIndexRef.current) return;
+    previousSelectedNodeIndexRef.current = selectedNodeIndex;
+
+    if (selectedNodeIndex === null || isPlayerMode || isCinematicPreviewing) {
+      return;
+    }
+
+    const selectedNode = sceneData.mapNodes[selectedNodeIndex];
+    if (!selectedNode) return;
+
+    focusCameraOnNode(selectedNode);
+  }, [
+    camera,
+    isCinematicPreviewing,
+    isPlayerMode,
+    focusCameraOnNode,
+    sceneData,
+    selectedNodeIndex,
+  ]);
+
+  useEffect(() => {
+    if (
+      focusSelectedCameraRequest === 0 ||
+      selectedNodeIndex === null ||
+      isPlayerMode ||
+      isCinematicPreviewing
+    ) {
+      return;
+    }
+
+    const selectedNode = sceneData.mapNodes[selectedNodeIndex];
+    if (!selectedNode) return;
+
+    focusCameraOnNode(selectedNode);
+  }, [
+    focusSelectedCameraRequest,
+    focusCameraOnNode,
+    isCinematicPreviewing,
+    isPlayerMode,
+    sceneData,
+    selectedNodeIndex,
+  ]);
+
+  useEffect(() => {
+    if (resetCameraRequest === 0 || isPlayerMode || isCinematicPreviewing) {
+      return;
+    }
+
+    const controls = orbitControlsRef.current;
+    camera.position.copy(EDITOR_CAMERA_HOME_POSITION);
+    camera.lookAt(EDITOR_CAMERA_HOME_TARGET);
+    controls?.target.copy(EDITOR_CAMERA_HOME_TARGET);
+    controls?.update();
+  }, [camera, isCinematicPreviewing, isPlayerMode, resetCameraRequest]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -110,6 +194,7 @@ export function EditorScene({
         <FlyController disabled={isCinematicPreviewing} />
       ) : (
         <OrbitControls
+          ref={orbitControlsRef}
           enabled={!isCinematicPreviewing}
           enableDamping
           dampingFactor={0.05}
@@ -130,6 +215,7 @@ export function EditorScene({
         onHoverNode={onHoverNode}
         transformMode={transformMode}
         snapToTerrain={snapToTerrain}
+        lockTerrainSelection={lockTerrainSelection}
         onTransformStart={onTransformStart}
         onTransformEnd={onTransformEnd}
         onNodeTransform={onNodeTransform}

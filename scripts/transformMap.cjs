@@ -105,6 +105,16 @@ function addRenderable(parent, objectNode, meshNode) {
   getOrCreateModelGroup(parent, renderable.name).children.push(renderable);
 }
 
+function addStandaloneObject(rawData, parent, name) {
+  const node = rawData.find(
+    (rawNode) => rawNode?.type === "Object3D" && rawNode.name === name,
+  );
+
+  if (!node) return;
+
+  getOrCreateModelGroup(parent, name).children.push(cloneNode(node));
+}
+
 function addObjectsByRange(rawData, parent, start, end, allowedNames) {
   let currentObject = null;
 
@@ -279,6 +289,7 @@ function transformMap() {
   agriculture.children.push(champs, ferme);
 
   addObjectsByRange(rawData, direction, 6, 12, DIRECTION_MESH_NAMES);
+  addStandaloneObject(rawData, residence, "ebike");
   createResidenceZones(rawData, residence);
   addObjectsByRange(rawData, energie, 61, 96, new Set(["pyloneelectrique"]));
   addObjectsByRange(rawData, vegetation, 98, 829, VEGETATION_MESH_NAMES);
