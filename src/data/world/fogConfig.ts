@@ -1,5 +1,3 @@
-import { TERRAIN_COLORS } from "@/data/world/terrainConfig";
-
 export type FogMode = "linear" | "exp2";
 
 export const FOG_CONFIG = {
@@ -28,13 +26,3 @@ export interface FogState {
   mode: FogMode;
   near: number;
 }
-
-export const CHUNK_CONFIG = {
-  enabled: true,
-  chunkSize: 35,
-  loadRadius: 50,
-  unloadRadius: 65,
-  updateInterval: 250,
-};
-
-export const GROUND_PLANE_COLOR = TERRAIN_COLORS.grass1.hex;

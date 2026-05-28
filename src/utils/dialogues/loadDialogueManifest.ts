@@ -3,7 +3,7 @@ import type {
   DialogueManifest,
   DialogueVoice,
 } from "@/types/dialogues/dialogues";
-import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
+import type { SubtitleLanguage } from "@/types/settings/settings";
 import { parseDialogueManifest } from "@/utils/dialogues/dialogueManifestValidation";
 import { parseSrt } from "@/utils/subtitles/parseSrt";
 import type { SubtitleCue } from "@/utils/subtitles/parseSrt";
@@ -27,18 +27,7 @@ export async function loadDialogueManifest(): Promise<DialogueManifest | null> {
   return parseDialogueManifest(await response.json());
 }
 
-export function resolveDialogueSubtitlePath(
-  manifest: DialogueManifest,
-  dialogue: DialogueDefinition,
-  language: SubtitleLanguage,
-): string | null {
-  const voice = getDialogueVoice(manifest, dialogue.voice);
-  if (!voice) return null;
-
-  return getVoiceSubtitlePath(voice, language);
-}
-
-export function getDialogueVoice(
+function getDialogueVoice(
   manifest: DialogueManifest,
   voiceId: DialogueDefinition["voice"],
 ): DialogueVoice | null {
@@ -69,7 +58,7 @@ export async function loadDialogueSubtitleCue(
   };
 }
 
-export async function loadVoiceSubtitleCues(
+async function loadVoiceSubtitleCues(
   voice: DialogueVoice,
   language: SubtitleLanguage,
 ): Promise<{ path: string; cues: SubtitleCue[] } | null> {
@@ -102,15 +91,4 @@ function getVoiceSubtitlePaths(
   return [voice.subtitles[language], voice.subtitles[DEFAULT_SUBTITLE_LANGUAGE]]
     .filter((path): path is string => Boolean(path))
     .filter((path, index, paths) => paths.indexOf(path) === index);
-}
-
-function getVoiceSubtitlePath(
-  voice: DialogueVoice,
-  language: SubtitleLanguage,
-): string | null {
-  return (
-    voice.subtitles[language] ??
-    voice.subtitles[DEFAULT_SUBTITLE_LANGUAGE] ??
-    null
-  );
 }

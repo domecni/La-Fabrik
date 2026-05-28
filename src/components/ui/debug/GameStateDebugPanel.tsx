@@ -1,18 +1,12 @@
 import { RotateCcw, StepBack, StepForward } from "lucide-react";
-import {
-  type MainGameState,
-  useGameStore,
-} from "@/managers/stores/useGameStore";
+import { useGameStore } from "@/managers/stores/useGameStore";
 import { isMissionStep, MISSION_STEPS } from "@/types/gameplay/repairMission";
-import { GAME_STEPS, type GameStep } from "@/types/game";
-
-const MAIN_STATES: MainGameState[] = [
-  "intro",
-  "bike",
-  "pylone",
-  "ferme",
-  "outro",
-];
+import {
+  GAME_STEPS,
+  isGameStep,
+  MAIN_GAME_STATES,
+  type MainGameState,
+} from "@/types/game";
 
 function toPascalCase(value: string): string {
   return value
@@ -60,7 +54,9 @@ export function GameStateDebugPanel(): React.JSX.Element {
 
   function setSubState(nextSubState: string): void {
     if (mainState === "intro") {
-      setIntroStep(nextSubState as GameStep);
+      if (isGameStep(nextSubState)) {
+        setIntroStep(nextSubState);
+      }
       return;
     }
 
@@ -124,7 +120,7 @@ export function GameStateDebugPanel(): React.JSX.Element {
           aria-label="Main states"
           role="group"
         >
-          {MAIN_STATES.map((state) => (
+          {MAIN_GAME_STATES.map((state) => (
             <button
               key={state}
               aria-pressed={state === mainState}

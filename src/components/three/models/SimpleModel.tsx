@@ -17,7 +17,7 @@ function applyShadowSettings(
   });
 }
 
-export interface SimpleModelConfig extends ModelTransformProps {
+interface SimpleModelConfig extends ModelTransformProps {
   modelPath: string;
   castShadow?: boolean;
   receiveShadow?: boolean;

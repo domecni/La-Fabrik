@@ -160,7 +160,6 @@ State:
 - `dialogueVolume`
 - `subtitlesEnabled`
 - `subtitleLanguage`
-- `repairRuntime`
 
 Audio setters clamp values between `0` and `1`, then call:
 
@@ -169,8 +168,6 @@ AudioManager.getInstance().setCategoryVolume(category, nextVolume);
 ```
 
 This keeps UI state and browser audio state synchronized.
-
-Current caveat: `repairRuntime` is stored and displayed in the settings menu, but the repair game does not consume it yet. Treat it as a staged architecture hook rather than an active runtime switch.
 
 ## Subtitle Store
 
@@ -222,12 +219,10 @@ Current overlays:
 - `GameStateDebugPanel`: compact debug UI for viewing and switching main/sub states
 - `Crosshair`: player aiming helper
 - `InteractPrompt`: interaction prompt
-- `RepairMovementLockIndicator`: indicator intended for repair movement lock
+- `RepairMovementLockIndicator`: indicator shown while repair steps lock movement
 - `HandTrackingVisualizer`: hand tracking SVG fallback/debug visualization
 - `Subtitles`: active dialogue subtitle overlay
 - `GameSettingsMenu`: options menu and settings controls
-
-Current caveat: `useRepairMovementLocked()` returns `false` immediately on the current branch, so the movement-lock rule and indicator exist but are disabled at runtime.
 
 ## Regression Rules
 
@@ -241,6 +236,4 @@ Current caveat: `useRepairMovementLocked()` returns `false` immediately on the c
 
 ## Next Steps
 
-- Decide whether `repairRuntime` should be removed, implemented, or clearly labeled as experimental.
-- Re-enable or remove the repair movement-lock rule depending on desired gameplay.
 - Move broader mission orchestration into a clearer layer if intro, mission, dialogue, and cinematic branching grows.

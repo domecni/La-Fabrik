@@ -8,7 +8,9 @@ import { REPAIR_SCAN_PART_SECONDS } from "@/data/gameplay/repairGameConfig";
 import type {
   RepairMissionConfig,
   RepairMissionPartConfig,
-} from "@/data/gameplay/repairMissions";
+  RepairScannedBrokenPart,
+} from "@/types/gameplay/repairMission";
+import { logger } from "@/utils/core/Logger";
 import type { ExplodedPart } from "@/utils/three/ExplodedModel";
 
 interface RepairScanSequenceProps {
@@ -16,12 +18,12 @@ interface RepairScanSequenceProps {
   onComplete: (brokenParts: readonly RepairScannedBrokenPart[]) => void;
 }
 
-export interface RepairScannedBrokenPart {
-  id: string;
-  label: string;
-  modelPath: string;
-  placeholderName?: string;
+interface RepairBrokenPartMatch {
+  config: RepairMissionPartConfig;
+  partIndex: number;
 }
+
+const warnedMissingScanParts = new Set<string>();
 
 export function RepairScanSequence({
   config,
@@ -31,9 +33,9 @@ export function RepairScanSequence({
   const [activePartIndex, setActivePartIndex] = useState(0);
   const activePart = parts[activePartIndex];
   const scanPartSeconds = config.scanPartSeconds ?? REPAIR_SCAN_PART_SECONDS;
-  const brokenPartIndexes = getBrokenPartIndexes(parts, config.brokenParts);
-  const visibleBrokenPartIndexes = brokenPartIndexes.filter(
-    (partIndex) => partIndex <= activePartIndex,
+  const brokenPartMatches = getBrokenPartMatches(parts, config);
+  const visibleBrokenPartMatches = brokenPartMatches.filter(
+    (match) => match.partIndex <= activePartIndex,
   );
 
   useEffect(() => {
@@ -65,8 +67,8 @@ export function RepairScanSequence({
         onPartsReady={setParts}
       />
       <RepairScanVisual target={activePart?.object} />
-      {visibleBrokenPartIndexes.map((partIndex) => {
-        const part = parts[partIndex];
+      {visibleBrokenPartMatches.map((match) => {
+        const part = parts[match.partIndex];
         if (!part) return null;
 
         return (
@@ -87,29 +89,25 @@ function getScannedBrokenParts(
   parts: readonly ExplodedPart[],
   config: RepairMissionConfig,
 ): readonly RepairScannedBrokenPart[] {
-  const brokenPartIndexes = getBrokenPartIndexes(parts, config.brokenParts);
-
-  return brokenPartIndexes.map((_, index) => {
-    const configuredPart = config.brokenParts[index] ?? config.brokenParts[0];
-
+  return getBrokenPartMatches(parts, config).map((match) => {
     return {
-      id: configuredPart?.id ?? `${config.id}-broken-part-${index}`,
-      label: configuredPart?.label ?? `${config.label} broken part`,
-      modelPath: configuredPart?.modelPath ?? config.modelPath,
-      ...(configuredPart?.placeholderName
-        ? { placeholderName: configuredPart.placeholderName }
+      id: match.config.id,
+      label: match.config.label,
+      modelPath: match.config.modelPath ?? config.modelPath,
+      ...(match.config.caseSlotName
+        ? { caseSlotName: match.config.caseSlotName }
         : {}),
     };
   });
 }
 
-function getBrokenPartIndexes(
+function getBrokenPartMatches(
   parts: readonly ExplodedPart[],
-  brokenParts: readonly RepairMissionPartConfig[],
-): number[] {
-  if (parts.length === 0 || brokenParts.length === 0) return [];
+  config: RepairMissionConfig,
+): RepairBrokenPartMatch[] {
+  if (parts.length === 0 || config.brokenParts.length === 0) return [];
 
-  const matchedIndexes = brokenParts.flatMap((brokenPart) => {
+  const matches = config.brokenParts.flatMap((brokenPart) => {
     const { nodeName } = brokenPart;
     if (!nodeName) return [];
 
@@ -117,12 +115,30 @@ function getBrokenPartIndexes(
       objectContainsNodeName(part.object, nodeName),
     );
 
-    return index >= 0 ? [index] : [];
+    return index >= 0 ? [{ config: brokenPart, partIndex: index }] : [];
   });
 
-  if (matchedIndexes.length > 0) return [...new Set(matchedIndexes)];
+  if (matches.length !== config.brokenParts.length) {
+    const matchedIds = new Set(matches.map((match) => match.config.id));
+    const missingIds = config.brokenParts
+      .filter((brokenPart) => !matchedIds.has(brokenPart.id))
+      .map((brokenPart) => brokenPart.id);
 
-  return parts.slice(0, brokenParts.length).map((_, index) => index);
+    const warningKey = `${config.id}:${missingIds.join(",")}`;
+    if (!warnedMissingScanParts.has(warningKey)) {
+      warnedMissingScanParts.add(warningKey);
+      logger.warn("RepairScan", "Broken parts missing from exploded model", {
+        missionId: config.id,
+        missingIds,
+      });
+    }
+  }
+
+  return matches.filter(
+    (match, index, allMatches) =>
+      allMatches.findIndex((item) => item.partIndex === match.partIndex) ===
+      index,
+  );
 }
 
 function objectContainsNodeName(

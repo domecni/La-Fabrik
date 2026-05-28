@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from uuid import uuid4
 
@@ -13,7 +13,6 @@ class ClientConnection:
     websocket: WebSocket
     is_processing: bool = False
     last_frame_at: float = 0.0
-    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class ConnectionManager:

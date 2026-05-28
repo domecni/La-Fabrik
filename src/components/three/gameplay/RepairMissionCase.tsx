@@ -10,7 +10,7 @@ import {
   REPAIR_CASE_MODEL_PATH,
 } from "@/data/gameplay/repairCaseConfig";
 import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
-import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
+import type { RepairMissionConfig } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 
 interface RepairMissionCaseProps {

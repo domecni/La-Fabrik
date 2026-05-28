@@ -1,8 +1,10 @@
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
-import { EBIKE_REPAIR_POSITION } from "@/data/gameplay/repairMissionAnchors";
+import {
+  BIKE_REPAIR_POSITION,
+  REPAIR_MISSION_POSITION_ENTRIES,
+} from "@/data/gameplay/repairMissionAnchors";
 import { useGameStore } from "@/managers/stores/useGameStore";
-import type { RepairMissionId } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 
 interface StageAnchorProps {
@@ -10,26 +12,6 @@ interface StageAnchorProps {
   position: Vector3Tuple;
   scale?: number;
 }
-
-interface GameRepairZone {
-  mission: RepairMissionId;
-  position: Vector3Tuple;
-}
-
-const GAME_REPAIR_ZONES = [
-  {
-    mission: "bike",
-    position: EBIKE_REPAIR_POSITION,
-  },
-  {
-    mission: "pylone",
-    position: [64, 0, -66],
-  },
-  {
-    mission: "ferme",
-    position: [-24, 0, 42],
-  },
-] as const satisfies readonly GameRepairZone[];
 
 function StageAnchor({
   color,
@@ -58,11 +40,11 @@ function EbikeMissionTrigger(): React.JSX.Element | null {
   if (mainState !== "bike" || bikeStep !== "locked") return null;
 
   return (
-    <group position={EBIKE_REPAIR_POSITION}>
+    <group position={BIKE_REPAIR_POSITION}>
       <InteractableObject
         kind="trigger"
         label="Réparer l'e-bike"
-        position={EBIKE_REPAIR_POSITION}
+        position={BIKE_REPAIR_POSITION}
         radius={4}
         onPress={() => setMissionStep("bike", "waiting")}
       >
@@ -83,12 +65,8 @@ export function GameStageContent(): React.JSX.Element {
       {mainState === "intro" ? (
         <StageAnchor color="#7dd3fc" position={[0, 4, 0]} />
       ) : null}
-      {GAME_REPAIR_ZONES.map((zone) => (
-        <RepairGame
-          key={zone.mission}
-          mission={zone.mission}
-          position={zone.position}
-        />
+      {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission, position }) => (
+        <RepairGame key={mission} mission={mission} position={position} />
       ))}
       <EbikeMissionTrigger />
       {mainState === "outro" ? (

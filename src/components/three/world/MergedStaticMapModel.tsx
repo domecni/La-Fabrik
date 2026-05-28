@@ -93,8 +93,11 @@ function createMergedMeshes(scene: THREE.Group): MergedMeshData[] {
   return [...groups.values()]
     .map((group) => {
       if (group.geometries.length === 1) {
+        const [geometry] = group.geometries;
+        if (!geometry) return null;
+
         return {
-          geometry: group.geometries[0] as THREE.BufferGeometry,
+          geometry,
           material: group.material,
         };
       }

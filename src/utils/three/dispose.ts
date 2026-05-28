@@ -1,5 +1,41 @@
 import * as THREE from "three";
 
+type TextureMaterialKey = Extract<
+  | keyof THREE.MeshBasicMaterial
+  | keyof THREE.MeshStandardMaterial
+  | keyof THREE.MeshPhysicalMaterial
+  | keyof THREE.MeshToonMaterial,
+  string
+>;
+
+type MaterialWithTextureSlots = THREE.Material &
+  Partial<Record<TextureMaterialKey, THREE.Texture | null>>;
+
+const MATERIAL_TEXTURE_KEYS = [
+  "alphaMap",
+  "aoMap",
+  "bumpMap",
+  "clearcoatMap",
+  "clearcoatNormalMap",
+  "clearcoatRoughnessMap",
+  "displacementMap",
+  "emissiveMap",
+  "envMap",
+  "gradientMap",
+  "lightMap",
+  "map",
+  "metalnessMap",
+  "normalMap",
+  "roughnessMap",
+  "sheenColorMap",
+  "sheenRoughnessMap",
+  "specularColorMap",
+  "specularIntensityMap",
+  "specularMap",
+  "thicknessMap",
+  "transmissionMap",
+] as const satisfies readonly TextureMaterialKey[];
+
 export function disposeObject3D(object: THREE.Object3D): void {
   object.traverse((child) => {
     if (child instanceof THREE.Mesh) {
@@ -18,25 +54,13 @@ export function disposeObject3D(object: THREE.Object3D): void {
 
 function disposeMaterial(material: THREE.Material): void {
   material.dispose();
+  const materialWithTextures = material as MaterialWithTextureSlots;
 
-  for (const key of Object.keys(material)) {
-    const value = (material as unknown as Record<string, unknown>)[key];
+  for (const key of MATERIAL_TEXTURE_KEYS) {
+    const value = materialWithTextures[key];
+
     if (value instanceof THREE.Texture) {
       value.dispose();
     }
   }
-}
-
-export function disposeInstancedMesh(mesh: THREE.InstancedMesh): void {
-  mesh.geometry?.dispose();
-
-  if (Array.isArray(mesh.material)) {
-    for (const material of mesh.material) {
-      disposeMaterial(material);
-    }
-  } else if (mesh.material) {
-    disposeMaterial(mesh.material);
-  }
-
-  mesh.dispose();
 }

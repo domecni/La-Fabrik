@@ -2,7 +2,7 @@ import type {
   HierarchicalMapNode,
   MapNode,
   SceneData,
-} from "@/types/editor/editor";
+} from "@/types/map/mapScene";
 import { parseMapData } from "@/utils/map/mapNodeValidation";
 
 const MAP_JSON_PATH = "/map.json";

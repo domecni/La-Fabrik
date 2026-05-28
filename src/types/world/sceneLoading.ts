@@ -1,4 +1,4 @@
-export type SceneLoadingStatus = "loading" | "ready";
+type SceneLoadingStatus = "loading" | "ready";
 
 export interface SceneLoadingState {
   currentStep: string;

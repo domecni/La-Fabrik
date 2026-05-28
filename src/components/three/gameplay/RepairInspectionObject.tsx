@@ -2,7 +2,7 @@ import { InteractableObject } from "@/components/three/interaction/InteractableO
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
 import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
-import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
+import type { RepairMissionConfig } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 
 interface RepairInspectionObjectProps {

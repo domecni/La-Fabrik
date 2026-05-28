@@ -1,5 +1,5 @@
-import type { MapNode } from "@/types/editor/editor";
-import { isInstancedMapNodeName } from "@/world/map-instancing/mapInstancingConfig";
+import type { MapNode } from "@/types/map/mapScene";
+import { isInstancedMapNodeName } from "@/data/world/mapInstancingConfig";
 
 const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking", "terrain"]);
 const RUNTIME_VEGETATION_NODE_NAMES = new Set([
@@ -11,7 +11,7 @@ const RUNTIME_VEGETATION_NODE_NAMES = new Set([
   "sapin",
 ]);
 
-export function isRuntimeStructureMapNode(name: string): boolean {
+function isRuntimeStructureMapNode(name: string): boolean {
   return MAP_STRUCTURE_NODE_NAMES.has(name);
 }
 

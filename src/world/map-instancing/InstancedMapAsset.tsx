@@ -7,8 +7,8 @@ import {
   normalizeMapScale,
   useTerrainHeightSampler,
 } from "@/hooks/three/useTerrainHeight";
+import type { MapAssetInstance } from "@/hooks/world/useMapInstancingData";
 import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
-import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
 
 interface InstancedMapAssetProps {
   modelPath: string;
@@ -102,8 +102,11 @@ function extractMeshes(scene: THREE.Group): MeshData[] {
   return [...groups.values()]
     .map((group) => {
       if (group.geometries.length === 1) {
+        const [geometry] = group.geometries;
+        if (!geometry) return null;
+
         return {
-          geometry: group.geometries[0] as THREE.BufferGeometry,
+          geometry,
           material: group.material,
         };
       }

@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw, Save } from "lucide-react";
-import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
+import type { SubtitleLanguage } from "@/types/settings/settings";
 import type {
   DialogueDefinition,
   DialogueManifest,
   DialogueSpeaker,
   DialogueVoiceId,
 } from "@/types/dialogues/dialogues";
+import { logger } from "@/utils/core/Logger";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
-import { parseSrt } from "@/utils/subtitles/parseSrt";
+import {
+  parseSrt,
+  parseSrtTime,
+  parseSrtWithDiagnostics,
+} from "@/utils/subtitles/parseSrt";
 
 interface SrtVoiceOption {
   id: DialogueVoiceId;
@@ -88,21 +93,6 @@ function formatPreviewTime(totalSeconds: number): string {
   return `${Math.max(0, totalSeconds).toFixed(1)}s`;
 }
 
-function parseSrtTime(value: string): number | null {
-  const match = value.match(/^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/);
-  if (!match) return null;
-
-  const [, hours, minutes, seconds, milliseconds] = match;
-  if (!hours || !minutes || !seconds || !milliseconds) return null;
-
-  return (
-    Number(hours) * 3600 +
-    Number(minutes) * 60 +
-    Number(seconds) +
-    Number(milliseconds) / 1000
-  );
-}
-
 function padTime(value: number): string {
   return value.toString().padStart(2, "0");
 }
@@ -120,7 +110,7 @@ function getSrtDiagnostic(
     .trim()
     .split(/\n{2,}/)
     .filter(Boolean);
-  const cues = parseSrt(content);
+  const { cues, diagnostics } = parseSrtWithDiagnostics(content);
   const errors: string[] = [];
   const indexes = new Set<number>();
 
@@ -162,6 +152,10 @@ function getSrtDiagnostic(
     errors.push(
       "Un ou plusieurs blocs ont une duree invalide ou un timecode illisible.",
     );
+  }
+
+  for (const diagnostic of diagnostics) {
+    errors.push(`Bloc ${diagnostic.blockIndex + 1}: ${diagnostic.reason}.`);
   }
 
   const cueIndexes = new Set(cues.map((cue) => cue.index));
@@ -470,8 +464,14 @@ export function EditorSrtPanel(): React.JSX.Element {
       .then((loadedManifest) => {
         if (mounted) setManifest(loadedManifest);
       })
-      .catch(() => {
-        if (mounted) setManifest(null);
+      .catch((error) => {
+        if (!mounted) return;
+
+        setManifest(null);
+        setStatus("Erreur de chargement du manifeste dialogues");
+        logger.error("EditorSrt", "Failed to load dialogue manifest", {
+          error: error instanceof Error ? error : String(error),
+        });
       });
 
     return () => {
@@ -519,9 +519,14 @@ export function EditorSrtPanel(): React.JSX.Element {
           Voix
           <select
             value={voice}
-            onChange={(event) =>
-              setVoice(event.target.value as DialogueVoiceId)
-            }
+            onChange={(event) => {
+              const selectedVoice = SRT_VOICES.find(
+                (item) => item.id === event.target.value,
+              );
+              if (selectedVoice) {
+                setVoice(selectedVoice.id);
+              }
+            }}
           >
             {SRT_VOICES.map((item) => (
               <option key={item.id} value={item.id}>
@@ -535,9 +540,14 @@ export function EditorSrtPanel(): React.JSX.Element {
           Langue
           <select
             value={language}
-            onChange={(event) =>
-              setLanguage(event.target.value as SubtitleLanguage)
-            }
+            onChange={(event) => {
+              const selectedLanguage = SRT_LANGUAGES.find(
+                (item) => item === event.target.value,
+              );
+              if (selectedLanguage) {
+                setLanguage(selectedLanguage);
+              }
+            }}
           >
             {SRT_LANGUAGES.map((item) => (
               <option key={item} value={item}>

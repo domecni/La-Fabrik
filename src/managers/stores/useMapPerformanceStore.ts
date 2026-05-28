@@ -26,6 +26,10 @@ export type MapPerformanceModelName =
   | "pylone"
   | "boiteauxlettres"
   | "maison1"
+  | "panneauaffichage"
+  | "panneauclassique"
+  | "panneaufleche"
+  | "panneausolaire"
   | "parcebike"
   | "terrain"
   | "sky";
@@ -70,6 +74,10 @@ export const MAP_PERFORMANCE_MODEL_NAMES: readonly MapPerformanceModelName[] = [
   "pylone",
   "boiteauxlettres",
   "maison1",
+  "panneauaffichage",
+  "panneauclassique",
+  "panneaufleche",
+  "panneausolaire",
   "parcebike",
   "terrain",
   "sky",
@@ -94,6 +102,10 @@ const MODEL_GROUPS: Record<
   pylone: ["props"],
   boiteauxlettres: ["props"],
   maison1: ["buildings"],
+  panneauaffichage: ["props"],
+  panneauclassique: ["props"],
+  panneaufleche: ["props"],
+  panneausolaire: ["props"],
   parcebike: ["props"],
   terrain: ["terrain"],
   sky: ["sky"],
@@ -115,10 +127,10 @@ function createDefaultVisibility(): MapPerformanceVisibility {
   };
 }
 
-export function isMapPerformanceModelName(
+function isMapPerformanceModelName(
   name: string,
 ): name is MapPerformanceModelName {
-  return MAP_PERFORMANCE_MODEL_NAMES.includes(name as MapPerformanceModelName);
+  return (MAP_PERFORMANCE_MODEL_NAMES as readonly string[]).includes(name);
 }
 
 export function isMapModelVisible(

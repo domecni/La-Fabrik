@@ -6,7 +6,7 @@ import {
   normalizeMapScale,
   useTerrainSnappedPosition,
 } from "@/hooks/three/useTerrainHeight";
-import type { MapNode } from "@/types/editor/editor";
+import type { MapNode } from "@/types/map/mapScene";
 
 interface GeneratedMapNodeInstanceProps {
   node: MapNode;

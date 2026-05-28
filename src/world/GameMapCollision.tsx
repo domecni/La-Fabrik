@@ -18,12 +18,12 @@ import {
   useTerrainHeightSampler,
 } from "@/hooks/three/useTerrainHeight";
 import { WorldBoundsCollision } from "@/world/collision/WorldBoundsCollision";
-import type { MapNode } from "@/types/editor/editor";
+import type { MapNode } from "@/types/map/mapScene";
 import type { OctreeReadyHandler } from "@/types/three/three";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
-export interface GameMapCollisionNode {
+interface GameMapCollisionNode {
   node: MapNode;
   modelUrl: string | null;
 }

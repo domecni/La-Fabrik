@@ -445,11 +445,14 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
             Voix
             <select
               value={selectedDialogue.voice}
-              onChange={(event) =>
-                updateSelectedDialogue({
-                  voice: event.target.value as DialogueVoiceId,
-                })
-              }
+              onChange={(event) => {
+                const selectedVoice = voices.find(
+                  (voice) => voice.id === event.target.value,
+                );
+                if (!selectedVoice) return;
+
+                updateSelectedDialogue({ voice: selectedVoice.id });
+              }}
             >
               {voices.map((voice) => (
                 <option key={voice.id} value={voice.id}>

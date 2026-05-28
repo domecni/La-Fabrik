@@ -80,9 +80,9 @@ This document lists the user-visible and developer-facing features implemented i
 - Fragmentation through repair-case trigger or two-fists hand gesture
 - Exploded model visualization through `ExplodableModel`
 - Scan visual that steps through exploded parts
-- Broken-part detection by configured `nodeName`, with fallback to first scanned parts
+- Broken-part detection by configured `nodeName`, with diagnostics when configured parts are missing
 - Persistent broken-part highlight and broken-part prompt after discovery
-- Grabbable replacement part choices, including decoys
+- Grabbable replacement part choices, including distractor parts
 - Grabbable broken parts that must be deposited back into the case
 - Snap-to-placeholder placement
 - Correct-part, wrong-part, and stored-part visual feedback

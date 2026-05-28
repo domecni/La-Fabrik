@@ -1,8 +1,8 @@
-import { Suspense, useCallback, useMemo, useRef, useState } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
-import { CHUNK_CONFIG } from "@/data/world/fogConfig";
+import { Suspense, useMemo } from "react";
+import { CHUNK_CONFIG } from "@/data/world/chunkStreamingConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
+import { useVisibleWorldChunks } from "@/hooks/world/useVisibleWorldChunks";
 import {
   isMapModelVisible,
   useMapPerformanceStore,
@@ -11,8 +11,9 @@ import { InstancedVegetation } from "@/world/vegetation/InstancedVegetation";
 import {
   type VegetationInstance,
   useVegetationData,
-} from "@/world/vegetation/useVegetationData";
+} from "@/hooks/world/useVegetationData";
 import {
+  VEGETATION_TYPE_KEYS,
   VEGETATION_TYPES,
   type VegetationType,
 } from "@/world/vegetation/vegetationConfig";
@@ -80,87 +81,31 @@ function createVegetationChunks(
 }
 
 export function VegetationSystem(): React.JSX.Element | null {
-  const camera = useThree((state) => state.camera);
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
   const { data, isLoading } = useVegetationData();
-  const lastUpdateRef = useRef(-CHUNK_CONFIG.updateInterval);
-  const [activeChunkKeys, setActiveChunkKeys] = useState<Set<string>>(
-    () => new Set(),
-  );
   const streamingEnabled =
     CHUNK_CONFIG.enabled && sceneMode === "game" && cameraMode === "player";
 
   const chunks = useMemo(() => {
     if (!data) return [];
 
-    return Object.entries(VEGETATION_TYPES).flatMap(([type, config]) => {
+    return VEGETATION_TYPE_KEYS.flatMap((type) => {
+      const config = VEGETATION_TYPES[type];
+
       if (!config.enabled) return [];
       if (!isMapModelVisible(config.mapName, { groups, models })) return [];
 
       const entry = data.get(config.mapName);
       if (!entry || entry.instances.length === 0) return [];
 
-      return createVegetationChunks(type as VegetationType, entry.instances);
+      return createVegetationChunks(type, entry.instances);
     });
   }, [data, groups, models]);
 
-  const visibleChunks = streamingEnabled
-    ? chunks.filter((chunk) => {
-        if (activeChunkKeys.size > 0) {
-          return activeChunkKeys.has(chunk.key);
-        }
-
-        return (
-          Math.hypot(
-            chunk.centerX - camera.position.x,
-            chunk.centerZ - camera.position.z,
-          ) <= CHUNK_CONFIG.loadRadius
-        );
-      })
-    : chunks;
-
-  const updateActiveChunks = useCallback(() => {
-    const nextKeys = new Set<string>();
-    const cameraX = camera.position.x;
-    const cameraZ = camera.position.z;
-
-    for (const chunk of chunks) {
-      const distance = Math.hypot(
-        chunk.centerX - cameraX,
-        chunk.centerZ - cameraZ,
-      );
-      const wasActive = activeChunkKeys.has(chunk.key);
-      const radius = wasActive
-        ? CHUNK_CONFIG.unloadRadius
-        : CHUNK_CONFIG.loadRadius;
-
-      if (distance <= radius) {
-        nextKeys.add(chunk.key);
-      }
-    }
-
-    if (
-      nextKeys.size === activeChunkKeys.size &&
-      [...nextKeys].every((key) => activeChunkKeys.has(key))
-    ) {
-      return;
-    }
-
-    setActiveChunkKeys(nextKeys);
-  }, [activeChunkKeys, camera, chunks]);
-
-  useFrame(({ clock }) => {
-    if (!streamingEnabled) return;
-
-    const now = clock.elapsedTime * 1000;
-    if (now - lastUpdateRef.current < CHUNK_CONFIG.updateInterval) return;
-    lastUpdateRef.current = now;
-
-    updateActiveChunks();
-  });
+  const visibleChunks = useVisibleWorldChunks(chunks, streamingEnabled);
 
   if (isLoading || !data) {
     return null;

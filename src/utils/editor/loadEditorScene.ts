@@ -1,4 +1,4 @@
-import type { SceneData } from "@/types/editor/editor";
+import type { SceneData } from "@/types/map/mapScene";
 import { createSceneDataFromMapPayload } from "@/utils/map/loadMapSceneData";
 
 const MAP_JSON_PATH = "/map.json";

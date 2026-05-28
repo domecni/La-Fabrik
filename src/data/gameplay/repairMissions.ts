@@ -1,40 +1,8 @@
-import type { RepairMissionId } from "@/types/gameplay/repairMission";
 import type {
-  ModelTransformProps,
-  Vector3Scale,
-  Vector3Tuple,
-} from "@/types/three/three";
-
-export interface RepairMissionCaseConfig {
-  position: Vector3Tuple;
-  rotation: Vector3Tuple;
-  scale: Vector3Scale;
-}
-
-export interface RepairMissionPartConfig {
-  id: string;
-  label: string;
-  nodeName?: string;
-  placeholderName?: string;
-  modelPath?: string;
-}
-
-export interface RepairMissionConfig {
-  id: RepairMissionId;
-  label: string;
-  description: string;
-  modelPath: string;
-  modelScale?: ModelTransformProps["scale"];
-  stageUiPath: string;
-  interactUiPath: string;
-  brokenUiPath: string;
-  case: RepairMissionCaseConfig;
-  reassemblySeconds?: number;
-  requiredReplacementPartId: string;
-  scanPartSeconds?: number;
-  brokenParts: readonly RepairMissionPartConfig[];
-  replacementParts: readonly RepairMissionPartConfig[];
-}
+  RepairMissionCaseConfig,
+  RepairMissionConfig,
+  RepairMissionId,
+} from "@/types/gameplay/repairMission";
 
 const REPAIR_INTERACT_UI_PATH = "/assets/UI/interagir.webm";
 const REPAIR_BROKEN_UI_PATH = "/assets/UI/cassé.webm";
@@ -64,7 +32,7 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         label: "Cooling core",
         modelPath: "/models/refroidisseur/model.gltf",
         nodeName: "refroidisseur",
-        placeholderName: "placeholder_1",
+        caseSlotName: "placeholder_1",
       },
     ],
     replacementParts: [
@@ -74,12 +42,12 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         modelPath: "/models/refroidisseur/model.gltf",
       },
       {
-        id: "bike-radio-decoy",
+        id: "bike-radio-distractor",
         label: "Radio module",
         modelPath: "/models/talkie/model.gltf",
       },
       {
-        id: "bike-glove-decoy",
+        id: "bike-glove-distractor",
         label: "Insulation glove",
         modelPath: "/models/gant_l/model.gltf",
       },
@@ -103,13 +71,13 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         id: "pylone-grid-relay",
         label: "Grid relay",
         nodeName: "lampe",
-        placeholderName: "placeholder_1",
+        caseSlotName: "placeholder_1",
       },
       {
         id: "pylone-damaged-panel",
         label: "Damaged solar panel",
         nodeName: "panneau2",
-        placeholderName: "placeholder_2",
+        caseSlotName: "placeholder_2",
       },
     ],
     replacementParts: [
@@ -119,12 +87,12 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         modelPath: "/models/pylone/model.gltf",
       },
       {
-        id: "pylone-stone-decoy",
+        id: "pylone-stone-distractor",
         label: "Stone counterweight",
         modelPath: "/models/galet/model.gltf",
       },
       {
-        id: "pylone-cooling-decoy",
+        id: "pylone-cooling-distractor",
         label: "Cooling core",
         modelPath: "/models/refroidisseur/model.gltf",
       },
@@ -147,12 +115,12 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
       {
         id: "ferme-irrigation-pump",
         label: "Irrigation pump",
-        placeholderName: "placeholder_1",
+        caseSlotName: "placeholder_1",
       },
       {
         id: "ferme-humidity-sensor",
         label: "Humidity sensor",
-        placeholderName: "placeholder_2",
+        caseSlotName: "placeholder_2",
       },
     ],
     replacementParts: [
@@ -162,12 +130,12 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         modelPath: "/models/fermeverticale/model.gltf",
       },
       {
-        id: "ferme-tree-decoy",
+        id: "ferme-tree-distractor",
         label: "Tree sensor",
         modelPath: "/models/sapin/model.gltf",
       },
       {
-        id: "ferme-radio-decoy",
+        id: "ferme-radio-distractor",
         label: "Radio module",
         modelPath: "/models/talkie/model.gltf",
       },

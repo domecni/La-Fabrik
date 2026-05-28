@@ -51,8 +51,6 @@ public/models/electricienne_animated/model.gltf
 
 with the `Dance` animation.
 
-`src/hooks/animation/useCharacterAnimation.ts` is a hook-level alternative for components that need to own their group ref and animation controls directly.
-
 ## GLTF Reuse
 
 Use `useClonedObject` when a GLTF scene is reused by a component instance. It memoizes `scene.clone(true)` and keeps clone creation out of render churn.

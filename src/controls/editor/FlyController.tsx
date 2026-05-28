@@ -30,7 +30,7 @@ export const FlyController = forwardRef<FlyControllerRef, FlyControllerProps>(
   ) => {
     const { camera: rawCamera } = useThree();
     const cameraRef = useRef(rawCamera);
-    const keys = useRef<{ [key: string]: boolean }>({});
+    const keys = useRef<Partial<Record<string, boolean>>>({});
     const controlsRef = useRef<OrbitControlsRef | null>(null);
     const lastPosition = useRef(new THREE.Vector3());
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { RepairCompletionParticles } from "@/components/three/gameplay/RepairCompletionParticles";
 import { ExplodableModel } from "@/components/three/models/ExplodableModel";
 import { REPAIR_REASSEMBLY_SECONDS } from "@/data/gameplay/repairGameConfig";
-import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
+import type { RepairMissionConfig } from "@/types/gameplay/repairMission";
 
 interface RepairReassemblyStepProps {
   config: RepairMissionConfig;

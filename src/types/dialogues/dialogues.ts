@@ -1,4 +1,4 @@
-import type { SubtitleLanguage } from "@/managers/stores/useSettingsStore";
+import type { SubtitleLanguage } from "@/types/settings/settings";
 
 export type DialogueVoiceId = "narrateur" | "fermier" | "electricienne";
 export type DialogueSpeaker = "Narrateur" | "Fermier" | "Electricienne";

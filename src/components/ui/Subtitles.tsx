@@ -2,7 +2,7 @@ import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 import type { DialogueSpeaker } from "@/types/dialogues/dialogues";
 
-export type SubtitleSpeaker = DialogueSpeaker;
+type SubtitleSpeaker = DialogueSpeaker;
 
 interface SubtitlesProps {
   speaker?: SubtitleSpeaker | null;

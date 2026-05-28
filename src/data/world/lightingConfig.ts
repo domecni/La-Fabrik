@@ -1,5 +1,5 @@
-export const AMBIENT_LIGHT_COLOR = "#dfe7d8";
-export const SUN_LIGHT_COLOR = "#ffe2bf";
+const AMBIENT_LIGHT_COLOR = "#dfe7d8";
+const SUN_LIGHT_COLOR = "#ffe2bf";
 
 export const LIGHTING_DEFAULTS = {
   ambientColor: AMBIENT_LIGHT_COLOR,

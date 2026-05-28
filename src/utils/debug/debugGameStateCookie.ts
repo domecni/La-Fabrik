@@ -1,5 +1,3 @@
-import type { GameState } from "@/managers/stores/useGameStore";
-
 const DEBUG_GAME_STATE_COOKIE_NAME = "la-fabrik-debug-game-state";
 const DEBUG_GAME_STATE_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
@@ -25,7 +23,7 @@ export function readDebugGameStateCookie(): unknown {
   }
 }
 
-export function writeDebugGameStateCookie(state: GameState): void {
+export function writeDebugGameStateCookie(state: unknown): void {
   if (typeof document === "undefined") return;
 
   const value = encodeURIComponent(JSON.stringify(state));

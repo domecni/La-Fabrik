@@ -2,8 +2,6 @@ import { useGameStore } from "@/managers/stores/useGameStore";
 import type { MissionStep } from "@/types/gameplay/repairMission";
 
 export function useRepairMovementLocked(): boolean {
-  return false;
-
   return useGameStore((state) => {
     switch (state.mainState) {
       case "bike":

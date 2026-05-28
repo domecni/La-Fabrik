@@ -4,9 +4,9 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
+import type { VegetationInstance } from "@/hooks/world/useVegetationData";
 import { useWind } from "@/hooks/world/useWind";
 import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
-import type { VegetationInstance } from "@/world/vegetation/useVegetationData";
 
 interface InstancedVegetationProps {
   modelPath: string;

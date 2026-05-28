@@ -7,8 +7,9 @@ import {
 } from "@/hooks/animation/useAnimatedModel";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import type { ModelTransformProps } from "@/types/three/three";
+import { logger } from "@/utils/core/Logger";
 
-export interface AnimatedModelConfig extends ModelTransformProps {
+interface AnimatedModelConfig extends ModelTransformProps {
   modelPath: string;
   animations?: string[];
   defaultAnimation?: string;
@@ -121,17 +122,28 @@ export function AnimatedModel({
       return;
     }
 
-    let defaultAction = actions[defaultAnimation as string];
+    let defaultAction = actions[defaultAnimation];
 
-    if (!defaultAction && names.length > 0) {
-      defaultAction = actions[names[0] as string];
+    const fallbackAnimation = names[0];
+    if (!defaultAction && fallbackAnimation) {
+      logger.warn(
+        "AnimatedModel",
+        "Default animation missing, using fallback",
+        {
+          modelPath,
+          defaultAnimation,
+          fallbackAnimation,
+          availableAnimations: names,
+        },
+      );
+      defaultAction = actions[fallbackAnimation];
     }
 
     if (defaultAction) {
       defaultAction.play();
       onLoaded?.();
     }
-  }, [actions, defaultAnimation, names, autoPlay, onLoaded]);
+  }, [actions, defaultAnimation, modelPath, names, autoPlay, onLoaded]);
 
   const contextValue: AnimatedModelContextValue = {
     play,

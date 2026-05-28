@@ -1,4 +1,48 @@
+import type {
+  ModelTransformProps,
+  Vector3Scale,
+  Vector3Tuple,
+} from "@/types/three/three";
+
 export type RepairMissionId = "bike" | "pylone" | "ferme";
+
+export interface RepairMissionCaseConfig {
+  position: Vector3Tuple;
+  rotation: Vector3Tuple;
+  scale: Vector3Scale;
+}
+
+export interface RepairMissionPartConfig {
+  id: string;
+  label: string;
+  nodeName?: string;
+  caseSlotName?: string;
+  modelPath?: string;
+}
+
+export interface RepairScannedBrokenPart {
+  id: string;
+  label: string;
+  modelPath: string;
+  caseSlotName?: string;
+}
+
+export interface RepairMissionConfig {
+  id: RepairMissionId;
+  label: string;
+  description: string;
+  modelPath: string;
+  modelScale?: ModelTransformProps["scale"];
+  stageUiPath: string;
+  interactUiPath: string;
+  brokenUiPath: string;
+  case: RepairMissionCaseConfig;
+  reassemblySeconds?: number;
+  requiredReplacementPartId: string;
+  scanPartSeconds?: number;
+  brokenParts: readonly RepairMissionPartConfig[];
+  replacementParts: readonly RepairMissionPartConfig[];
+}
 
 export type MissionStep =
   | "locked"
@@ -10,7 +54,10 @@ export type MissionStep =
   | "reassembling"
   | "done";
 
-export const REPAIR_MISSION_IDS = ["bike", "pylone", "ferme"] as const;
+const REPAIR_MISSION_IDS = ["bike", "pylone", "ferme"] as const;
+const REPAIR_MISSION_ID_VALUES: ReadonlySet<string> = new Set(
+  REPAIR_MISSION_IDS,
+);
 
 export const MISSION_STEPS = [
   "locked",
@@ -22,13 +69,14 @@ export const MISSION_STEPS = [
   "reassembling",
   "done",
 ] as const satisfies readonly MissionStep[];
+const MISSION_STEP_VALUES: ReadonlySet<string> = new Set(MISSION_STEPS);
 
 export function isRepairMissionId(value: string): value is RepairMissionId {
-  return (REPAIR_MISSION_IDS as readonly string[]).includes(value);
+  return REPAIR_MISSION_ID_VALUES.has(value);
 }
 
 export function isMissionStep(value: string): value is MissionStep {
-  return (MISSION_STEPS as readonly string[]).includes(value);
+  return MISSION_STEP_VALUES.has(value);
 }
 
 export function getNextMissionStep(step: MissionStep): MissionStep {

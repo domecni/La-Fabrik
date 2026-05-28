@@ -3,7 +3,6 @@ import * as THREE from "three";
 import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
-import type { RepairScannedBrokenPart } from "@/components/three/gameplay/RepairScanSequence";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import {
@@ -15,7 +14,9 @@ import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
 import type {
   RepairMissionConfig,
   RepairMissionPartConfig,
-} from "@/data/gameplay/repairMissions";
+  RepairScannedBrokenPart,
+} from "@/types/gameplay/repairMission";
+import { logger } from "@/utils/core/Logger";
 import type { Vector3Tuple } from "@/types/three/three";
 
 const INSTALL_TARGET_POSITION: Vector3Tuple = [0, 0.8, 0];
@@ -34,6 +35,7 @@ const REPAIR_INSTALL_RADIUS = 1.1;
 const VALID_PART_COLOR = "#22c55e";
 const INVALID_PART_COLOR = "#ef4444";
 const STORED_BROKEN_PART_COLOR = "#38bdf8";
+let hasWarnedMissingPlaceholders = false;
 
 interface RepairRepairingStepProps {
   brokenParts: readonly RepairScannedBrokenPart[];
@@ -400,6 +402,14 @@ function getPlaceholderTargets(
     return placeholders;
   }
 
+  if (!hasWarnedMissingPlaceholders) {
+    hasWarnedMissingPlaceholders = true;
+    logger.warn(
+      "RepairGame",
+      "Repair case placeholders missing, using fallback slots",
+    );
+  }
+
   return FALLBACK_PLACEHOLDER_OFFSETS.map(
     (offset, index): RepairCasePlaceholder => ({
       name: `placeholder_${index + 1}`,
@@ -416,12 +426,12 @@ function getBrokenPartTargetPositions(
   part: RepairScannedBrokenPart,
   placeholderTargets: readonly RepairCasePlaceholder[],
 ): readonly Vector3Tuple[] {
-  if (!part.placeholderName) {
+  if (!part.caseSlotName) {
     return placeholderTargets.map((placeholder) => placeholder.position);
   }
 
   const matchingPlaceholder = placeholderTargets.find(
-    (placeholder) => placeholder.name === part.placeholderName,
+    (placeholder) => placeholder.name === part.caseSlotName,
   );
 
   return matchingPlaceholder
@@ -475,6 +485,6 @@ function getBrokenPartsToDeposit(
     id: part.id,
     label: part.label,
     modelPath: part.modelPath ?? config.modelPath,
-    ...(part.placeholderName ? { placeholderName: part.placeholderName } : {}),
+    ...(part.caseSlotName ? { caseSlotName: part.caseSlotName } : {}),
   }));
 }

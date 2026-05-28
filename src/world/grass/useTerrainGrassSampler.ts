@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { TERRAIN_MODEL_PATH } from "@/data/world/terrainConfig";
 import type { TerrainSurfaceBounds } from "@/types/world/terrainSurface";
 import type { Vector3Tuple } from "@/types/three/three";
+import { logger } from "@/utils/core/Logger";
 import { getMapNodesByName } from "@/utils/map/loadMapSceneData";
 import { GRASS_CONFIG } from "@/world/grass/grassConfig";
 
@@ -13,8 +14,9 @@ const DOWN = new THREE.Vector3(0, -1, 0);
 const DEFAULT_TERRAIN_POSITION: Vector3Tuple = [0, 0, 0];
 const DEFAULT_TERRAIN_ROTATION: Vector3Tuple = [0, 0, 0];
 const DEFAULT_TERRAIN_SCALE: Vector3Tuple = [1, 1, 1];
+let hasWarnedFallbackBounds = false;
 
-export interface TerrainGrassSample {
+interface TerrainGrassSample {
   normal: THREE.Vector3;
   position: THREE.Vector3;
 }
@@ -27,7 +29,12 @@ export interface TerrainGrassSampler {
   sample: (x: number, z: number) => TerrainGrassSample | null;
 }
 
-function createFallbackBounds(): TerrainSurfaceBounds {
+function createFallbackTerrainBounds(): TerrainSurfaceBounds {
+  if (!hasWarnedFallbackBounds) {
+    hasWarnedFallbackBounds = true;
+    logger.warn("Grass", "Terrain bounds missing, using fallback grass bounds");
+  }
+
   return {
     minX: -120,
     maxX: 120,
@@ -78,7 +85,7 @@ function createTerrainGrassSampler(
   }
 
   const bounds = terrainBounds.isEmpty()
-    ? createFallbackBounds()
+    ? createFallbackTerrainBounds()
     : {
         minX: terrainBounds.min.x,
         maxX: terrainBounds.max.x,

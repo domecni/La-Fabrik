@@ -35,7 +35,7 @@ import {
   isRuntimeSingleMapNode,
 } from "@/utils/map/mapRuntimeClassification";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
-import type { MapNode } from "@/types/editor/editor";
+import type { MapNode } from "@/types/map/mapScene";
 import type { OctreeReadyHandler } from "@/types/three/three";
 
 interface LoadedMapNode {

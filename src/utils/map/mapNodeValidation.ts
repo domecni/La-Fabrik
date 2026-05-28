@@ -1,4 +1,4 @@
-import type { HierarchicalMapNode, MapNode } from "../../types/editor/editor";
+import type { HierarchicalMapNode, MapNode } from "@/types/map/mapScene";
 
 export interface ParsedMapNodes {
   mapNodes: MapNode[];
@@ -31,9 +31,7 @@ function isMapNode(value: unknown): value is MapNode {
   );
 }
 
-export function isHierarchicalMapNode(
-  value: unknown,
-): value is HierarchicalMapNode {
+function isHierarchicalMapNode(value: unknown): value is HierarchicalMapNode {
   if (!isMapNode(value)) {
     return false;
   }
@@ -72,20 +70,6 @@ function flattenMapNode(node: HierarchicalMapNode, path: number[]): MapNode[] {
   }
 
   return [mapNode, ...childNodes];
-}
-
-export function parseHierarchicalMapPayload(
-  value: unknown,
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  if (Array.isArray(value) && value.every(isHierarchicalMapNode)) {
-    return value;
-  }
-
-  if (isHierarchicalMapNode(value)) {
-    return value;
-  }
-
-  throw new Error("Invalid map node data");
 }
 
 export function parseMapNodes(value: unknown): MapNode[] {

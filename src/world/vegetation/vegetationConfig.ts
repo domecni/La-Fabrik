@@ -1,9 +1,3 @@
-export const VEGETATION_LOD = {
-  windAnimationRadius: 70,
-  windFadeStart: 50,
-  windFadeEnd: 70,
-};
-
 export const VEGETATION_TYPES = {
   buissons: {
     mapName: "buisson",
@@ -61,18 +55,19 @@ export const VEGETATION_TYPES = {
   },
 } as const;
 
-export type VegetationType = keyof typeof VEGETATION_TYPES;
+export const VEGETATION_TYPE_KEYS = [
+  "buissons",
+  "sapin",
+  "arbre",
+  "champdeble",
+  "champdesoja",
+  "champsdetournesol",
+] as const satisfies readonly (keyof typeof VEGETATION_TYPES)[];
+
+export type VegetationType = (typeof VEGETATION_TYPE_KEYS)[number];
 
 export const INSTANCED_MAP_EXCEPTIONS = new Set([
   "Scene",
   "blocking",
   "terrain",
 ]);
-
-export function getVegetationScaleMultiplier(name: string): number | null {
-  const config = Object.values(VEGETATION_TYPES).find(
-    (vegetationConfig) => vegetationConfig.mapName === name,
-  );
-
-  return config?.scaleMultiplier ?? null;
-}

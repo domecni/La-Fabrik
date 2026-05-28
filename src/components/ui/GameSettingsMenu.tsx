@@ -2,10 +2,7 @@ import { useEffect } from "react";
 import { RotateCcw, X } from "lucide-react";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
-import type {
-  RepairRuntime,
-  SubtitleLanguage,
-} from "@/managers/stores/useSettingsStore";
+import type { SubtitleLanguage } from "@/types/settings/settings";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
 function formatPercent(value: number): string {
@@ -62,14 +59,12 @@ export function GameSettingsMenu(): React.JSX.Element | null {
     dialogueVolume,
     subtitlesEnabled,
     subtitleLanguage,
-    repairRuntime,
     setMusicVolume,
     setSfxVolume,
     setDialogueVolume,
     setSettingsMenuOpen,
     setSubtitlesEnabled,
     setSubtitleLanguage,
-    setRepairRuntime,
   } = useSettingsStore();
 
   useEffect(() => {
@@ -173,28 +168,6 @@ export function GameSettingsMenu(): React.JSX.Element | null {
                 aria-pressed={subtitleLanguage === language}
               >
                 {language === "fr" ? "Francais" : "English"}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section
-          className="game-settings-menu__section"
-          aria-labelledby="repair-settings-heading"
-        >
-          <h3 id="repair-settings-heading">Repair game</h3>
-          <div className="game-settings-menu__choice-group game-settings-menu__choice-group--stacked">
-            {(["js", "python"] satisfies RepairRuntime[]).map((runtime) => (
-              <button
-                key={runtime}
-                type="button"
-                className={repairRuntime === runtime ? "active" : undefined}
-                onClick={() => setRepairRuntime(runtime)}
-                aria-pressed={repairRuntime === runtime}
-              >
-                {runtime === "js"
-                  ? "Repair game en JS (local)"
-                  : "Repair game en Python (server)"}
               </button>
             ))}
           </div>

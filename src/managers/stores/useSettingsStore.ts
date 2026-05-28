@@ -1,9 +1,7 @@
 import { create } from "zustand";
 import { AudioManager } from "@/managers/AudioManager";
 import type { AudioCategory } from "@/managers/AudioManager";
-
-export type SubtitleLanguage = "fr" | "en";
-export type RepairRuntime = "js" | "python";
+import type { SubtitleLanguage } from "@/types/settings/settings";
 
 interface SettingsState {
   isSettingsMenuOpen: boolean;
@@ -12,7 +10,6 @@ interface SettingsState {
   dialogueVolume: number;
   subtitlesEnabled: boolean;
   subtitleLanguage: SubtitleLanguage;
-  repairRuntime: RepairRuntime;
 }
 
 interface SettingsActions {
@@ -22,7 +19,6 @@ interface SettingsActions {
   setDialogueVolume: (volume: number) => void;
   setSubtitlesEnabled: (enabled: boolean) => void;
   setSubtitleLanguage: (language: SubtitleLanguage) => void;
-  setRepairRuntime: (runtime: RepairRuntime) => void;
   resetSettings: () => void;
 }
 
@@ -35,7 +31,6 @@ const DEFAULT_SETTINGS: SettingsState = {
   dialogueVolume: 1,
   subtitlesEnabled: true,
   subtitleLanguage: "fr",
-  repairRuntime: "js",
 };
 
 function clampVolume(volume: number): number {
@@ -79,7 +74,6 @@ export const useSettingsStore = create<SettingsStore>()((set) => ({
     set({ dialogueVolume: setAudioCategoryVolume("dialogue", volume) }),
   setSubtitlesEnabled: (subtitlesEnabled) => set({ subtitlesEnabled }),
   setSubtitleLanguage: (subtitleLanguage) => set({ subtitleLanguage }),
-  setRepairRuntime: (repairRuntime) => set({ repairRuntime }),
   resetSettings: () => {
     applyDefaultAudioSettings();
     set(DEFAULT_SETTINGS);

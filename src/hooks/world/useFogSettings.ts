@@ -4,7 +4,3 @@ import type { FogState } from "@/data/world/fogConfig";
 export function useFogSettings(): FogState {
   return useWorldSettingsStore((state) => state.fog);
 }
-
-export function useSetFogSettings(): (fog: Partial<FogState>) => void {
-  return useWorldSettingsStore((state) => state.setFog);
-}

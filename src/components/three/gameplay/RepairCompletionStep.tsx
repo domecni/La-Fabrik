@@ -5,7 +5,7 @@ import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
 import { REPAIR_CASE_ANIMATION_DURATION } from "@/data/gameplay/repairCaseConfig";
 import { REPAIR_INTERACTION_RADIUS } from "@/data/gameplay/repairGameConfig";
-import type { RepairMissionConfig } from "@/data/gameplay/repairMissions";
+import type { RepairMissionConfig } from "@/types/gameplay/repairMission";
 
 interface RepairCompletionStepProps {
   config: RepairMissionConfig;

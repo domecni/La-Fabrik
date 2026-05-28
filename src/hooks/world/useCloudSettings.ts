@@ -4,7 +4,3 @@ import type { CloudState } from "@/data/world/cloudConfig";
 export function useCloudSettings(): CloudState {
   return useWorldSettingsStore((state) => state.clouds);
 }
-
-export function useSetCloudSettings(): (clouds: Partial<CloudState>) => void {
-  return useWorldSettingsStore((state) => state.setClouds);
-}

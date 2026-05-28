@@ -52,7 +52,7 @@ intro → start-intro → naming → bienvenue → star-move → mission2 → se
 - **Actions** :
   - Stocke `activityCity: false` dans le store Zustand
   - Joue l'audio `alertCentral`
-- **État** : Les objets avec hook `useActivityCity()` détectent le changement et jouent leurs animations
+- **État** : Les systèmes lisent `activityCity` depuis `useGameStore` pour adapter leur comportement
 - **Attente** : Le joueur atteint la zone de trigger pour `searching_problem`
 
 ### 7. `searching_problem`
@@ -81,15 +81,13 @@ intro → start-intro → naming → bienvenue → star-move → mission2 → se
 
 | Fichier                                 | Rôle                                                      |
 | --------------------------------------- | --------------------------------------------------------- |
-| `src/stores/gameStore.ts`               | Store Zustand pour l'état global du jeu                   |
-| `src/stateManager/GameStepManager.ts`   | Synchronise avec le store Zustand                         |
+| `src/managers/stores/useGameStore.ts`   | Store Zustand pour l'état global du jeu                   |
 | `src/components/game/GameFlow.tsx`      | Gère les transitions automatiques et la lecture audio     |
 | `src/components/ui/IntroUI.tsx`         | Affiche l'input pour le prénom et le message de bienvenue |
 | `src/components/zone/ZoneDetection.tsx` | Détecte quand le joueur entre dans une zone               |
-| `src/components/3d/CentralObject.tsx`   | Objet interactif "central" pour la mission 2              |
+| `src/world/GameStageContent.tsx`        | Monte les contenus de mission dans la scène               |
 | `src/data/audioConfig.ts`               | Chemins des fichiers audio                                |
 | `src/data/zones.ts`                     | Configuration des zones de transition                     |
-| `src/hooks/useActivityCity.ts`          | Hook pour détecter le changement d'activité de la ville   |
 
 ---
 
@@ -134,35 +132,14 @@ export const ZONES: Zone[] = [
 ## Store Zustand
 
 ```typescript
-// src/stores/gameStore.ts
+// src/managers/stores/useGameStore.ts
 interface GameState {
-  step: GameStep;
-  activityCity: boolean;
-  playerName: string;
-  canMove: boolean;
-  setStep: (step: GameStep) => void;
-  setActivityCity: (value: boolean) => void;
-  setPlayerName: (name: string) => void;
-  setCanMove: (canMove: boolean) => void;
-}
-```
-
----
-
-## Hooks personnalisés
-
-### useActivityCity
-
-Permet aux objets 3D de réagir au changement d'activité de la ville :
-
-```typescript
-import { useActivityCity } from "@/hooks/useActivityCity";
-
-function MyAnimatedObject() {
-  const activityCity = useActivityCity(); // true par défaut, false en mission2
-
-  // L'animation se déclenche quand activityCity change à false
-  // Utiliser useEffect pour réagir au changement
+  mainState: MainGameState;
+  missionFlow: {
+    activityCity: boolean;
+    canMove: boolean;
+    playerName: string;
+  };
 }
 ```
 

@@ -7,21 +7,17 @@ import { RepairInspectionObject } from "@/components/three/gameplay/RepairInspec
 import { RepairMissionCase } from "@/components/three/gameplay/RepairMissionCase";
 import { RepairRepairingStep } from "@/components/three/gameplay/RepairRepairingStep";
 import { RepairReassemblyStep } from "@/components/three/gameplay/RepairReassemblyStep";
-import {
-  RepairScanSequence,
-  type RepairScannedBrokenPart,
-} from "@/components/three/gameplay/RepairScanSequence";
+import { RepairScanSequence } from "@/components/three/gameplay/RepairScanSequence";
 import { REPAIR_CASE_MODEL_PATH } from "@/data/gameplay/repairCaseConfig";
 import { REPAIR_FRAGMENTATION_SEQUENCE_SECONDS } from "@/data/gameplay/repairGameConfig";
-import {
-  REPAIR_MISSIONS,
-  type RepairMissionConfig,
-} from "@/data/gameplay/repairMissions";
+import { REPAIR_MISSIONS } from "@/data/gameplay/repairMissions";
 import { useRepairFragmentationInput } from "@/hooks/gameplay/useRepairFragmentationInput";
 import { useRepairMissionStep } from "@/hooks/gameplay/useRepairMissionStep";
 import type {
   MissionStep,
+  RepairMissionConfig,
   RepairMissionId,
+  RepairScannedBrokenPart,
 } from "@/types/gameplay/repairMission";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";

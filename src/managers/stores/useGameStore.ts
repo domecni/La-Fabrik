@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { GAME_STEPS, type GameStep } from "@/types/game";
+import {
+  isGameStep,
+  isMainGameState,
+  type GameStep,
+  type MainGameState,
+} from "@/types/game";
 import {
   isRepairMissionId,
   isMissionStep,
@@ -15,7 +20,6 @@ import {
 } from "@/utils/debug/debugGameStateCookie";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
-export type MainGameState = "intro" | "bike" | "pylone" | "ferme" | "outro";
 export type { MissionStep, RepairMissionId };
 
 interface IntroState {
@@ -86,14 +90,6 @@ interface GameActions {
 type GameStore = GameState & GameActions;
 type GameStateUpdate = Partial<GameState>;
 
-const MAIN_GAME_STATES: readonly MainGameState[] = [
-  "intro",
-  "bike",
-  "pylone",
-  "ferme",
-  "outro",
-];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -104,14 +100,6 @@ function isStringOrNull(value: unknown): value is string | null {
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
-}
-
-function isMainGameState(value: unknown): value is MainGameState {
-  return MAIN_GAME_STATES.includes(value as MainGameState);
-}
-
-function isGameStep(value: unknown): value is GameStep {
-  return GAME_STEPS.includes(value as GameStep);
 }
 
 function completeIntroState(state: GameState): GameStateUpdate {
