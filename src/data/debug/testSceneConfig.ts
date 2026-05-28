@@ -1,4 +1,5 @@
 import type { Vector3Tuple } from "@/types/three/three";
+import type { RepairMissionId } from "@/types/gameplay/repairMission";
 
 export const TEST_SCENE_FLOOR_POSITION: Vector3Tuple = [0, -0.5, 0];
 export const TEST_SCENE_FLOOR_SIZE: Vector3Tuple = [200, 1, 200];
@@ -23,7 +24,7 @@ export const TEST_SCENE_TRIGGER_METALNESS = 0.5;
 export const TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS = 1.65;
 export const TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS = 0.045;
 
-export const TEST_SCENE_REPAIR_ZONES = [
+export const GAME_REPAIR_ZONES = [
   {
     mission: "ebike",
     label: "E-bike",
@@ -43,8 +44,10 @@ export const TEST_SCENE_REPAIR_ZONES = [
     position: [12, 0, -12],
   },
 ] as const satisfies readonly {
-  mission: "ebike" | "pylon" | "farm";
+  mission: RepairMissionId;
   label: string;
   color: string;
   position: Vector3Tuple;
 }[];
+
+export const TEST_SCENE_REPAIR_ZONES = GAME_REPAIR_ZONES;

@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
-import { Component, useRef } from "react";
+import { Component, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
+import { Line } from "@react-three/drei";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { AnimatedModel } from "@/components/three/models/AnimatedModel";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
+import { EbikeGPSMap } from "@/components/ebike/EbikeGPSMap";
 import {
   TEST_SCENE_FLOOR_COLLIDER_HALF_EXTENTS,
   TEST_SCENE_FLOOR_POSITION,
@@ -15,9 +17,9 @@ import {
   TEST_SCENE_GRABBABLE_METALNESS,
   TEST_SCENE_GRABBABLE_POSITION,
   TEST_SCENE_GRABBABLE_ROUGHNESS,
+  GAME_REPAIR_ZONES,
   TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS,
   TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS,
-  TEST_SCENE_REPAIR_ZONES,
   TEST_SCENE_TRIGGER_COLOR,
   TEST_SCENE_TRIGGER_METALNESS,
   TEST_SCENE_TRIGGER_POSITION,
@@ -84,10 +86,60 @@ class ModelPreviewErrorBoundary extends Component<
   }
 }
 
+interface Waypoint {
+  id: number;
+  x: number;
+  y: number;
+  z: number;
+  connections: number[];
+}
+
 export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
   const floorRef = useRef<THREE.Group>(null);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
 
   useOctreeGraphNode(floorRef, onOctreeReady);
+
+  // Load waypoints with double-safe fallback
+  useEffect(() => {
+    // 1. Try localStorage
+    const saved = localStorage.getItem("la-fabrik-waypoints");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          console.log(
+            `[TestMap] ${parsed.length} waypoints chargés depuis localStorage.`,
+          );
+          setWaypoints(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse local storage waypoints", e);
+      }
+    }
+
+    // 2. Try public/roadNetwork.json
+    console.log(
+      "[TestMap] Tentative de chargement depuis /roadNetwork.json...",
+    );
+    fetch("/roadNetwork.json")
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error("Impossible de charger /roadNetwork.json");
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          console.log(
+            `[TestMap] ${data.length} waypoints chargés depuis /roadNetwork.json.`,
+          );
+          setWaypoints(data);
+        }
+      })
+      .catch((err) => {
+        console.log("[TestMap] Aucun point d'A* trouvé par défaut.", err);
+      });
+  }, []);
 
   return (
     <>
@@ -96,6 +148,45 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
           <boxGeometry args={TEST_SCENE_FLOOR_SIZE} />
           <meshBasicMaterial />
         </mesh>
+      </group>
+
+      {/* Render Pathfinder Maps Waypoints & Routes visually */}
+      <group name="pathfinder-maps-visuals">
+        {/* Render Connection Lines */}
+        {waypoints.flatMap((wp) =>
+          wp.connections.map((connId) => {
+            const other = waypoints.find((w) => w.id === connId);
+            // Draw each line only once by enforcing wp.id < other.id
+            if (other && wp.id < other.id) {
+              return (
+                <Line
+                  key={`route-${wp.id}-${other.id}`}
+                  points={[
+                    [wp.x, wp.y + 0.3, wp.z],
+                    [other.x, other.y + 0.3, other.z],
+                  ]}
+                  color="#10b981" // Beautiful emerald green
+                  lineWidth={2.5}
+                  transparent
+                  opacity={0.8}
+                />
+              );
+            }
+            return null;
+          }),
+        )}
+
+        {/* Render Waypoint Spheres */}
+        {waypoints.map((wp) => (
+          <mesh key={`wp-sphere-${wp.id}`} position={[wp.x, wp.y + 0.3, wp.z]}>
+            <sphereGeometry args={[0.35, 16, 16]} />
+            <meshBasicMaterial
+              color="#059669" // Deep emerald green
+              transparent
+              opacity={0.8}
+            />
+          </mesh>
+        ))}
       </group>
 
       <Physics>
@@ -141,7 +232,7 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
           </mesh>
         </TriggerObject>
 
-        {TEST_SCENE_REPAIR_ZONES.map((zone) => (
+        {GAME_REPAIR_ZONES.map((zone) => (
           <group key={zone.mission}>
             <group position={zone.position}>
               <RepairPlaygroundZoneMarker color={zone.color} />
@@ -150,6 +241,42 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
           </group>
         ))}
       </Physics>
+
+      {/* Dynamic Futuristic 3D GPS Dashboard Preview */}
+      <group position={[0, 2.8, -4.8]} rotation={[0, 0, 0]}>
+        {/* Futuristic glowing screen frame (commented out to show true 3D transparency!) */}
+        {/*
+        <mesh>
+          <boxGeometry args={[4.2, 4.2, 0.1]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.2} metalness={0.8} transparent opacity={0.4} />
+        </mesh>
+        */}
+        {/* Glow accent border (commented out to remove any orange transparency tint!) */}
+        {/*
+        <mesh position={[0, 0, 0.01]}>
+          <boxGeometry args={[4.05, 4.05, 0.02]} />
+          <meshBasicMaterial color="#f97316" transparent opacity={0.1} />
+        </mesh>
+        */}
+        {/* GPS Map screen plane */}
+        <group position={[0, 0, 0.06]}>
+          <EbikeGPSMap
+            width={4}
+            height={4}
+            startPos={{ x: 10, y: 0, z: -10 }}
+            destPos={{ x: -40, y: 0, z: 30 }}
+            mapImageUrl="/assets/gps/map_background.png"
+            worldBounds={{
+              minX: -166,
+              maxX: 163,
+              minZ: -142,
+              maxZ: 138,
+            }}
+            zoom={1}
+            canvasSize={900}
+          />
+        </group>
+      </group>
 
       <ModelPreviewErrorBoundary modelPath={ELECTRICIENNE_ANIMATED_MODEL_PATH}>
         <AnimatedModel

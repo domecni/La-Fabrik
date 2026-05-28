@@ -21,7 +21,6 @@ import {
   PLAYER_GRAVITY,
   PLAYER_JUMP_SPEED,
   PLAYER_MAX_DELTA,
-  PLAYER_WALK_SPEED,
   PLAYER_XZ_DAMPING_FACTOR,
 } from "@/data/player/playerConfig";
 import { useRepairMovementLocked } from "@/hooks/gameplay/useRepairMovementLocked";
@@ -30,6 +29,7 @@ import { InteractionManager } from "@/managers/InteractionManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import type { Vector3Tuple } from "@/types/three/three";
+import { EBIKE_CAMERA_TRANSFORM } from "@/components/ebike/Ebike";
 
 type Keys = {
   forward: boolean;
@@ -136,8 +136,73 @@ export function PlayerController({
   const wantsJump = useRef(false);
   const initializedRef = useRef(false);
   const canMove = useGameStore((state) => state.missionFlow.canMove);
-
+  const currentSpeed = useGameStore((state) => state.player.currentSpeed);
+  const movementMode = useGameStore((state) => state.player.movementMode);
+  const movementModeRef = useRef(movementMode);
+  const prevMovementModeRef = useRef(movementMode);
+  const ebikeAngle = useRef(0);
   const capsule = useRef(createSpawnCapsule(spawnPosition));
+
+  useEffect(() => {
+    movementModeRef.current = movementMode;
+  }, [movementMode]);
+  useEffect(() => {
+    if (movementMode === "ebike") {
+      const targetPos: Vector3Tuple = (window as any).ebikeParkedPosition || [
+        0, 8.2, 0,
+      ];
+      const targetRot: number = (window as any).ebikeParkedRotation || 0;
+
+      const headY = targetPos[1] + PLAYER_EYE_HEIGHT;
+      const bottomY = targetPos[1] + PLAYER_CAPSULE_RADIUS;
+
+      capsule.current.start.set(targetPos[0], bottomY, targetPos[2]);
+      capsule.current.end.set(targetPos[0], headY, targetPos[2]);
+      velocity.current.set(0, 0, 0);
+      onFloor.current = false;
+      wantsJump.current = false;
+
+      ebikeAngle.current = targetRot;
+
+      const cameraOffset = new THREE.Vector3(
+        ...EBIKE_CAMERA_TRANSFORM.position,
+      );
+      cameraOffset.applyAxisAngle(_up, targetRot);
+
+      const camPos = new THREE.Vector3()
+        .copy(capsule.current.end)
+        .add(cameraOffset);
+      camera.position.copy(camPos);
+
+      const pitchRad = THREE.MathUtils.degToRad(
+        EBIKE_CAMERA_TRANSFORM.rotation[0],
+      );
+      const yawRad =
+        THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[1]) +
+        targetRot;
+      const rollRad = THREE.MathUtils.degToRad(
+        EBIKE_CAMERA_TRANSFORM.rotation[2],
+      );
+      camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
+    } else if (
+      movementMode === "walk" &&
+      prevMovementModeRef.current === "ebike"
+    ) {
+      const perspectiveCam = camera as THREE.PerspectiveCamera;
+      perspectiveCam.fov = 60;
+      perspectiveCam.updateProjectionMatrix();
+
+      const rightDir = new THREE.Vector3();
+      camera.getWorldDirection(_forward);
+      _forward.setY(0).normalize();
+      rightDir.crossVectors(_forward, _up).normalize();
+
+      const shift = rightDir.multiplyScalar(3);
+      capsule.current.translate(shift);
+      camera.position.copy(capsule.current.end);
+    }
+    prevMovementModeRef.current = movementMode;
+  }, [movementMode, camera]);
 
   useLayoutEffect(() => {
     resetPlayerCapsule(
@@ -266,6 +331,16 @@ export function PlayerController({
       return;
     }
 
+    if (movementModeRef.current === "ebike") {
+      const turnSpeed = 1.8;
+      if (keys.current.left) {
+        ebikeAngle.current += turnSpeed * dt;
+      }
+      if (keys.current.right) {
+        ebikeAngle.current -= turnSpeed * dt;
+      }
+    }
+
     camera.getWorldDirection(_forward);
     _forward.setY(0);
     if (_forward.lengthSq() > 0) {
@@ -277,14 +352,16 @@ export function PlayerController({
     if (!movementLocked) {
       if (keys.current.forward) _wishDir.add(_forward);
       if (keys.current.backward) _wishDir.sub(_forward);
-      if (keys.current.left) _wishDir.sub(_right);
-      if (keys.current.right) _wishDir.add(_right);
+      if (movementModeRef.current !== "ebike") {
+        if (keys.current.left) _wishDir.sub(_right);
+        if (keys.current.right) _wishDir.add(_right);
+      }
     }
     if (_wishDir.lengthSq() > 0) _wishDir.normalize();
 
     const accel = onFloor.current
-      ? PLAYER_WALK_SPEED
-      : PLAYER_WALK_SPEED * PLAYER_AIR_CONTROL_FACTOR;
+      ? currentSpeed
+      : currentSpeed * PLAYER_AIR_CONTROL_FACTOR;
     velocity.current.x +=
       _wishDir.x * accel * dt * PLAYER_ACCELERATION_MULTIPLIER;
     velocity.current.z +=
@@ -353,7 +430,78 @@ export function PlayerController({
       }
     }
 
-    camera.position.copy(capsule.current.end);
+    if (movementModeRef.current === "ebike") {
+      let targetSteer = 0;
+      if (keys.current.left) targetSteer = 1;
+      else if (keys.current.right) targetSteer = -1;
+
+      const currentSteer = (window as any).ebikeSteerFactor || 0;
+      const steerFactor = THREE.MathUtils.lerp(
+        currentSteer,
+        targetSteer,
+        8 * dt,
+      );
+      (window as any).ebikeSteerFactor = steerFactor;
+
+      const speed = velocity.current.length();
+      const targetFov = 60 + Math.min(speed * 0.35, 9);
+      const perspectiveCam = camera as THREE.PerspectiveCamera;
+      perspectiveCam.fov = THREE.MathUtils.lerp(
+        perspectiveCam.fov,
+        targetFov,
+        6 * dt,
+      );
+      perspectiveCam.updateProjectionMatrix();
+
+      const cameraOffset = new THREE.Vector3(
+        ...EBIKE_CAMERA_TRANSFORM.position,
+      );
+      cameraOffset.applyAxisAngle(_up, ebikeAngle.current);
+
+      const swingX = -Math.abs(steerFactor) * 1.5;
+      const swingZ = steerFactor > 0 ? steerFactor * 2.5 : steerFactor * 1.0;
+
+      const cameraSwing = new THREE.Vector3(swingX, 0, swingZ);
+      cameraSwing.applyAxisAngle(_up, ebikeAngle.current);
+      cameraOffset.add(cameraSwing);
+
+      const targetCamPos = new THREE.Vector3()
+        .copy(capsule.current.end)
+        .add(cameraOffset);
+
+      camera.position.lerp(targetCamPos, 12 * dt);
+
+      const pitchRad = THREE.MathUtils.degToRad(
+        EBIKE_CAMERA_TRANSFORM.rotation[0],
+      );
+      const yawRad =
+        THREE.MathUtils.degToRad(EBIKE_CAMERA_TRANSFORM.rotation[1]) +
+        ebikeAngle.current;
+      const rollRad = THREE.MathUtils.degToRad(
+        EBIKE_CAMERA_TRANSFORM.rotation[2],
+      );
+      camera.rotation.set(pitchRad, yawRad, rollRad, "YXZ");
+
+      const ebikeVisual = (window as any).ebikeVisualGroup?.current;
+      if (ebikeVisual) {
+        ebikeVisual.position.set(
+          capsule.current.end.x,
+          capsule.current.end.y - PLAYER_EYE_HEIGHT,
+          capsule.current.end.z,
+        );
+        const leanAngle = steerFactor * 0.26;
+        ebikeVisual.rotation.set(0, ebikeAngle.current, leanAngle, "YXZ");
+      }
+    } else {
+      camera.position.copy(capsule.current.end);
+    }
+
+    (window as any).playerPos = [
+      capsule.current.end.x,
+      capsule.current.end.y,
+      capsule.current.end.z,
+    ];
+    (window as any).ebikeAngle = ebikeAngle.current;
   });
 
   return null;

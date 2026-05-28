@@ -6,6 +6,10 @@ import {
   isMissionStep,
   isRepairMissionId,
 } from "@/data/gameplay/repairMissionState";
+import {
+  PLAYER_EBIKE_SPEED,
+  PLAYER_WALK_SPEED,
+} from "@/data/player/playerConfig";
 import type { GameStep, MainGameState } from "@/types/game";
 import {
   type MissionStep,
@@ -18,6 +22,7 @@ import {
 } from "@/utils/debug/debugGameStateCookie";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
+export type PlayerMovementMode = "walk" | "ebike";
 export type { MissionStep, RepairMissionId };
 
 interface IntroState {
@@ -43,6 +48,7 @@ export interface GameState {
   mainState: MainGameState;
   isCinematicPlaying: boolean;
   missionFlow: MissionFlowState;
+  player: PlayerState;
   intro: IntroState;
   ebike: MissionState & {
     isRepaired: boolean;
@@ -59,12 +65,18 @@ export interface GameState {
   };
 }
 
+interface PlayerState {
+  movementMode: PlayerMovementMode;
+  currentSpeed: number;
+}
+
 interface GameActions {
   setMainState: (mainState: MainGameState) => void;
   setCinematicPlaying: (isCinematicPlaying: boolean) => void;
   hideDialog: () => void;
   setActivityCity: (activityCity: boolean) => void;
   setCanMove: (canMove: boolean) => void;
+  setPlayerMovementMode: (mode: PlayerMovementMode) => void;
   setIntroStep: (step: GameStep) => void;
   setIntroState: (intro: Partial<IntroState>) => void;
   setPlayerName: (playerName: string) => void;
@@ -98,6 +110,10 @@ function isStringOrNull(value: unknown): value is string | null {
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
+}
+
+function isPlayerMovementMode(value: unknown): value is PlayerMovementMode {
+  return value === "walk" || value === "ebike";
 }
 
 function completeIntroState(state: GameState): GameStateUpdate {
@@ -234,6 +250,10 @@ function createInitialGameState(): GameState {
       dialogMessage: null,
       playerName: "",
     },
+    player: {
+      movementMode: "walk",
+      currentSpeed: PLAYER_WALK_SPEED,
+    },
     intro: {
       currentStep: "intro",
       dialogueAudio: null,
@@ -319,6 +339,20 @@ function hydrateMissionFlowState(
   };
 }
 
+function hydratePlayerState(initial: PlayerState, value: unknown): PlayerState {
+  if (!isRecord(value)) return initial;
+
+  return {
+    movementMode: isPlayerMovementMode(value.movementMode)
+      ? value.movementMode
+      : initial.movementMode,
+    currentSpeed:
+      typeof value.currentSpeed === "number"
+        ? value.currentSpeed
+        : initial.currentSpeed,
+  };
+}
+
 function hydrateDebugGameState(initial: GameState, value: unknown): GameState {
   if (!isRecord(value)) return initial;
 
@@ -338,6 +372,7 @@ function hydrateDebugGameState(initial: GameState, value: unknown): GameState {
       initial.missionFlow,
       value.missionFlow,
     ),
+    player: hydratePlayerState(initial.player, value.player),
     intro: hydrateIntroState(initial.intro, value.intro),
     ebike: {
       ...ebike,
@@ -385,6 +420,7 @@ function pickGameState(state: GameStore): GameState {
     mainState: state.mainState,
     isCinematicPlaying: state.isCinematicPlaying,
     missionFlow: state.missionFlow,
+    player: state.player,
     intro: state.intro,
     ebike: state.ebike,
     pylon: state.pylon,
@@ -404,6 +440,14 @@ export const useGameStore = create<GameStore>()((set) => ({
   setActivityCity: (activityCity) =>
     set((state) => ({
       missionFlow: { ...state.missionFlow, activityCity },
+    })),
+  setPlayerMovementMode: (mode) =>
+    set((state) => ({
+      player: {
+        ...state.player,
+        movementMode: mode,
+        currentSpeed: mode === "ebike" ? PLAYER_EBIKE_SPEED : PLAYER_WALK_SPEED,
+      },
     })),
   setCanMove: (canMove) =>
     set((state) => ({

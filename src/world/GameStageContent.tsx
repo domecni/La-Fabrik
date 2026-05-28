@@ -1,3 +1,4 @@
+import { Ebike } from "@/components/ebike/Ebike";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import {
@@ -80,6 +81,7 @@ export function GameStageContent(): React.JSX.Element {
   return (
     <>
       {mainState === "intro" ? <StageAnchor {...INTRO_STAGE_ANCHOR} /> : null}
+      <Ebike position={[0, 10, 0]} />
       {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission }) => {
         const position = getRepairMissionPosition(mission, anchors);
         if (!position) return null;
