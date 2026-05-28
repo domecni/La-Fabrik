@@ -74,7 +74,7 @@ These vegetation and crop assets account for almost all of the current `~69M` tr
 
 ## Debug Performance Controls
 
-The next useful runtime tool is a debug-only performance folder that can isolate model families. This should be mounted only when `?debug` is enabled.
+The debug-only performance folder can isolate model families when `?debug` is enabled.
 
 Proposed controls:
 

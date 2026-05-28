@@ -6,8 +6,12 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
 import { FlyController } from "@/controls/editor/FlyController";
-import type { CinematicDefinition } from "@/types/cinematics/cinematics";
-import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
+import type {
+  EditorCinematicPreviewRequest,
+  MapNode,
+  TransformMode,
+  SceneData,
+} from "@/types/editor/editor";
 
 const EDITOR_CAMERA_HOME_POSITION = new THREE.Vector3(0, 50, 100);
 const EDITOR_CAMERA_HOME_TARGET = new THREE.Vector3(0, 0, 0);
@@ -21,11 +25,6 @@ function isEditableShortcutTarget(target: EventTarget | null): boolean {
     target instanceof HTMLSelectElement ||
     target.isContentEditable
   );
-}
-
-export interface EditorCinematicPreviewRequest {
-  id: string;
-  cinematic: CinematicDefinition;
 }
 
 interface EditorSceneProps {

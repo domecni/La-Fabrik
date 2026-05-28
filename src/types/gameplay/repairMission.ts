@@ -4,7 +4,9 @@ import type {
   Vector3Tuple,
 } from "@/types/three/three";
 
-export type RepairMissionId = "ebike" | "pylon" | "farm";
+export const REPAIR_MISSION_IDS = ["ebike", "pylon", "farm"] as const;
+
+export type RepairMissionId = (typeof REPAIR_MISSION_IDS)[number];
 
 export interface RepairMissionTriggerConfig {
   mission: RepairMissionId;

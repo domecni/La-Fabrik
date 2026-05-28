@@ -2,8 +2,8 @@ import type {
   MissionStep,
   RepairMissionId,
 } from "@/types/gameplay/repairMission";
+import { REPAIR_MISSION_IDS } from "@/types/gameplay/repairMission";
 
-const REPAIR_MISSION_IDS = ["ebike", "pylon", "farm"] as const;
 const REPAIR_MISSION_ID_VALUES: ReadonlySet<string> = new Set(
   REPAIR_MISSION_IDS,
 );

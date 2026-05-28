@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { EditorControls } from "@/components/editor/EditorControls";
 import { EditorScene } from "@/components/editor/scene/EditorScene";
-import type { EditorCinematicPreviewRequest } from "@/components/editor/scene/EditorScene";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { Subtitles } from "@/components/ui/Subtitles";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
-import type { MapNode, TransformMode } from "@/types/editor/editor";
+import type {
+  EditorCinematicPreviewRequest,
+  MapNode,
+  TransformMode,
+} from "@/types/editor/editor";
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 import {
@@ -82,7 +85,7 @@ export function EditorPage(): React.JSX.Element {
   );
   const editorLoadingState: SceneLoadingState = isMapLoading
     ? {
-        currentStep: "Récupération blocking",
+        currentStep: "Chargement de la carte",
         progress: 0.08,
         status: "loading" as const,
       }

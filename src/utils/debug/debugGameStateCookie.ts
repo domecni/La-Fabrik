@@ -1,3 +1,5 @@
+import { logger } from "@/utils/core/Logger";
+
 const DEBUG_GAME_STATE_COOKIE_NAME = "la-fabrik-debug-game-state";
 const DEBUG_GAME_STATE_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
@@ -18,7 +20,11 @@ export function readDebugGameStateCookie(): unknown {
 
   try {
     return JSON.parse(decodeURIComponent(value));
-  } catch {
+  } catch (error) {
+    logger.warn("DebugGameState", "Invalid debug game state cookie cleared", {
+      error: error instanceof Error ? error : String(error),
+    });
+    clearDebugGameStateCookie();
     return null;
   }
 }

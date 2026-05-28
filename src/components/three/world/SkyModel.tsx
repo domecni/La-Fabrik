@@ -3,6 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
+import { logger } from "@/utils/core/Logger";
 
 interface SkyModelProps {
   fallbackModelScale?: number | undefined;
@@ -20,6 +21,8 @@ interface SkyModelContentProps {
 interface SkyModelErrorBoundaryProps {
   children: ReactNode;
   fallback: ReactNode;
+  label: string;
+  modelPath: string;
 }
 
 interface SkyModelErrorBoundaryState {
@@ -43,6 +46,17 @@ class SkyModelErrorBoundary extends Component<
     return { hasError: true };
   }
 
+  componentDidCatch(error: Error): void {
+    logger.warn(
+      "SkyModel",
+      `${this.props.label} model failed; using fallback`,
+      {
+        error,
+        modelPath: this.props.modelPath,
+      },
+    );
+  }
+
   render(): ReactNode {
     if (this.state.hasError) {
       return this.props.fallback;
@@ -63,7 +77,12 @@ export function SkyModel({
     <color attach="background" args={[fallbackColor]} />
   ) : null;
   const fallback = fallbackModelPath ? (
-    <SkyModelErrorBoundary key={fallbackModelPath} fallback={colorFallback}>
+    <SkyModelErrorBoundary
+      key={fallbackModelPath}
+      fallback={colorFallback}
+      label="Fallback sky"
+      modelPath={fallbackModelPath}
+    >
       <SkyModelContent
         modelPath={fallbackModelPath}
         scale={fallbackModelScale}
@@ -74,7 +93,12 @@ export function SkyModel({
   );
 
   return (
-    <SkyModelErrorBoundary key={modelPath} fallback={fallback}>
+    <SkyModelErrorBoundary
+      key={modelPath}
+      fallback={fallback}
+      label="Primary sky"
+      modelPath={modelPath}
+    >
       <SkyModelContent modelPath={modelPath} scale={scale} />
     </SkyModelErrorBoundary>
   );

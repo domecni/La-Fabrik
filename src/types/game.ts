@@ -1,4 +1,5 @@
 import type { Vector3Tuple } from "@/types/three/three";
+import type { RepairMissionId } from "@/types/gameplay/repairMission";
 
 export type GameStep =
   | "intro"
@@ -12,7 +13,7 @@ export type GameStep =
   | "manipulation"
   | "outOfFabrik";
 
-export type MainGameState = "intro" | "ebike" | "pylon" | "farm" | "outro";
+export type MainGameState = "intro" | RepairMissionId | "outro";
 
 export interface Zone {
   id: string;

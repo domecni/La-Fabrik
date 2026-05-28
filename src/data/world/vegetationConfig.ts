@@ -83,6 +83,12 @@ export const VEGETATION_TYPE_KEYS = [
 
 export type VegetationType = (typeof VEGETATION_TYPE_KEYS)[number];
 
+export const VEGETATION_MAP_NODE_NAMES: ReadonlySet<string> = new Set(
+  Object.values(VEGETATION_TYPES)
+    .filter((config) => config.enabled)
+    .map((config) => config.mapName),
+);
+
 export function getVegetationModelScaleMultiplier(name: string): number {
   return (
     Object.values(VEGETATION_TYPES).find((config) => config.mapName === name)

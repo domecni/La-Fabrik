@@ -148,7 +148,7 @@ export function GameMap({
 
   useEffect(() => {
     onLoadingStateChange?.({
-      currentStep: "Récupération blocking",
+      currentStep: "Chargement de la carte",
       progress: 0.05,
       status: "loading",
     });
@@ -163,7 +163,7 @@ export function GameMap({
         }
 
         onLoadingStateChange?.({
-          currentStep: "Importation des models",
+          currentStep: "Importation des modèles",
           progress: 0.18,
           status: "loading",
         });
