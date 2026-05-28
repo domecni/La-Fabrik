@@ -47,6 +47,9 @@ function createTerrainHeightSampler(
     new THREE.Vector3(...scale),
   );
   const inverseTerrainMatrix = terrainMatrix.clone().invert();
+  const localOrigin = new THREE.Vector3();
+  const localDirection = DOWN.clone().transformDirection(inverseTerrainMatrix);
+  const hits: THREE.Intersection[] = [];
   const raycaster = new THREE.Raycaster(
     new THREE.Vector3(),
     DOWN,
@@ -63,13 +66,11 @@ function createTerrainHeightSampler(
 
   return {
     getHeight: (x, z) => {
-      const localOrigin = new THREE.Vector3(x, RAYCAST_Y, z).applyMatrix4(
-        inverseTerrainMatrix,
-      );
-      const localDirection =
-        DOWN.clone().transformDirection(inverseTerrainMatrix);
+      localOrigin.set(x, RAYCAST_Y, z).applyMatrix4(inverseTerrainMatrix);
       raycaster.set(localOrigin, localDirection);
-      const hit = raycaster.intersectObjects(meshes, false)[0];
+      hits.length = 0;
+      raycaster.intersectObjects(meshes, false, hits);
+      const hit = hits[0];
       return hit?.point.applyMatrix4(terrainMatrix).y ?? null;
     },
   };

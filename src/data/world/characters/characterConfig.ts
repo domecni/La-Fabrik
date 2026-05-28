@@ -1,9 +1,9 @@
 import type { Vector3Tuple } from "@/types/three/three";
 
-export type PersonnageId = "electricienne" | "gerant" | "fermier";
+export type CharacterId = "electricienne" | "gerant" | "fermier";
 
-export interface PersonnageConfig {
-  id: PersonnageId;
+export interface CharacterConfig {
+  id: CharacterId;
   label: string;
   modelPath: string;
   position: Vector3Tuple;
@@ -13,7 +13,7 @@ export interface PersonnageConfig {
   defaultAnimation: string;
 }
 
-export const PERSONNAGE_CONFIGS = {
+export const CHARACTER_CONFIGS = {
   electricienne: {
     id: "electricienne",
     label: "Electricienne",
@@ -44,10 +44,10 @@ export const PERSONNAGE_CONFIGS = {
     animations: ["idle", "walk"],
     defaultAnimation: "idle",
   },
-} satisfies Record<PersonnageId, PersonnageConfig>;
+} satisfies Record<CharacterId, CharacterConfig>;
 
-export const PERSONNAGE_IDS = [
+export const CHARACTER_IDS = [
   "electricienne",
   "gerant",
   "fermier",
-] as const satisfies readonly PersonnageId[];
+] as const satisfies readonly CharacterId[];

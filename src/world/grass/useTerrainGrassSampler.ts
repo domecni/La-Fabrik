@@ -65,6 +65,10 @@ function createTerrainGrassSampler(
   const terrainMatrix = createTerrainMatrix(position, rotation, scale);
   const inverseTerrainMatrix = terrainMatrix.clone().invert();
   const normalMatrix = new THREE.Matrix3().getNormalMatrix(terrainMatrix);
+  const localOrigin = new THREE.Vector3();
+  const localDirection = DOWN.clone().transformDirection(inverseTerrainMatrix);
+  const fallbackNormal = new THREE.Vector3(0, 1, 0);
+  const hits: THREE.Intersection[] = [];
   const raycaster = new THREE.Raycaster(
     new THREE.Vector3(),
     DOWN,
@@ -94,14 +98,11 @@ function createTerrainGrassSampler(
       };
 
   const sample = (x: number, z: number): TerrainGrassSample | null => {
-    const localOrigin = new THREE.Vector3(x, RAYCAST_Y, z).applyMatrix4(
-      inverseTerrainMatrix,
-    );
-    const localDirection =
-      DOWN.clone().transformDirection(inverseTerrainMatrix);
-
+    localOrigin.set(x, RAYCAST_Y, z).applyMatrix4(inverseTerrainMatrix);
     raycaster.set(localOrigin, localDirection);
-    const hit = raycaster.intersectObjects(meshes, false)[0];
+    hits.length = 0;
+    raycaster.intersectObjects(meshes, false, hits);
+    const hit = hits[0];
     if (!hit) return null;
 
     const normal = hit.face?.normal
@@ -112,7 +113,7 @@ function createTerrainGrassSampler(
 
     return {
       position: hit.point.clone().applyMatrix4(terrainMatrix),
-      normal: normal ?? new THREE.Vector3(0, 1, 0),
+      normal: normal ?? fallbackNormal.clone(),
     };
   };
 

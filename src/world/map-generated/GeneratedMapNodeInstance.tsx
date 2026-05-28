@@ -1,7 +1,7 @@
 import { EcoleModel } from "@/components/three/world/EcoleModel";
 import { FermeVerticaleModel } from "@/components/three/world/FermeVerticaleModel";
 import { GenerateurModel } from "@/components/three/world/GenerateurModel";
-import { LafabrikModel } from "@/components/three/world/LafabrikModel";
+import { LaFabrikMapModel } from "@/components/three/world/LaFabrikMapModel";
 import {
   normalizeMapScale,
   useTerrainSnappedPosition,
@@ -55,7 +55,7 @@ export function GeneratedMapNodeInstance({
 
   if (node.name === "lafabrik") {
     return (
-      <LafabrikModel
+      <LaFabrikMapModel
         position={position}
         rotation={node.rotation}
         scale={scale}

@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 
 interface SkyModelProps {
+  fallbackModelScale?: number | undefined;
   fallbackModelPath?: string | undefined;
   modelPath: string;
   fallbackColor?: string | undefined;
@@ -53,6 +54,7 @@ class SkyModelErrorBoundary extends Component<
 
 export function SkyModel({
   fallbackColor,
+  fallbackModelScale = SKY_MODEL_SCALE,
   fallbackModelPath,
   modelPath,
   scale = SKY_MODEL_SCALE,
@@ -62,7 +64,10 @@ export function SkyModel({
   ) : null;
   const fallback = fallbackModelPath ? (
     <SkyModelErrorBoundary key={fallbackModelPath} fallback={colorFallback}>
-      <SkyModelContent modelPath={fallbackModelPath} scale={scale} />
+      <SkyModelContent
+        modelPath={fallbackModelPath}
+        scale={fallbackModelScale}
+      />
     </SkyModelErrorBoundary>
   ) : (
     colorFallback

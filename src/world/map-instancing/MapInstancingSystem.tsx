@@ -16,9 +16,10 @@ import {
 } from "@/data/world/mapInstancingConfig";
 import { useMapInstancingData } from "@/hooks/world/useMapInstancingData";
 import type { MapAssetInstance } from "@/types/map/mapScene";
+import { createWorldInstanceChunks } from "@/utils/world/chunkInstances";
 
 interface MapInstancingSystemProps {
-  onlyModelName?: string | null;
+  onlyMapName?: string | null;
   streaming?: boolean;
 }
 
@@ -30,53 +31,24 @@ interface MapAssetChunk {
   instances: MapAssetInstance[];
 }
 
-function getChunkKey(instance: MapAssetInstance): string {
-  const [x, , z] = instance.position;
-  const chunkX = Math.floor(x / CHUNK_CONFIG.chunkSize);
-  const chunkZ = Math.floor(z / CHUNK_CONFIG.chunkSize);
-  return `${chunkX}:${chunkZ}`;
-}
-
 function createMapAssetChunks(
   type: MapInstancingAssetType,
   config: MapInstancingAssetConfig,
   instances: MapAssetInstance[],
 ): MapAssetChunk[] {
-  const chunks = new Map<string, MapAssetInstance[]>();
-
-  for (const instance of instances) {
-    const key = getChunkKey(instance);
-    const chunk = chunks.get(key);
-
-    if (chunk) {
-      chunk.push(instance);
-    } else {
-      chunks.set(key, [instance]);
-    }
-  }
-
-  return [...chunks.entries()].map(([chunkKey, chunkInstances]) => {
-    const center = chunkInstances.reduce(
-      (sum, instance) => {
-        sum.x += instance.position[0];
-        sum.z += instance.position[2];
-        return sum;
-      },
-      { x: 0, z: 0 },
-    );
-
+  return createWorldInstanceChunks(instances).map((chunk) => {
     return {
-      key: `${type}:${chunkKey}`,
+      key: `${type}:${chunk.chunkKey}`,
       config,
-      centerX: center.x / chunkInstances.length,
-      centerZ: center.z / chunkInstances.length,
-      instances: chunkInstances,
+      centerX: chunk.centerX,
+      centerZ: chunk.centerZ,
+      instances: chunk.instances,
     };
   });
 }
 
 export function MapInstancingSystem({
-  onlyModelName = null,
+  onlyMapName = null,
   streaming = true,
 }: MapInstancingSystemProps): React.JSX.Element | null {
   const cameraMode = useCameraMode();
@@ -96,7 +68,7 @@ export function MapInstancingSystem({
     return MAP_INSTANCING_ASSET_TYPES.flatMap((type) => {
       const config = MAP_INSTANCING_ASSETS[type];
 
-      if (onlyModelName && config.mapName !== onlyModelName) return [];
+      if (onlyMapName && config.mapName !== onlyMapName) return [];
 
       if (
         !config.enabled ||
@@ -110,7 +82,7 @@ export function MapInstancingSystem({
 
       return createMapAssetChunks(type, config, instances);
     });
-  }, [data, groups, models, onlyModelName]);
+  }, [data, groups, models, onlyMapName]);
 
   const visibleChunks = useVisibleWorldChunks(chunks, streamingEnabled);
 

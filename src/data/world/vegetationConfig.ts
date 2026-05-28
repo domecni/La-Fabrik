@@ -90,7 +90,7 @@ export function getVegetationModelScaleMultiplier(name: string): number {
   );
 }
 
-export const INSTANCED_MAP_EXCEPTIONS = new Set([
+export const VEGETATION_INSTANCE_EXCLUDED_NODE_NAMES = new Set([
   "Scene",
   "blocking",
   "terrain",

@@ -3,7 +3,7 @@ import { Component, useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { clone } from "three/addons/utils/SkeletonUtils.js";
+import { SkeletonUtils } from "three-stdlib";
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import {
   useHandTrackingGloveStatus,
@@ -255,7 +255,7 @@ function HandTrackingGloveModel({
       throw new Error(`Missing glove root node ${config.rootNodeName}`);
     }
 
-    const clonedRootNode = clone(rootNode);
+    const clonedRootNode = SkeletonUtils.clone(rootNode);
     clonedRootNode.visible = false;
 
     return clonedRootNode;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Octree } from "three/addons/math/Octree.js";
+import type { Octree } from "three-stdlib";
 import type { SceneMode } from "@/types/debug/debug";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 

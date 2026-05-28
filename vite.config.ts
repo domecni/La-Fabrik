@@ -13,7 +13,7 @@ const THREE_SOURCE_ENTRY = fileURLToPath(
   new URL("./node_modules/three/src/Three.js", import.meta.url),
 );
 
-const MAX_MAP_PAYLOAD_BYTES = 1024 * 1024;
+const MAX_MAP_PAYLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_SRT_PAYLOAD_BYTES = 256 * 1024;
 const MAX_DIALOGUE_MANIFEST_PAYLOAD_BYTES = 256 * 1024;
 const MAX_CINEMATIC_MANIFEST_PAYLOAD_BYTES = 256 * 1024;

@@ -18,6 +18,7 @@ import {
   Unlock,
   X,
 } from "lucide-react";
+import { useState } from "react";
 import { EditorCinematicManifestPanel } from "@/components/editor/EditorCinematicManifestPanel";
 import { EditorDialogueManifestPanel } from "@/components/editor/EditorDialogueManifestPanel";
 import { EditorSrtPanel } from "@/components/editor/EditorSrtPanel";
@@ -99,6 +100,52 @@ function EditorPanelGroup({
       </summary>
       <div className="editor-panel-group-content">{children}</div>
     </details>
+  );
+}
+
+interface EditorScaleFieldProps {
+  axis: 0 | 1 | 2;
+  label: string;
+  value: number;
+  onCommit: (axis: 0 | 1 | 2, value: number) => void;
+}
+
+function EditorScaleField({
+  axis,
+  label,
+  onCommit,
+  value,
+}: EditorScaleFieldProps): React.JSX.Element {
+  const [draftValue, setDraftValue] = useState(() =>
+    String(Number(value.toFixed(4))),
+  );
+
+  const commitDraftValue = (): void => {
+    const nextValue = Number(draftValue);
+    if (!draftValue.trim() || Number.isNaN(nextValue)) {
+      setDraftValue(String(Number(value.toFixed(4))));
+      return;
+    }
+
+    onCommit(axis, nextValue);
+  };
+
+  return (
+    <label>
+      <span>{label}</span>
+      <input
+        type="number"
+        step="0.01"
+        value={draftValue}
+        onBlur={commitDraftValue}
+        onChange={(event) => setDraftValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
+        }}
+      />
+    </label>
   );
 }
 
@@ -303,20 +350,13 @@ export function EditorControls({
                 {selectedNodeScale ? (
                   <div className="editor-scale-fields">
                     {selectedNodeScale.map((value, axis) => (
-                      <label key={axis}>
-                        <span>{["X", "Y", "Z"][axis]}</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={Number(value.toFixed(4))}
-                          onChange={(event) =>
-                            onSelectedScaleChange(
-                              axis as 0 | 1 | 2,
-                              Number(event.target.value),
-                            )
-                          }
-                        />
-                      </label>
+                      <EditorScaleField
+                        key={`${axis}:${value}`}
+                        axis={axis as 0 | 1 | 2}
+                        label={["X", "Y", "Z"][axis] ?? "?"}
+                        value={value}
+                        onCommit={onSelectedScaleChange}
+                      />
                     ))}
                   </div>
                 ) : null}

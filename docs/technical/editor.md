@@ -113,7 +113,7 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 2. `useEditorSceneData` calls `loadMapSceneData()`.
 3. `loadMapSceneData()` loads `/map.json` and available model URLs.
 4. If `/map.json` is missing, the page displays a folder-upload flow.
-5. `EditorSceneLoadingTracker` uses drei `useProgress()` to update the fullscreen editor loading overlay while models load.
+5. The route-level loading overlay reports map JSON loading, then hands off to the editor scene once the map payload is ready.
 6. `EditorScene` renders the grid, lights, camera controls, and map nodes inside `Suspense`.
 7. `EditorControls` exposes transform mode, terrain snap, terrain-selection lock, add/delete node, precise scale inputs, history actions, camera focus/reset, export, save, JSON preview, selection lock, multi-selection status, and the cinematic/dialogue/SRT editors.
 
@@ -150,14 +150,13 @@ The dev-only `/api/save-map` endpoint is implemented by the Vite plugin in `vite
 
 ## Editor Loading Overlay
 
-The editor uses `SceneLoadingOverlay` like the runtime scene. `EditorSceneLoadingTracker` lives in `src/pages/editor/page.tsx` and reads drei `useProgress()` inside the canvas.
+The editor uses `SceneLoadingOverlay` like the runtime scene for the route-level map JSON loading phase.
 
-The route tracks two loading phases:
+The route tracks the map JSON loading phase:
 
 - map JSON loading through `useEditorSceneData()`
-- model loading through `useProgress()`
 
-The overlay is rendered outside the canvas so it remains visible while the R3F scene mounts. The scene itself is wrapped in `Suspense` with a `null` fallback; the visual feedback is handled by the overlay instead of by the canvas fallback.
+The overlay is rendered outside the canvas so it remains visible while the editor route mounts. Model loading is left to R3F `Suspense` boundaries to avoid progress updates during model render.
 
 ## Panel Groups
 

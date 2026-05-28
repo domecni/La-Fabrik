@@ -22,7 +22,7 @@ export async function createSceneDataFromFiles(
   const models = new Map<string, string>();
 
   for (const [path, file] of fileMap.entries()) {
-    const modelMatch = path.match(/^\/models\/(.+)\/model\.(glb|gltf)$/);
+    const modelMatch = path.match(/^\/models\/(.+)\/(?:model|\1)\.(glb|gltf)$/);
     const modelName = modelMatch?.[1];
     const modelExtension = modelMatch?.[2];
 

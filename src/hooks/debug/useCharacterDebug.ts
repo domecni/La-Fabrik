@@ -1,9 +1,9 @@
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import {
-  PERSONNAGE_CONFIGS,
-  PERSONNAGE_IDS,
-} from "@/data/world/personnages/personnageConfig";
-import { usePersonnageDebugStore } from "@/managers/stores/usePersonnageDebugStore";
+  CHARACTER_CONFIGS,
+  CHARACTER_IDS,
+} from "@/data/world/characters/characterConfig";
+import { useCharacterDebugStore } from "@/managers/stores/useCharacterDebugStore";
 
 function createAnimationOptions(
   animations: readonly string[],
@@ -17,13 +17,13 @@ function createAnimationOptions(
   );
 }
 
-export function usePersonnageDebug(): void {
+export function useCharacterDebug(): void {
   useDebugFolder("Personnages", (folder) => {
-    const store = usePersonnageDebugStore.getState();
+    const store = useCharacterDebugStore.getState();
 
-    for (const id of PERSONNAGE_IDS) {
-      const config = PERSONNAGE_CONFIGS[id];
-      const state = store.personnages[id];
+    for (const id of CHARACTER_IDS) {
+      const config = CHARACTER_CONFIGS[id];
+      const state = store.characters[id];
       const characterFolder = folder.addFolder(config.label);
       const controls = {
         animation: state.animation,
@@ -42,64 +42,64 @@ export function usePersonnageDebug(): void {
         .add(controls, "animation", createAnimationOptions(config.animations))
         .name("Animation")
         .onChange((animation: string) => {
-          usePersonnageDebugStore.getState().setAnimation(id, animation);
+          useCharacterDebugStore.getState().setAnimation(id, animation);
         });
 
       characterFolder
         .add(controls, "positionX", -120, 120, 0.1)
         .name("Position X")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setPosition(id, 0, value);
+          useCharacterDebugStore.getState().setPosition(id, 0, value);
         });
       characterFolder
         .add(controls, "positionY", -20, 40, 0.1)
         .name("Position Y")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setPosition(id, 1, value);
+          useCharacterDebugStore.getState().setPosition(id, 1, value);
         });
       characterFolder
         .add(controls, "positionZ", -120, 120, 0.1)
         .name("Position Z")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setPosition(id, 2, value);
+          useCharacterDebugStore.getState().setPosition(id, 2, value);
         });
 
       characterFolder
         .add(controls, "rotationX", -Math.PI, Math.PI, 0.01)
         .name("Rotation X")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setRotation(id, 0, value);
+          useCharacterDebugStore.getState().setRotation(id, 0, value);
         });
       characterFolder
         .add(controls, "rotationY", -Math.PI, Math.PI, 0.01)
         .name("Rotation Y")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setRotation(id, 1, value);
+          useCharacterDebugStore.getState().setRotation(id, 1, value);
         });
       characterFolder
         .add(controls, "rotationZ", -Math.PI, Math.PI, 0.01)
         .name("Rotation Z")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setRotation(id, 2, value);
+          useCharacterDebugStore.getState().setRotation(id, 2, value);
         });
 
       characterFolder
         .add(controls, "scaleX", 0.1, 5, 0.05)
         .name("Scale X")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setScale(id, 0, value);
+          useCharacterDebugStore.getState().setScale(id, 0, value);
         });
       characterFolder
         .add(controls, "scaleY", 0.1, 5, 0.05)
         .name("Scale Y")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setScale(id, 1, value);
+          useCharacterDebugStore.getState().setScale(id, 1, value);
         });
       characterFolder
         .add(controls, "scaleZ", 0.1, 5, 0.05)
         .name("Scale Z")
         .onChange((value: number) => {
-          usePersonnageDebugStore.getState().setScale(id, 2, value);
+          useCharacterDebugStore.getState().setScale(id, 2, value);
         });
 
       characterFolder.close();

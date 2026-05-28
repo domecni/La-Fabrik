@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeBufferGeometries } from "three-stdlib";
 import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
 import type { VegetationInstance } from "@/types/map/mapScene";
 import { useWind } from "@/hooks/world/useWind";
@@ -161,7 +161,7 @@ function extractMeshes(scene: THREE.Group): MeshData[] {
 
   return [...meshesByMaterial.values()]
     .map(({ geometries, material }) => {
-      const mergedGeometry = mergeGeometries(geometries, false);
+      const mergedGeometry = mergeBufferGeometries(geometries, false);
 
       for (const geometry of geometries) {
         if (geometry !== mergedGeometry) {

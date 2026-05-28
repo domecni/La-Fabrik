@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeBufferGeometries } from "three-stdlib";
 import {
   normalizeMapScale,
   useTerrainHeightSampler,
@@ -112,7 +112,7 @@ function extractMeshes(scene: THREE.Group): MeshData[] {
         };
       }
 
-      const mergedGeometry = mergeGeometries(group.geometries, false);
+      const mergedGeometry = mergeBufferGeometries(group.geometries, false);
 
       for (const geometry of group.geometries) {
         geometry.dispose();

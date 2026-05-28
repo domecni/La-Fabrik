@@ -24,89 +24,84 @@ function random01(seed: number): number {
   return value - Math.floor(value);
 }
 
-function pushVector(target: number[], value: THREE.Vector3): void {
-  target.push(value.x, value.y, value.z);
-}
-
-function pushColor(target: number[], value: THREE.Color): void {
-  target.push(value.r, value.g, value.b);
-}
+const GRASS_COLOR_VALUES = GRASS_COLORS.map((color) => new THREE.Color(color));
+const MARKER_COLOR_VALUES = [0.1, 0, 0, 0, 0, 0.1, 1, 1, 1] as const;
 
 function createGrassGeometry(density: number): THREE.BufferGeometry {
-  const positions: number[] = [];
-  const colors: number[] = [];
-  const uvs: number[] = [];
-  const bladeOrigins: number[] = [];
-  const yaws: number[] = [];
   const bladeCount = Math.round(GRASS_CONFIG.bladeCount * density);
+  const vertexCount = bladeCount * 3;
+  const positions = new Float32Array(vertexCount * 3);
+  const markerColorValues = new Float32Array(vertexCount * 3);
+  const bladeColorValues = new Float32Array(vertexCount * 3);
+  const uvs = new Float32Array(vertexCount * 2);
+  const bladeOrigins = new Float32Array(vertexCount * 3);
+  const yaws = new Float32Array(vertexCount * 3);
   const halfPatchSize = GRASS_CONFIG.patchSize * 0.5;
 
   for (let index = 0; index < bladeCount; index++) {
     const seed = index * 997;
-    const origin = new THREE.Vector3(
-      random01(seed + 1) * GRASS_CONFIG.patchSize - halfPatchSize,
-      0,
-      random01(seed + 2) * GRASS_CONFIG.patchSize - halfPatchSize,
-    );
+    const originX = random01(seed + 1) * GRASS_CONFIG.patchSize - halfPatchSize;
+    const originY = 0;
+    const originZ = random01(seed + 2) * GRASS_CONFIG.patchSize - halfPatchSize;
     const yawAngle = random01(seed + 3) * Math.PI * 2;
-    const yaw = new THREE.Vector3(Math.sin(yawAngle), 0, -Math.cos(yawAngle));
+    const yawX = Math.sin(yawAngle);
+    const yawY = 0;
+    const yawZ = -Math.cos(yawAngle);
     const colorIndex = Math.floor(random01(seed + 4) * GRASS_COLORS.length);
-    const color = new THREE.Color(GRASS_COLORS[colorIndex] ?? GRASS_COLORS[0]);
-    const markerColors = [
-      new THREE.Color(0.1, 0, 0),
-      new THREE.Color(0, 0, 0.1),
-      new THREE.Color(1, 1, 1),
-    ] as const;
-    const uv = new THREE.Vector2(
-      origin.x / GRASS_CONFIG.patchSize + 0.5,
-      origin.z / GRASS_CONFIG.patchSize + 0.5,
-    );
+    const color = GRASS_COLOR_VALUES[colorIndex] ?? GRASS_COLOR_VALUES[0];
+    const uvX = originX / GRASS_CONFIG.patchSize + 0.5;
+    const uvY = originZ / GRASS_CONFIG.patchSize + 0.5;
 
     for (let vertexIndex = 0; vertexIndex < 3; vertexIndex++) {
-      pushVector(positions, origin);
-      pushColor(colors, markerColors[vertexIndex] ?? markerColors[2]);
-      pushVector(bladeOrigins, origin);
-      pushVector(yaws, yaw);
-      pushColor(colors, color);
-      uvs.push(uv.x, uv.y);
+      const vertexOffset = index * 3 + vertexIndex;
+      const vectorOffset = vertexOffset * 3;
+      const uvOffset = vertexOffset * 2;
+      const markerOffset = vertexIndex * 3;
+
+      positions[vectorOffset] = originX;
+      positions[vectorOffset + 1] = originY;
+      positions[vectorOffset + 2] = originZ;
+
+      markerColorValues[vectorOffset] = MARKER_COLOR_VALUES[markerOffset] ?? 1;
+      markerColorValues[vectorOffset + 1] =
+        MARKER_COLOR_VALUES[markerOffset + 1] ?? 1;
+      markerColorValues[vectorOffset + 2] =
+        MARKER_COLOR_VALUES[markerOffset + 2] ?? 1;
+
+      bladeColorValues[vectorOffset] = color?.r ?? 0;
+      bladeColorValues[vectorOffset + 1] = color?.g ?? 0;
+      bladeColorValues[vectorOffset + 2] = color?.b ?? 0;
+
+      bladeOrigins[vectorOffset] = originX;
+      bladeOrigins[vectorOffset + 1] = originY;
+      bladeOrigins[vectorOffset + 2] = originZ;
+
+      yaws[vectorOffset] = yawX;
+      yaws[vectorOffset + 1] = yawY;
+      yaws[vectorOffset + 2] = yawZ;
+
+      uvs[uvOffset] = uvX;
+      uvs[uvOffset + 1] = uvY;
     }
   }
 
   const geometry = new THREE.BufferGeometry();
-  const markerColorValues: number[] = [];
-  const bladeColorValues: number[] = [];
 
-  for (let index = 0; index < colors.length; index += 6) {
-    markerColorValues.push(
-      colors[index] ?? 0,
-      colors[index + 1] ?? 0,
-      colors[index + 2] ?? 0,
-    );
-    bladeColorValues.push(
-      colors[index + 3] ?? 0,
-      colors[index + 4] ?? 0,
-      colors[index + 5] ?? 0,
-    );
-  }
-
-  geometry.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(positions, 3),
-  );
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute(
     "color",
-    new THREE.Float32BufferAttribute(markerColorValues, 3),
+    new THREE.BufferAttribute(markerColorValues, 3),
   );
   geometry.setAttribute(
     "aBladeColor",
-    new THREE.Float32BufferAttribute(bladeColorValues, 3),
+    new THREE.BufferAttribute(bladeColorValues, 3),
   );
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
   geometry.setAttribute(
     "aBladeOrigin",
-    new THREE.Float32BufferAttribute(bladeOrigins, 3),
+    new THREE.BufferAttribute(bladeOrigins, 3),
   );
-  geometry.setAttribute("aYaw", new THREE.Float32BufferAttribute(yaws, 3));
+  geometry.setAttribute("aYaw", new THREE.BufferAttribute(yaws, 3));
   geometry.computeVertexNormals();
   geometry.computeBoundingSphere();
 

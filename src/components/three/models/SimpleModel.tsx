@@ -42,7 +42,7 @@ export function SimpleModel({
     rotation,
     scale,
   });
-  const model = useClonedObject(scene);
+  const model = useClonedObject(scene, { cloneResources: true });
 
   useEffect(() => {
     applyShadowSettings(model, castShadow, receiveShadow);

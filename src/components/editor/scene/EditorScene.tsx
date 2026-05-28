@@ -12,6 +12,17 @@ import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
 const EDITOR_CAMERA_HOME_POSITION = new THREE.Vector3(0, 50, 100);
 const EDITOR_CAMERA_HOME_TARGET = new THREE.Vector3(0, 0, 0);
 
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
+}
+
 export interface EditorCinematicPreviewRequest {
   id: string;
   cinematic: CinematicDefinition;
@@ -148,6 +159,8 @@ export function EditorScene({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableShortcutTarget(e.target)) return;
+
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "z" || e.key === "Z") {
           e.preventDefault();

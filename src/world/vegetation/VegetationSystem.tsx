@@ -15,9 +15,10 @@ import {
   VEGETATION_TYPES,
   type VegetationType,
 } from "@/data/world/vegetationConfig";
+import { createWorldInstanceChunks } from "@/utils/world/chunkInstances";
 
 interface VegetationSystemProps {
-  onlyModelName?: string | null;
+  onlyMapName?: string | null;
   streaming?: boolean;
 }
 
@@ -35,42 +36,15 @@ interface VegetationChunk {
   instances: VegetationInstance[];
 }
 
-function getChunkKey(instance: VegetationInstance): string {
-  const [x, , z] = instance.position;
-  const chunkX = Math.floor(x / CHUNK_CONFIG.chunkSize);
-  const chunkZ = Math.floor(z / CHUNK_CONFIG.chunkSize);
-  return `${chunkX}:${chunkZ}`;
-}
-
 function createVegetationChunks(
   type: VegetationType,
   instances: VegetationInstance[],
 ): VegetationChunk[] {
   const config = VEGETATION_TYPES[type];
-  const chunks = new Map<string, VegetationInstance[]>();
 
-  for (const instance of instances) {
-    const key = getChunkKey(instance);
-    const chunk = chunks.get(key);
-    if (chunk) {
-      chunk.push(instance);
-    } else {
-      chunks.set(key, [instance]);
-    }
-  }
-
-  return [...chunks.entries()].map(([chunkKey, chunkInstances]) => {
-    const center = chunkInstances.reduce(
-      (sum, instance) => {
-        sum.x += instance.position[0];
-        sum.z += instance.position[2];
-        return sum;
-      },
-      { x: 0, z: 0 },
-    );
-
+  return createWorldInstanceChunks(instances).map((chunk) => {
     return {
-      key: `${type}:${chunkKey}`,
+      key: `${type}:${chunk.chunkKey}`,
       type,
       modelPath: config.modelPath,
       scaleMultiplier: config.scaleMultiplier,
@@ -78,15 +52,15 @@ function createVegetationChunks(
       receiveShadow: config.receiveShadow,
       windStrength: config.windStrength,
       rotationOffset: config.rotationOffset,
-      centerX: center.x / chunkInstances.length,
-      centerZ: center.z / chunkInstances.length,
-      instances: chunkInstances,
+      centerX: chunk.centerX,
+      centerZ: chunk.centerZ,
+      instances: chunk.instances,
     };
   });
 }
 
 export function VegetationSystem({
-  onlyModelName = null,
+  onlyMapName = null,
   streaming = true,
 }: VegetationSystemProps): React.JSX.Element | null {
   const cameraMode = useCameraMode();
@@ -106,7 +80,7 @@ export function VegetationSystem({
     return VEGETATION_TYPE_KEYS.flatMap((type) => {
       const config = VEGETATION_TYPES[type];
 
-      if (onlyModelName && config.mapName !== onlyModelName) return [];
+      if (onlyMapName && config.mapName !== onlyMapName) return [];
 
       if (!config.enabled) return [];
       if (!isMapModelVisible(config.mapName, { groups, models })) return [];
@@ -116,7 +90,7 @@ export function VegetationSystem({
 
       return createVegetationChunks(type, entry.instances);
     });
-  }, [data, groups, models, onlyModelName]);
+  }, [data, groups, models, onlyMapName]);
 
   const visibleChunks = useVisibleWorldChunks(chunks, streamingEnabled);
 

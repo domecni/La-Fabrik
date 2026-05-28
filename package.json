@@ -57,10 +57,5 @@
     "r3f-perf": {
       "@react-three/drei": "$@react-three/drei"
     }
-  },
-  "knip": {
-    "ignore": [
-      "src/types/three/three-addons.d.ts"
-    ]
   }
 }

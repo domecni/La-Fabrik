@@ -1,4 +1,4 @@
-import type { Octree } from "three/addons/math/Octree.js";
+import type { Octree } from "three-stdlib";
 
 export type Vector3Tuple = [number, number, number];
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import type { Object3D } from "three";
-import { Octree } from "three/addons/math/Octree.js";
+import { Octree } from "three-stdlib";
 import type { OctreeReadyHandler } from "@/types/three/three";
 
 export function useOctreeGraphNode(

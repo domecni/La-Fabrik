@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useCallback, useEffect, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { EditorControls } from "@/components/editor/EditorControls";
 import { EditorScene } from "@/components/editor/scene/EditorScene";
 import type { EditorCinematicPreviewRequest } from "@/components/editor/scene/EditorScene";
@@ -8,268 +8,48 @@ import { Subtitles } from "@/components/ui/Subtitles";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
-import type {
-  HierarchicalMapNode,
-  MapNode,
-  SceneData,
-  TransformMode,
-} from "@/types/editor/editor";
+import type { MapNode, TransformMode } from "@/types/editor/editor";
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
+import {
+  addTreeNode,
+  createNewMapNode,
+  mergeFlatNodeTransformsIntoTree,
+  removeEditorMetadata,
+  removeTreeNodeAtPath,
+  serializeMapNodes,
+  updateSceneDataTree,
+  updateTreeNodeAtPath,
+} from "@/utils/editor/editorMapTree";
 
 const SAVE_ERROR_MESSAGE = "Erreur lors de l'enregistrement";
 const DEFAULT_NEW_NODE_NAME = "new-model";
 
-function serializeMapNodes(sceneData: SceneData): string {
-  const mapPayload = sceneData.mapTree
-    ? mergeFlatNodeTransformsIntoTree(sceneData)
-    : sceneData.mapNodes.map(removeEditorMetadata);
+function EditorWebGLContextLogger(): null {
+  const gl = useThree((state) => state.gl);
 
-  return JSON.stringify(mapPayload, null, 2);
-}
+  useEffect(() => {
+    gl.setClearColor("#050505");
 
-function createSourcePathKey(sourcePath: readonly number[]): string {
-  return sourcePath.join(".");
-}
-
-function removeEditorMetadata(node: MapNode): MapNode {
-  return {
-    ...(node.id ? { id: node.id } : {}),
-    name: node.name,
-    type: node.type,
-    position: node.position,
-    rotation: node.rotation,
-    scale: node.scale,
-  };
-}
-
-function mergeFlatNodeTransformsIntoTree(
-  sceneData: SceneData,
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  const nodesBySourcePath = new Map<string, MapNode>();
-
-  for (const node of sceneData.mapNodes) {
-    if (!node.sourcePath) continue;
-    nodesBySourcePath.set(createSourcePathKey(node.sourcePath), node);
-  }
-
-  const cloneNode = (
-    node: HierarchicalMapNode,
-    path: number[],
-  ): HierarchicalMapNode => {
-    const updatedNode = nodesBySourcePath.get(createSourcePathKey(path));
-    const nextNode: HierarchicalMapNode = {
-      ...((updatedNode?.id ?? node.id)
-        ? { id: updatedNode?.id ?? node.id }
-        : {}),
-      name: node.name,
-      type: node.type,
-      position: updatedNode?.position ?? node.position,
-      rotation: updatedNode?.rotation ?? node.rotation,
-      scale: updatedNode?.scale ?? node.scale,
+    const canvas = gl.domElement;
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      logger.error("WebGL", "Context lost - GPU resources exhausted");
+    };
+    const handleContextRestored = () => {
+      logger.info("WebGL", "Context restored");
     };
 
-    if (node.role) {
-      nextNode.role = node.role;
-    }
+    canvas.addEventListener("webglcontextlost", handleContextLost);
+    canvas.addEventListener("webglcontextrestored", handleContextRestored);
 
-    if (node.children) {
-      nextNode.children = node.children.map((child, index) =>
-        cloneNode(child, [...path, index]),
-      );
-    }
+    return () => {
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
+      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+    };
+  }, [gl]);
 
-    return nextNode;
-  };
-
-  const mapTree = sceneData.mapTree;
-
-  if (!mapTree) {
-    return sceneData.mapNodes.map(removeEditorMetadata);
-  }
-
-  if (Array.isArray(mapTree)) {
-    return mapTree.map((node, index) => cloneNode(node, [index]));
-  }
-
-  return cloneNode(mapTree, []);
-}
-
-function cloneMapTree(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  return JSON.parse(JSON.stringify(mapTree)) as
-    | HierarchicalMapNode
-    | HierarchicalMapNode[];
-}
-
-function collectEditableMapNodes(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-): MapNode[] {
-  const nodes: MapNode[] = [];
-
-  function visit(node: HierarchicalMapNode, path: number[]): void {
-    if (node.role !== "group" && node.type !== "Mesh") {
-      nodes.push({
-        ...(node.id ? { id: node.id } : {}),
-        name: node.name,
-        position: node.position,
-        rotation: node.rotation,
-        scale: node.scale,
-        sourcePath: path,
-        type: node.type,
-      });
-    }
-
-    node.children?.forEach((child, index) => visit(child, [...path, index]));
-  }
-
-  if (Array.isArray(mapTree)) {
-    mapTree.forEach((node, index) => visit(node, [index]));
-  } else {
-    visit(mapTree, []);
-  }
-
-  return nodes;
-}
-
-function updateTreeNodeAtPath(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  path: number[],
-  update: (node: HierarchicalMapNode) => HierarchicalMapNode,
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  const nextTree = cloneMapTree(mapTree);
-  const rootNodes = Array.isArray(nextTree) ? nextTree : [nextTree];
-  const targetIndex = path[path.length - 1] ?? 0;
-  const isRootTarget = Array.isArray(nextTree)
-    ? path.length === 1
-    : path.length === 0;
-
-  if (isRootTarget) {
-    const targetNode = rootNodes[targetIndex];
-    if (targetNode) {
-      rootNodes[targetIndex] = update(targetNode);
-    }
-    return nextTree;
-  }
-
-  const parentPath = path.slice(0, -1);
-  let parent = Array.isArray(nextTree)
-    ? rootNodes[parentPath[0] ?? 0]
-    : rootNodes[0];
-  const childPath = Array.isArray(nextTree) ? parentPath.slice(1) : parentPath;
-
-  for (const index of childPath) {
-    parent = parent?.children?.[index];
-  }
-
-  if (!parent?.children?.[targetIndex]) return nextTree;
-  parent.children[targetIndex] = update(parent.children[targetIndex]);
-
-  return nextTree;
-}
-
-function removeTreeNodeAtPath(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  path: number[],
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  const nextTree = cloneMapTree(mapTree);
-  const rootNodes = Array.isArray(nextTree) ? nextTree : [nextTree];
-  const targetIndex = path[path.length - 1];
-  if (targetIndex === undefined) return nextTree;
-
-  if (Array.isArray(nextTree) && path.length === 1) {
-    nextTree.splice(targetIndex, 1);
-    return nextTree;
-  }
-
-  const parentPath = path.slice(0, -1);
-  let parent = Array.isArray(nextTree)
-    ? rootNodes[parentPath[0] ?? 0]
-    : rootNodes[0];
-  const childPath = Array.isArray(nextTree) ? parentPath.slice(1) : parentPath;
-
-  for (const index of childPath) {
-    parent = parent?.children?.[index];
-  }
-
-  parent?.children?.splice(targetIndex, 1);
-  return nextTree;
-}
-
-function updateSceneDataTree(
-  sceneData: SceneData,
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-): SceneData {
-  return {
-    ...sceneData,
-    mapNodes: collectEditableMapNodes(mapTree),
-    mapTree,
-  };
-}
-
-function findNodePathByName(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  name: string,
-): number[] | null {
-  function visit(node: HierarchicalMapNode, path: number[]): number[] | null {
-    if (node.name === name) return path;
-
-    for (let index = 0; index < (node.children?.length ?? 0); index++) {
-      const child = node.children?.[index];
-      if (!child) continue;
-      const result = visit(child, [...path, index]);
-      if (result) return result;
-    }
-
-    return null;
-  }
-
-  if (Array.isArray(mapTree)) {
-    for (let index = 0; index < mapTree.length; index++) {
-      const node = mapTree[index];
-      if (!node) continue;
-      const result = visit(node, [index]);
-      if (result) return result;
-    }
-    return null;
-  }
-
-  return visit(mapTree, []);
-}
-
-function addTreeNode(
-  mapTree: HierarchicalMapNode | HierarchicalMapNode[],
-  node: HierarchicalMapNode,
-): HierarchicalMapNode | HierarchicalMapNode[] {
-  const blockingPath = findNodePathByName(mapTree, "blocking");
-  if (!blockingPath) return mapTree;
-
-  return updateTreeNodeAtPath(mapTree, blockingPath, (blockingNode) => ({
-    ...blockingNode,
-    children: [...(blockingNode.children ?? []), node],
-  }));
-}
-
-function createNewMapNode(name: string): HierarchicalMapNode {
-  const safeName = name.trim() || DEFAULT_NEW_NODE_NAME;
-
-  return {
-    name: safeName,
-    type: "Object3D",
-    position: [0, 0, 0],
-    rotation: [0, 0, 0],
-    scale: [1, 1, 1],
-    children: [
-      {
-        name: safeName,
-        type: "Mesh",
-        position: [0, 0, 0],
-        rotation: [0, 0, 0],
-        scale: [1, 1, 1],
-      },
-    ],
-  };
+  return null;
 }
 
 export function EditorPage(): React.JSX.Element {
@@ -336,13 +116,14 @@ export function EditorPage(): React.JSX.Element {
     setResetCameraRequest((request) => request + 1);
   }, []);
 
-  const handleToggleNodeSelection = useCallback((index: number) => {
-    setSelectedNodeIndexes((currentIndexes) => {
-      const isSelected = currentIndexes.includes(index);
+  const handleToggleNodeSelection = useCallback(
+    (index: number) => {
+      const isSelected = selectedNodeIndexes.includes(index);
       const nextIndexes = isSelected
-        ? currentIndexes.filter((item) => item !== index)
-        : [...currentIndexes, index];
+        ? selectedNodeIndexes.filter((item) => item !== index)
+        : [...selectedNodeIndexes, index];
 
+      setSelectedNodeIndexes(nextIndexes);
       setSelectedNodeIndex(nextIndexes.at(-1) ?? null);
       if (nextIndexes.length > 0) {
         setCameraViewMode("object");
@@ -350,10 +131,9 @@ export function EditorPage(): React.JSX.Element {
         setCameraViewMode("home");
         setResetCameraRequest((request) => request + 1);
       }
-
-      return nextIndexes;
-    });
-  }, []);
+    },
+    [selectedNodeIndexes],
+  );
 
   const handleClearSelection = useCallback(() => {
     setSelectedNodeIndex(null);
@@ -399,28 +179,20 @@ export function EditorPage(): React.JSX.Element {
 
       if (!locked) return;
 
-      setSelectedNodeIndex((currentIndex) => {
-        if (currentIndex === null) return null;
+      const nextIndexes = selectedNodeIndexes.filter(
+        (index) => sceneData?.mapNodes[index]?.name !== "terrain",
+      );
+      const selectedNode =
+        selectedNodeIndex !== null
+          ? sceneData?.mapNodes[selectedNodeIndex]
+          : null;
 
-        const selectedNode = sceneData?.mapNodes[currentIndex];
-        if (selectedNode?.name === "terrain") {
-          setSelectedNodeIndexes((indexes) =>
-            indexes.filter(
-              (index) => sceneData?.mapNodes[index]?.name !== "terrain",
-            ),
-          );
-          return null;
-        }
-
-        setSelectedNodeIndexes((indexes) =>
-          indexes.filter(
-            (index) => sceneData?.mapNodes[index]?.name !== "terrain",
-          ),
-        );
-        return currentIndex;
-      });
+      setSelectedNodeIndexes(nextIndexes);
+      setSelectedNodeIndex(
+        selectedNode?.name === "terrain" ? null : selectedNodeIndex,
+      );
     },
-    [sceneData],
+    [sceneData, selectedNodeIndex, selectedNodeIndexes],
   );
 
   const handleHoverNode = useCallback((index: number | null) => {
@@ -554,51 +326,55 @@ export function EditorPage(): React.JSX.Element {
   );
 
   const handleAddNode = useCallback(() => {
-    setSceneData((prev) => {
-      if (!prev) return null;
-      if (!prev.mapTree) {
-        const newNode = createNewMapNode(newNodeName);
-        const mapNodes = [...prev.mapNodes, removeEditorMetadata(newNode)];
-        setSelectedNodeIndex(mapNodes.length - 1);
-        setSelectedNodeIndexes([mapNodes.length - 1]);
-        return { ...prev, mapNodes };
-      }
+    if (!sceneData) return;
 
-      const mapTree = addTreeNode(prev.mapTree, createNewMapNode(newNodeName));
-      const nextSceneData = updateSceneDataTree(prev, mapTree);
-      setSelectedNodeIndex(nextSceneData.mapNodes.length - 1);
-      setSelectedNodeIndexes([nextSceneData.mapNodes.length - 1]);
-      return nextSceneData;
-    });
-  }, [newNodeName, setSceneData]);
+    if (!sceneData.mapTree) {
+      const newNode = createNewMapNode(newNodeName);
+      const mapNodes = [...sceneData.mapNodes, removeEditorMetadata(newNode)];
+      const selectedIndex = mapNodes.length - 1;
+
+      setSceneData({ ...sceneData, mapNodes });
+      setSelectedNodeIndex(selectedIndex);
+      setSelectedNodeIndexes([selectedIndex]);
+      return;
+    }
+
+    const mapTree = addTreeNode(
+      sceneData.mapTree,
+      createNewMapNode(newNodeName),
+    );
+    const nextSceneData = updateSceneDataTree(sceneData, mapTree);
+    const selectedIndex = nextSceneData.mapNodes.length - 1;
+
+    setSceneData(nextSceneData);
+    setSelectedNodeIndex(selectedIndex);
+    setSelectedNodeIndexes([selectedIndex]);
+  }, [newNodeName, sceneData, setSceneData]);
 
   const handleDeleteSelectedNode = useCallback(() => {
-    if (selectedNodeIndex === null) return;
+    if (!sceneData || selectedNodeIndex === null) return;
 
-    setSceneData((prev) => {
-      if (!prev) return null;
-      const currentNode = prev.mapNodes[selectedNodeIndex];
-      if (!currentNode) return prev;
-      if (!prev.mapTree || !currentNode.sourcePath) {
-        setSelectedNodeIndex(null);
-        setSelectedNodeIndexes([]);
-        return {
-          ...prev,
-          mapNodes: prev.mapNodes.filter(
-            (_node, index) => index !== selectedNodeIndex,
-          ),
-        };
-      }
+    const currentNode = sceneData.mapNodes[selectedNodeIndex];
+    if (!currentNode) return;
 
+    if (!sceneData.mapTree || !currentNode.sourcePath) {
+      setSceneData({
+        ...sceneData,
+        mapNodes: sceneData.mapNodes.filter(
+          (_node, index) => index !== selectedNodeIndex,
+        ),
+      });
+    } else {
       const mapTree = removeTreeNodeAtPath(
-        prev.mapTree,
+        sceneData.mapTree,
         currentNode.sourcePath,
       );
-      setSelectedNodeIndex(null);
-      setSelectedNodeIndexes([]);
-      return updateSceneDataTree(prev, mapTree);
-    });
-  }, [selectedNodeIndex, setSceneData]);
+      setSceneData(updateSceneDataTree(sceneData, mapTree));
+    }
+
+    setSelectedNodeIndex(null);
+    setSelectedNodeIndexes([]);
+  }, [sceneData, selectedNodeIndex, setSceneData]);
 
   if (isMapLoading) {
     return (
@@ -655,24 +431,8 @@ export function EditorPage(): React.JSX.Element {
           antialias: true,
           stencil: false,
         }}
-        onCreated={({ gl }) => {
-          gl.setClearColor("#050505");
-
-          const canvas = gl.domElement;
-          const handleContextLost = (event: Event) => {
-            event.preventDefault();
-            logger.error("WebGL", "Context lost - GPU resources exhausted");
-          };
-          const handleContextRestored = () => {
-            logger.info("WebGL", "Context restored");
-          };
-          canvas.addEventListener("webglcontextlost", handleContextLost);
-          canvas.addEventListener(
-            "webglcontextrestored",
-            handleContextRestored,
-          );
-        }}
       >
+        <EditorWebGLContextLogger />
         <EditorScene
           sceneData={sceneData!}
           selectedNodeIndex={selectedNodeIndex}

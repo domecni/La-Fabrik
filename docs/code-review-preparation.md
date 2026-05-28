@@ -121,7 +121,7 @@ Phrase à retenir :
 
 Piège à connaître :
 
-`useRepairMovementLocked()` retourne actuellement `false`. Le lock de mouvement est prévu dans le code et l'UI, mais il est désactivé sur `develop`.
+`useRepairMovementLocked()` lit maintenant l'étape de mission active et verrouille le déplacement pendant les phases de réparation qui doivent immobiliser le joueur.
 
 ### Interaction
 

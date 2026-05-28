@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeBufferGeometries } from "three-stdlib";
 import type { Vector3Tuple } from "@/types/three/three";
 import { optimizeGLTFSceneTextures } from "@/utils/three/optimizeGLTFScene";
 
@@ -102,7 +102,7 @@ function createMergedMeshes(scene: THREE.Group): MergedMeshData[] {
         };
       }
 
-      const geometry = mergeGeometries(group.geometries, false);
+      const geometry = mergeBufferGeometries(group.geometries, false);
 
       for (const sourceGeometry of group.geometries) {
         sourceGeometry.dispose();

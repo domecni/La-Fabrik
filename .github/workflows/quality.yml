@@ -80,8 +80,8 @@ jobs:
 
       - name: 📏 Check bundle size
         run: |
-          # Check generated app assets only; public/ model files are runtime assets copied to dist.
-          SIZE=$(du -k dist/assets | cut -f1)
+          # Check generated JS/CSS bundles only; public runtime assets are copied to dist/assets too.
+          SIZE=$(node -e "const fs=require('fs');const path=require('path');function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap((entry)=>{const file=path.join(dir,entry.name);return entry.isDirectory()?walk(file):file;});}const bytes=walk('dist/assets').filter((file)=>/\.(js|css)$/.test(file)).reduce((sum,file)=>sum+fs.statSync(file).size,0);console.log(Math.ceil(bytes/1024));")
           echo "Bundle size: ${SIZE}KB"
 
           THRESHOLD=5000

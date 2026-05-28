@@ -1,8 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { Capsule } from "three/addons/math/Capsule.js";
-import type { Octree } from "three/addons/math/Octree.js";
+import { Capsule, type Octree } from "three-stdlib";
 import {
   INTERACT_KEY,
   JUMP_KEY,
