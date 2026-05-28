@@ -101,7 +101,6 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
         </>
       ) : (
         <TestMap onOctreeReady={handleOctreeReady} />
-        <NetTest />
       )}
 
       {sceneMode !== "game" && spawnPlayer ? (

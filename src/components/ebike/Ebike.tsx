@@ -243,7 +243,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
             height={0.8}
             startPos={gpsStartPos}
             destPos={destPos}
-            mapImageUrl="/map_background.png"
+            mapImageUrl="/assets/gps/map_background.png"
             worldBounds={{
               minX: -166,
               maxX: 163,

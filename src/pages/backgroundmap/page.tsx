@@ -101,7 +101,7 @@ function CameraManager({
       const dataUrl = gl.domElement.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "map_background.png";
+      a.download = "/assets/gps/map_background.png";
       a.click();
     };
     return () => { delete (window as any).downloadMapScreenshot; };
