@@ -72,7 +72,7 @@ Use the trash button in `Selection` to delete the selected node from the map tre
 | -------------------- | -------------------------- |
 | Select object        | Click object               |
 | Toggle multi-select  | `Shift` + right click      |
-| Deselect             | `Esc` or click empty space |
+| Deselect             | `Esc`                      |
 | Lock selection       | `Lock` button in Selection |
 | Clear selection      | `X` button in Selection    |
 | Translate mode       | `T`                        |
@@ -91,7 +91,7 @@ The `Selection` section shows the selected object name and its index in `public/
 - Click an object to select it.
 - Use `Shift + right click` on objects to add or remove them from a multi-selection.
 - When several objects are selected, the gizmo appears on the selection group and applies translate, rotate, or scale to each selected node.
-- Click empty space or press `Esc` to clear the selection.
+- Press `Esc` to clear the selection.
 - Use the `X` button to clear the selection explicitly.
 - Use the `Lock` button to protect the current selection while editing.
 - Use the scale fields to edit X/Y/Z scale precisely.
@@ -108,7 +108,6 @@ This is intended for map objects that should sit on the ground. Disable it when 
 When selection is locked:
 
 - clicking another object does not change the selection
-- clicking empty space does not clear the selection
 - pressing `Esc` does not clear the selection
 - the `X` button still clears the selection intentionally
 

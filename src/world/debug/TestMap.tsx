@@ -31,7 +31,7 @@ import type { OctreeReadyHandler } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
 const ELECTRICIENNE_ANIMATED_MODEL_PATH =
-  "/models/electricienne_animated/model.gltf";
+  "/models/electricienne-animated/model.gltf";
 
 interface TestMapProps {
   onOctreeReady: OctreeReadyHandler;

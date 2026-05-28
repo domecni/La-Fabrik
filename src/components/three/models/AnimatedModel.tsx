@@ -68,32 +68,6 @@ export function AnimatedModel({
     }
   }, [mixer, onAnimationEnd]);
 
-  const play = useCallback(
-    (name: string, fade = fadeDuration) => {
-      const action = actions[name];
-      if (action) {
-        Object.values(actions).forEach((a) => {
-          if (a && a !== action) a.fadeOut(fade);
-        });
-        action.reset().fadeIn(fade).play();
-        setCurrentAnim(name);
-      }
-    },
-    [actions, fadeDuration],
-  );
-
-  const stop = useCallback(
-    (fade = fadeDuration) => {
-      Object.values(actions).forEach((a) => a?.fadeOut(fade));
-      const defaultAction = actions[defaultAnimation];
-      if (defaultAction) {
-        defaultAction.reset().fadeIn(fade).play();
-        setCurrentAnim(defaultAnimation);
-      }
-    },
-    [actions, defaultAnimation, fadeDuration],
-  );
-
   const fadeTo = useCallback(
     (name: string, fade = fadeDuration) => {
       const action = actions[name];
@@ -106,6 +80,19 @@ export function AnimatedModel({
       }
     },
     [actions, fadeDuration],
+  );
+  const play = fadeTo;
+
+  const stop = useCallback(
+    (fade = fadeDuration) => {
+      Object.values(actions).forEach((a) => a?.fadeOut(fade));
+      const defaultAction = actions[defaultAnimation];
+      if (defaultAction) {
+        defaultAction.reset().fadeIn(fade).play();
+        setCurrentAnim(defaultAnimation);
+      }
+    },
+    [actions, defaultAnimation, fadeDuration],
   );
 
   const setSpeed = useCallback(
@@ -140,10 +127,21 @@ export function AnimatedModel({
     }
 
     if (defaultAction) {
-      defaultAction.play();
+      Object.values(actions).forEach((action) => {
+        if (action && action !== defaultAction) action.fadeOut(fadeDuration);
+      });
+      defaultAction.reset().fadeIn(fadeDuration).play();
       onLoaded?.();
     }
-  }, [actions, defaultAnimation, modelPath, names, autoPlay, onLoaded]);
+  }, [
+    actions,
+    defaultAnimation,
+    fadeDuration,
+    modelPath,
+    names,
+    autoPlay,
+    onLoaded,
+  ]);
 
   const contextValue: AnimatedModelContextValue = {
     play,

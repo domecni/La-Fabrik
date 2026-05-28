@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
 import { FlyController } from "@/controls/editor/FlyController";
+import { PersonnageSystem } from "@/world/personnages/PersonnageSystem";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
 
@@ -33,6 +34,8 @@ interface EditorSceneProps {
   onTransformStart: () => void;
   onTransformEnd: () => void;
   onNodeTransform: (nodeIndex: number, transform: MapNode) => void;
+  snapAllToTerrainRequest: number;
+  onSnapAllToTerrain: (mapNodes: MapNode[]) => void;
   onUndo: () => void;
   onRedo: () => void;
   resetCameraRequest: number;
@@ -58,6 +61,8 @@ export function EditorScene({
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
+  snapAllToTerrainRequest,
+  onSnapAllToTerrain,
   onUndo,
   onRedo,
   resetCameraRequest,
@@ -224,7 +229,11 @@ export function EditorScene({
         onTransformStart={onTransformStart}
         onTransformEnd={onTransformEnd}
         onNodeTransform={onNodeTransform}
+        snapAllToTerrainRequest={snapAllToTerrainRequest}
+        onSnapAllToTerrain={onSnapAllToTerrain}
       />
+
+      <PersonnageSystem />
 
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />

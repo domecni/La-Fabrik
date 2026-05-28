@@ -12,6 +12,8 @@ import {
   isEditorVisibleMapNode,
   getTerrainMapNode,
 } from "@/utils/map/mapRuntimeClassification";
+import { getMapModelScaleMultiplier } from "@/data/world/mapInstancingConfig";
+import { getVegetationModelScaleMultiplier } from "@/data/world/vegetationConfig";
 
 interface EditorMapProps {
   sceneData: SceneData;
@@ -28,6 +30,8 @@ interface EditorMapProps {
   onTransformStart: () => void;
   onTransformEnd: () => void;
   onNodeTransform: (nodeIndex: number, transform: MapNode) => void;
+  snapAllToTerrainRequest: number;
+  onSnapAllToTerrain: (mapNodes: MapNode[]) => void;
 }
 
 type EditorNodeObjectRef = React.RefObject<Map<number, THREE.Object3D>>;
@@ -63,6 +67,32 @@ const TEMP_INVERSE_GROUP_MATRIX = new THREE.Matrix4();
 const TEMP_POSITION = new THREE.Vector3();
 const TEMP_QUATERNION = new THREE.Quaternion();
 const TEMP_SCALE = new THREE.Vector3();
+
+function isOriginPosition(position: MapNode["position"]): boolean {
+  return position.every((value) => Math.abs(value) < 0.0001);
+}
+
+function isSnapAllCandidate(node: MapNode): boolean {
+  return (
+    isEditorVisibleMapNode(node) &&
+    node.name !== "terrain" &&
+    !isOriginPosition(node.position)
+  );
+}
+
+function shouldRenderEditorNode(
+  node: MapNode,
+  selectedNodeName: string | null,
+): boolean {
+  if (!isEditorVisibleMapNode(node)) return false;
+  return selectedNodeName === null || node.name === selectedNodeName;
+}
+
+function getEditorModelVisualScaleMultiplier(name: string): number {
+  return (
+    getMapModelScaleMultiplier(name) * getVegetationModelScaleMultiplier(name)
+  );
+}
 
 function applyNodeTransform(object: THREE.Object3D, node: MapNode): void {
   object.position.set(...node.position);
@@ -177,14 +207,21 @@ export function EditorMap({
   onTransformStart,
   onTransformEnd,
   onNodeTransform,
+  snapAllToTerrainRequest,
+  onSnapAllToTerrain,
 }: EditorMapProps): React.JSX.Element {
   const objectsMapRef = useRef<Map<number, THREE.Object3D>>(new Map());
   const transformGroupRef = useRef<THREE.Group>(null);
   const transformSnapshotRef = useRef<TransformSnapshot | null>(null);
   const terrainHeight = useTerrainHeightSampler();
+  const lastSnapAllToTerrainRequestRef = useRef(0);
 
   const selectedIndexSet = new Set(selectedNodeIndexes);
   const isMultiSelection = selectedNodeIndexes.length > 1;
+  const selectedNodeName =
+    selectedNodeIndex !== null
+      ? (sceneData.mapNodes[selectedNodeIndex]?.name ?? null)
+      : null;
 
   const getTransformObject = useCallback(() => {
     if (isMultiSelection) {
@@ -333,6 +370,37 @@ export function EditorMap({
     prepareTransformGroup();
   }, [prepareTransformGroup]);
 
+  useEffect(() => {
+    if (
+      snapAllToTerrainRequest === 0 ||
+      snapAllToTerrainRequest === lastSnapAllToTerrainRequestRef.current
+    ) {
+      return;
+    }
+
+    lastSnapAllToTerrainRequestRef.current = snapAllToTerrainRequest;
+
+    const snappedNodes = sceneData.mapNodes.map((node) => {
+      if (!isSnapAllCandidate(node)) return node;
+
+      const [x, y, z] = node.position;
+      const terrainY = terrainHeight.getHeight(x, z);
+      if (terrainY === null || Math.abs(terrainY - y) < 0.0001) return node;
+
+      return {
+        ...node,
+        position: [x, terrainY, z] satisfies [number, number, number],
+      };
+    });
+
+    onSnapAllToTerrain(snappedNodes);
+  }, [
+    onSnapAllToTerrain,
+    sceneData.mapNodes,
+    snapAllToTerrainRequest,
+    terrainHeight,
+  ]);
+
   // TransformControls needs the current Three object; editor refs are managed outside React rendering.
   // eslint-disable-next-line react-hooks/refs
   const selectedObject = getTransformObject();
@@ -370,7 +438,7 @@ export function EditorMap({
           />
         ) : null}
         {sceneData.mapNodes.map((node, index) => {
-          if (!isEditorVisibleMapNode(node)) {
+          if (!shouldRenderEditorNode(node, selectedNodeName)) {
             return null;
           }
 
@@ -451,6 +519,7 @@ function EditorModelNode({
     scale: node.scale,
   });
   const sceneInstance = useClonedObject(scene);
+  const visualScaleMultiplier = getEditorModelVisualScaleMultiplier(node.name);
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
@@ -512,14 +581,15 @@ function EditorModelNode({
   }, []);
 
   return (
-    <primitive
+    <group
       ref={groupRef}
-      object={sceneInstance}
       position={node.position}
       rotation={node.rotation}
       scale={node.scale}
       {...pointerHandlers}
-    />
+    >
+      <primitive object={sceneInstance} scale={visualScaleMultiplier} />
+    </group>
   );
 }
 

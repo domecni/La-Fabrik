@@ -122,8 +122,7 @@ If `model.glb` and `model.gltf` are both missing, the editor renders a fallback 
 - Click: select a node.
 - `Shift` + right click: add or remove a node from the multi-selection.
 - `Esc`: clear selection.
-- Click empty space: clear selection.
-- Selection lock button: prevent object clicks, empty-space clicks, and `Esc` from changing the current selection.
+- Selection lock button: prevent object clicks and `Esc` from changing the current selection.
 - Selection clear button: intentionally clear the current selection even when the lock is active.
 - `T`: translate mode.
 - `R`: rotate mode.
@@ -190,9 +189,9 @@ The state is passed to:
 
 - `EditorControls`, to render the lock/unlock button
 - `EditorScene`, to block `Esc` deselection when locked
-- `EditorMap`, to block object selection and empty-space deselection when locked
+- `EditorMap`, to block object selection when locked
 
-The clear button calls `onClearSelection` directly from `EditorControls`. This is intentionally separate from scene click behavior so the user always has an explicit way to clear the selection.
+The clear button calls `onClearSelection` directly from `EditorControls`. Clicking empty canvas space does not clear the current selection; use `Esc` or the explicit clear button instead.
 
 ## Dialogue SRT Editing
 

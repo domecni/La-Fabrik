@@ -7,6 +7,7 @@ import {
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useEnvironmentDebug } from "@/hooks/debug/useEnvironmentDebug";
 import { useMapPerformanceDebug } from "@/hooks/debug/useMapPerformanceDebug";
+import { usePersonnageDebug } from "@/hooks/debug/usePersonnageDebug";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { useWorldSceneLoading } from "@/hooks/world/useWorldSceneLoading";
@@ -28,6 +29,7 @@ import { GameMusic } from "@/world/GameMusic";
 import { Lighting } from "@/world/Lighting";
 import { GameMap } from "@/world/GameMap";
 import { GameStageContent } from "@/world/GameStageContent";
+import { PersonnageSystem } from "@/world/personnages/PersonnageSystem";
 import { Player } from "@/world/player/Player";
 import { TestMap } from "@/world/debug/TestMap";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
@@ -39,6 +41,7 @@ interface WorldProps {
 export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
   useEnvironmentDebug();
   useMapPerformanceDebug();
+  usePersonnageDebug();
 
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
@@ -87,6 +90,7 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
             onLoadingStateChange={onLoadingStateChange}
             onOctreeReady={handleOctreeReady}
           />
+          <PersonnageSystem />
           {showGameStage ? (
             <Physics>
               <GameStageLoaded onLoaded={handleGameStageLoaded} />

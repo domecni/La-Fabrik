@@ -41,6 +41,7 @@ interface EditorControlsProps {
   onClearSelection: () => void;
   snapToTerrain: boolean;
   onSnapToTerrainToggle: () => void;
+  onSnapAllToTerrain: () => void;
   newNodeName: string;
   onNewNodeNameChange: (value: string) => void;
   onAddNode: () => void;
@@ -70,7 +71,7 @@ const EDITOR_SHORTCUTS = [
   ["Shift + Right click", "Toggle multi-selection"],
   ["T / R / S", "Transform mode"],
   ["Ctrl Z / Y", "Undo / redo"],
-  ["Esc", "Deselect"],
+  ["Esc / X button", "Clear selection"],
   ["WASD", "Move when locked"],
 ] as const;
 
@@ -117,6 +118,7 @@ export function EditorControls({
   onClearSelection,
   snapToTerrain,
   onSnapToTerrainToggle,
+  onSnapAllToTerrain,
   newNodeName,
   onNewNodeNameChange,
   onAddNode,
@@ -228,6 +230,15 @@ export function EditorControls({
               />
               <span>Snap terrain on move</span>
             </label>
+
+            <button
+              type="button"
+              className="editor-history-button"
+              onClick={onSnapAllToTerrain}
+            >
+              <ScanSearch size={15} aria-hidden="true" />
+              Snap all to terrain
+            </button>
           </section>
 
           <section

@@ -323,6 +323,7 @@ export function EditorPage(): React.JSX.Element {
   const [newNodeName, setNewNodeName] = useState(DEFAULT_NEW_NODE_NAME);
   const [lockTerrainSelection, setLockTerrainSelection] = useState(true);
   const [resetCameraRequest, setResetCameraRequest] = useState(0);
+  const [snapAllToTerrainRequest, setSnapAllToTerrainRequest] = useState(0);
   const [focusSelectedCameraRequest, setFocusSelectedCameraRequest] =
     useState(0);
   const [cameraViewMode, setCameraViewMode] = useState<"home" | "object">(
@@ -372,9 +373,14 @@ export function EditorPage(): React.JSX.Element {
   const handleSelectNode = useCallback((index: number | null) => {
     setSelectedNodeIndex(index);
     setSelectedNodeIndexes(index === null ? [] : [index]);
+
     if (index !== null) {
       setCameraViewMode("object");
+      return;
     }
+
+    setCameraViewMode("home");
+    setResetCameraRequest((request) => request + 1);
   }, []);
 
   const handleToggleNodeSelection = useCallback((index: number) => {
@@ -387,6 +393,9 @@ export function EditorPage(): React.JSX.Element {
       setSelectedNodeIndex(nextIndexes.at(-1) ?? null);
       if (nextIndexes.length > 0) {
         setCameraViewMode("object");
+      } else {
+        setCameraViewMode("home");
+        setResetCameraRequest((request) => request + 1);
       }
 
       return nextIndexes;
@@ -396,6 +405,8 @@ export function EditorPage(): React.JSX.Element {
   const handleClearSelection = useCallback(() => {
     setSelectedNodeIndex(null);
     setSelectedNodeIndexes([]);
+    setCameraViewMode("home");
+    setResetCameraRequest((request) => request + 1);
   }, []);
 
   const handleSelectionLockToggle = useCallback(() => {
@@ -405,6 +416,25 @@ export function EditorPage(): React.JSX.Element {
   const handleSnapToTerrainToggle = useCallback(() => {
     setSnapToTerrain((enabled) => !enabled);
   }, []);
+
+  const handleSnapAllToTerrainRequest = useCallback(() => {
+    setSnapAllToTerrainRequest((request) => request + 1);
+  }, []);
+
+  const handleSnapAllToTerrain = useCallback(
+    (mapNodes: MapNode[]) => {
+      setSceneData((prev) => {
+        if (!prev) return null;
+
+        const nextSceneData = { ...prev, mapNodes };
+        if (!prev.mapTree) return nextSceneData;
+
+        const mapTree = mergeFlatNodeTransformsIntoTree(nextSceneData);
+        return updateSceneDataTree(nextSceneData, mapTree);
+      });
+    },
+    [setSceneData],
+  );
 
   const handleNewNodeNameChange = useCallback((value: string) => {
     setNewNodeName(value);
@@ -710,6 +740,8 @@ export function EditorPage(): React.JSX.Element {
             onTransformStart={handleTransformStart}
             onTransformEnd={handleTransformEnd}
             onNodeTransform={handleNodeTransform}
+            snapAllToTerrainRequest={snapAllToTerrainRequest}
+            onSnapAllToTerrain={handleSnapAllToTerrain}
             onUndo={handleUndo}
             onRedo={handleRedo}
             resetCameraRequest={resetCameraRequest}
@@ -748,6 +780,7 @@ export function EditorPage(): React.JSX.Element {
           onClearSelection={handleClearSelection}
           snapToTerrain={snapToTerrain}
           onSnapToTerrainToggle={handleSnapToTerrainToggle}
+          onSnapAllToTerrain={handleSnapAllToTerrainRequest}
           newNodeName={newNodeName}
           onNewNodeNameChange={handleNewNodeNameChange}
           onAddNode={handleAddNode}

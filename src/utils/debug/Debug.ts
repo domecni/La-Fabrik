@@ -24,6 +24,7 @@ const DEBUG_FOLDER_ORDER = [
   "Interaction",
   "Hand Tracking",
   "Map",
+  "Personnages",
 ] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
