@@ -8,7 +8,7 @@ The main feature is a reusable repair flow mounted in the production game scene.
 
 The current user flow is:
 
-1. Enter a mission state such as `bike`, `pylone`, or `ferme`.
+1. Enter a mission state such as `ebike`, `pylon`, or `farm`.
 2. Move close to the active repair object in the game scene.
 3. Aim at the object and press the interaction key when prompted.
 4. The mission step moves from `waiting` to `inspected`.
@@ -21,7 +21,7 @@ The current user flow is:
 11. Move each scanned broken part into a compatible placeholder so the damaged parts are stored in the case.
 12. Press `E` on the green install target to move to `reassembling`. Wrong parts turn the target red and cannot finish the repair.
 13. The exploded object animates back into its assembled form with completion particles, then moves to `done`.
-14. Press `E` on the completion target. The repair case closes, returns to the ground, disappears, then `completeMission` moves to the next mission or to `outro` after `ferme`.
+14. Press `E` on the completion target. The repair case closes, returns to the ground, disappears, then `completeMission` moves to the next mission or to `outro` after `farm`.
 
 ## Why It Matters
 
@@ -39,11 +39,11 @@ In `inspected`, `RepairGame` can also move to `fragmented`. Keyboard input goes 
 
 In `fragmented`, the repair object is rendered with `ExplodableModel`, then automatically advances to `scanning`. In `scanning`, the exploded model remains visible, a blue scan visual moves from part to part, and a red halo/wire marker plus the configured broken UI video stay attached to configured broken parts after the scanner reaches them. The scan matches configured broken parts by `nodeName` and reports diagnostics when a configured node is missing. In `repairing`, the case opens in a larger focused transform, `RepairCaseModel` traverses the case GLTF for empty nodes named `placeholder_*`, several grabbable replacement parts appear on those slot positions, and releasing a part near a slot snaps it into place with a short GSAP animation. Scanned broken parts are also rendered as grabbable objects and must be deposited into a compatible slot before the final install target validates. If `brokenParts[].caseSlotName` is configured, that broken part snaps only to the matching slot; otherwise it can use any available slot. If the current case asset has no slot nodes, the flow keeps using fallback focus positions and logs the fallback. Replacement parts show green or red placement feedback after snapping, broken parts show stored feedback after deposit, and the install target gives a short blocked feedback if the player tries to validate too early. The install target only validates when the configured correct replacement part is placed and all scanned broken parts have been deposited. In `reassembling`, the exploded model animates back into its assembled position with green completion particles before the flow moves to `done`. In `done`, the repaired object remains visible with a completion target; validating closes the repair case first, then plays the case exit animation before advancing the global mission progression.
 
-The mission config now carries the mission-specific variations. `bike` repairs one cooling core, `pylone` scans and stores both the lamp relay and a damaged panel with slower scan/reassembly timing, and `ferme` scans and stores an irrigation pump plus humidity sensor with faster scan/reassembly timing.
+The mission config now carries the mission-specific variations. `ebike` repairs one cooling core, `pylon` scans and stores both the lamp relay and a damaged panel with slower scan/reassembly timing, and `farm` scans and stores an irrigation pump plus humidity sensor with faster scan/reassembly timing.
 
 ## Key Files
 
-- `src/world/GameStageContent.tsx` mounts production `RepairGame` instances for `bike`, `pylone`, and `ferme`.
+- `src/world/GameStageContent.tsx` mounts production `RepairGame` instances for `ebike`, `pylon`, and `farm`.
 - `src/components/three/gameplay/RepairCompletionStep.tsx` renders the final repaired object, completion target, case exit animation, and mission UI prompt.
 - `src/components/three/gameplay/RepairGame.tsx` composes the reusable production repair flow.
 - `src/components/three/gameplay/RepairBrokenPartHighlight.tsx` renders the red halo and wire marker around detected broken parts during scanning.
@@ -65,7 +65,7 @@ The mission config now carries the mission-specific variations. `bike` repairs o
 - `src/components/three/models/ExplodableModel.tsx` renders selectable models with split/exploded visualization.
 - `src/data/gameplay/repairCaseConfig.ts` stores repair case model, sound, and animation constants.
 - `src/data/gameplay/repairGameConfig.ts` stores repair flow timing constants.
-- `src/data/gameplay/repairMissions.ts` stores reusable repair mission config for `bike`, `pylone`, and `ferme`.
+- `src/data/gameplay/repairMissions.ts` stores reusable repair mission config for `ebike`, `pylon`, and `farm`.
 - `src/managers/stores/useGameStore.ts` stores mission progression state and generic mission step helpers.
 - `src/types/gameplay/repairMission.ts` contains shared repair mission ids, mission steps, and guards used by the store, data config, debug UI, and gameplay components.
 
@@ -73,7 +73,7 @@ The mission config now carries the mission-specific variations. `bike` repairs o
 
 The production repair flow currently requires:
 
-- the active `mainState` to be one of `bike`, `pylone`, or `ferme`
+- the active `mainState` to be one of `ebike`, `pylon`, or `farm`
 - `GameStageContent` mounted inside the game scene Rapier `Physics` boundary
 - model assets available under `public/models/`
 - sound assets available under `public/sounds/`

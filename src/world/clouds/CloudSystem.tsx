@@ -2,7 +2,7 @@ import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { CLOUD_CONFIG } from "@/data/world/cloudConfig";
-import { getWindVector } from "@/data/world/windConfig";
+import { getWindVector } from "@/utils/world/windVector";
 import { useDynamicClouds } from "@/hooks/world/useGraphicsSettings";
 import { useCloudSettings } from "@/hooks/world/useCloudSettings";
 import { useWind } from "@/hooks/world/useWind";

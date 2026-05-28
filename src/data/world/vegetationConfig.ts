@@ -2,7 +2,7 @@ export const VEGETATION_TYPES = {
   buissons: {
     mapName: "buisson",
     modelPath: "/models/buisson/model.gltf",
-    scaleMultiplier: 2,
+    scaleMultiplier: 1.5,
     castShadow: true,
     receiveShadow: true,
     windStrength: 0.08,
@@ -11,7 +11,7 @@ export const VEGETATION_TYPES = {
   sapin: {
     mapName: "sapin",
     modelPath: "/models/sapin/model.gltf",
-    scaleMultiplier: 5,
+    scaleMultiplier: 4,
     castShadow: true,
     receiveShadow: true,
     windStrength: 0.04,

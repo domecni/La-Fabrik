@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { CHUNK_CONFIG } from "@/data/world/chunkStreamingConfig";
 
@@ -18,6 +18,7 @@ export function useVisibleWorldChunks<TChunk extends WorldChunkLike>(
 ): readonly TChunk[] {
   const camera = useThree((state) => state.camera);
   const lastUpdateRef = useRef(-CHUNK_CONFIG.updateInterval);
+  const activeChunkKeysRef = useRef<Set<string>>(new Set());
   const [activeChunkKeys, setActiveChunkKeys] = useState<Set<string>>(
     () => new Set(),
   );
@@ -32,7 +33,7 @@ export function useVisibleWorldChunks<TChunk extends WorldChunkLike>(
         chunk.centerX - cameraX,
         chunk.centerZ - cameraZ,
       );
-      const wasActive = activeChunkKeys.has(chunk.key);
+      const wasActive = activeChunkKeysRef.current.has(chunk.key);
       const radius = wasActive
         ? CHUNK_CONFIG.unloadRadius
         : CHUNK_CONFIG.loadRadius;
@@ -42,10 +43,11 @@ export function useVisibleWorldChunks<TChunk extends WorldChunkLike>(
       }
     }
 
-    if (areSetsEqual(nextKeys, activeChunkKeys)) return;
+    if (areSetsEqual(nextKeys, activeChunkKeysRef.current)) return;
 
+    activeChunkKeysRef.current = nextKeys;
     setActiveChunkKeys(nextKeys);
-  }, [activeChunkKeys, camera, chunks]);
+  }, [camera, chunks]);
 
   useFrame(({ clock }) => {
     if (!streamingEnabled) return;
@@ -57,18 +59,26 @@ export function useVisibleWorldChunks<TChunk extends WorldChunkLike>(
     updateActiveChunks();
   });
 
-  if (!streamingEnabled) return chunks;
+  return useMemo(() => {
+    if (!streamingEnabled) return chunks;
 
-  return chunks.filter((chunk) => {
-    if (activeChunkKeys.size > 0) {
-      return activeChunkKeys.has(chunk.key);
-    }
+    return chunks.filter((chunk) => {
+      if (activeChunkKeys.size > 0) {
+        return activeChunkKeys.has(chunk.key);
+      }
 
-    return (
-      Math.hypot(
-        chunk.centerX - camera.position.x,
-        chunk.centerZ - camera.position.z,
-      ) <= CHUNK_CONFIG.loadRadius
-    );
-  });
+      return (
+        Math.hypot(
+          chunk.centerX - camera.position.x,
+          chunk.centerZ - camera.position.z,
+        ) <= CHUNK_CONFIG.loadRadius
+      );
+    });
+  }, [
+    activeChunkKeys,
+    camera.position.x,
+    camera.position.z,
+    chunks,
+    streamingEnabled,
+  ]);
 }

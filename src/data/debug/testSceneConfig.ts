@@ -31,19 +31,19 @@ export const TEST_SCENE_REPAIR_ZONES = [
     position: [-12, 0, -12],
   },
   {
-    mission: "pylone",
-    label: "Pylone",
+    mission: "pylon",
+    label: "Pylon",
     color: "#facc15",
     position: [0, 0, -12],
   },
   {
-    mission: "ferme",
+    mission: "farm",
     label: "Farm",
     color: "#86efac",
     position: [12, 0, -12],
   },
 ] as const satisfies readonly {
-  mission: "ebike" | "pylone" | "ferme";
+  mission: "ebike" | "pylon" | "farm";
   label: string;
   color: string;
   position: Vector3Tuple;

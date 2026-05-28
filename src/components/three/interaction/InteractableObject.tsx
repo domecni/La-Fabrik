@@ -41,7 +41,26 @@ type InteractableObjectProps =
 const _cameraPos = new THREE.Vector3();
 const _cameraDir = new THREE.Vector3();
 const _objectPos = new THREE.Vector3();
+const _objectBounds = new THREE.Box3();
 const _raycaster = new THREE.Raycaster();
+
+function getInteractableWorldPosition(
+  group: THREE.Group,
+  debugSphere: THREE.Mesh | null,
+): THREE.Vector3 {
+  _objectBounds.makeEmpty();
+
+  for (const child of group.children) {
+    if (child === debugSphere) continue;
+    _objectBounds.expandByObject(child);
+  }
+
+  if (!_objectBounds.isEmpty()) {
+    return _objectBounds.getCenter(_objectPos);
+  }
+
+  return group.getWorldPosition(_objectPos);
+}
 
 function createInteractableHandle(
   props: InteractableObjectProps,
@@ -158,7 +177,7 @@ export function InteractableObject(
       const t = bodyRef.current.translation();
       _objectPos.set(t.x, t.y, t.z);
     } else if (group) {
-      group.getWorldPosition(_objectPos);
+      getInteractableWorldPosition(group, debugSphereRef.current);
     } else {
       _objectPos.set(...position);
     }

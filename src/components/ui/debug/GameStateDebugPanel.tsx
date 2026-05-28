@@ -1,12 +1,15 @@
 import { RotateCcw, StepBack, StepForward } from "lucide-react";
-import { useGameStore } from "@/managers/stores/useGameStore";
-import { isMissionStep, MISSION_STEPS } from "@/types/gameplay/repairMission";
 import {
   GAME_STEPS,
   isGameStep,
   MAIN_GAME_STATES,
-  type MainGameState,
-} from "@/types/game";
+} from "@/data/game/gameStateConfig";
+import {
+  isMissionStep,
+  MISSION_STEPS,
+} from "@/data/gameplay/repairMissionState";
+import { useGameStore } from "@/managers/stores/useGameStore";
+import type { MainGameState } from "@/types/game";
 
 function toPascalCase(value: string): string {
   return value
@@ -19,18 +22,18 @@ function toPascalCase(value: string): string {
 export function GameStateDebugPanel(): React.JSX.Element {
   const mainState = useGameStore((state) => state.mainState);
   const ebikeStep = useGameStore((state) => state.ebike.currentStep);
-  const pyloneStep = useGameStore((state) => state.pylone.currentStep);
-  const fermeStep = useGameStore((state) => state.ferme.currentStep);
+  const pylonStep = useGameStore((state) => state.pylon.currentStep);
+  const farmStep = useGameStore((state) => state.farm.currentStep);
   const detail = useGameStore((state) => {
     switch (state.mainState) {
       case "intro":
         return state.intro.currentStep;
       case "ebike":
         return state.ebike.currentStep;
-      case "pylone":
-        return state.pylone.currentStep;
-      case "ferme":
-        return state.ferme.currentStep;
+      case "pylon":
+        return state.pylon.currentStep;
+      case "farm":
+        return state.farm.currentStep;
       case "outro":
         return state.outro.hasStarted ? "started" : "waiting";
     }
@@ -38,8 +41,8 @@ export function GameStateDebugPanel(): React.JSX.Element {
   const setMainState = useGameStore((state) => state.setMainState);
   const setIntroStep = useGameStore((state) => state.setIntroStep);
   const setEbikeState = useGameStore((state) => state.setEbikeState);
-  const setPyloneState = useGameStore((state) => state.setPyloneState);
-  const setFermeState = useGameStore((state) => state.setFermeState);
+  const setPylonState = useGameStore((state) => state.setPylonState);
+  const setFarmState = useGameStore((state) => state.setFarmState);
   const setOutroState = useGameStore((state) => state.setOutroState);
   const advanceGameState = useGameStore((state) => state.advanceGameState);
   const rewindGameState = useGameStore((state) => state.rewindGameState);
@@ -72,13 +75,13 @@ export function GameStateDebugPanel(): React.JSX.Element {
       return;
     }
 
-    if (mainState === "pylone") {
-      setPyloneState({ currentStep: nextSubState });
+    if (mainState === "pylon") {
+      setPylonState({ currentStep: nextSubState });
       return;
     }
 
-    if (mainState === "ferme") {
-      setFermeState({ currentStep: nextSubState });
+    if (mainState === "farm") {
+      setFarmState({ currentStep: nextSubState });
       return;
     }
   }
@@ -86,18 +89,34 @@ export function GameStateDebugPanel(): React.JSX.Element {
   function setDebugMainState(nextMainState: MainGameState): void {
     setMainState(nextMainState);
 
+    if (
+      nextMainState === "pylon" ||
+      nextMainState === "farm" ||
+      nextMainState === "outro"
+    ) {
+      setEbikeState({ currentStep: "done", isRepaired: true });
+    }
+
+    if (nextMainState === "farm" || nextMainState === "outro") {
+      setPylonState({ currentStep: "done", isPowered: true });
+    }
+
+    if (nextMainState === "outro") {
+      setFarmState({ currentStep: "done", irrigationFixed: true });
+    }
+
     if (nextMainState === "ebike" && ebikeStep === "locked") {
       setEbikeState({ currentStep: "waiting" });
       return;
     }
 
-    if (nextMainState === "pylone" && pyloneStep === "locked") {
-      setPyloneState({ currentStep: "waiting" });
+    if (nextMainState === "pylon" && pylonStep === "locked") {
+      setPylonState({ currentStep: "waiting" });
       return;
     }
 
-    if (nextMainState === "ferme" && fermeStep === "locked") {
-      setFermeState({ currentStep: "waiting" });
+    if (nextMainState === "farm" && farmStep === "locked") {
+      setFarmState({ currentStep: "waiting" });
     }
   }
 

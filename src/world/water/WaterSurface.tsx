@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { FOG_CONFIG } from "@/data/world/fogConfig";
-import { getWindVector } from "@/data/world/windConfig";
+import { getWindVector } from "@/utils/world/windVector";
 import { WATER_SHADER_CONFIG } from "@/data/world/waterConfig";
 import type { WaterSurfaceConfig } from "@/data/world/waterConfig";
 import { useWind } from "@/hooks/world/useWind";

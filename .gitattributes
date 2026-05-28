@@ -23,3 +23,6 @@
 # Video (cinematics)
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.webm filter=lfs diff=lfs merge=lfs -text
+
+# ML models
+*.task filter=lfs diff=lfs merge=lfs -text

@@ -24,7 +24,7 @@ import {
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { GameMapCollision } from "@/world/GameMapCollision";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
-import { isGeneratedMapModelName } from "@/world/map-generated/generatedMapModelConfig";
+import { isGeneratedMapModelName } from "@/data/world/generatedMapModelConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";

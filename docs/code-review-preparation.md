@@ -19,7 +19,7 @@ La-Fabrik est une expérience web 3D en React, Vite, Three.js et React Three Fib
 Le joueur est dans un monde 3D et avance dans une progression de réparation :
 
 ```txt
-intro -> bike -> pylone -> ferme -> outro
+intro -> ebike -> pylon -> farm -> outro
 ```
 
 Les trois piliers à connaître pour la review :
@@ -62,7 +62,7 @@ HomePage
     -> World
       -> GameMap
       -> GameStageContent
-        -> RepairGame bike/pylone/ferme
+        -> RepairGame ebike/pylon/farm
       -> GameMusic
       -> GameDialogues
       -> Player
@@ -324,7 +324,7 @@ Ouvrir dans cet ordre :
 `RepairGame` reçoit une mission :
 
 ```tsx
-<RepairGame mission="bike" position={[8, 0, -6]} />
+<RepairGame mission="ebike" position={[42.2399, 4.5484, 34.6468]} />
 ```
 
 Puis il vérifie :
@@ -347,7 +347,7 @@ Les variations mission sont dans `repairMissions.ts` :
 ### Pourquoi c'est bien
 
 - Un seul flow réutilisable.
-- Moins de duplication entre `bike`, `pylone`, `ferme`.
+- Moins de duplication entre `ebike`, `pylon`, `farm`.
 - Les règles générales restent dans les composants.
 - Les variations restent dans la data.
 - Le debug panel peut tester les mêmes steps que le vrai jeu.
@@ -471,9 +471,9 @@ Main states :
 
 ```txt
 intro
-bike
-pylone
-ferme
+ebike
+pylon
+farm
 outro
 ```
 

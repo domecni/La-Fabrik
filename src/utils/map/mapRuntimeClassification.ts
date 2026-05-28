@@ -1,5 +1,5 @@
 import type { MapNode } from "@/types/map/mapScene";
-import { isInstancedMapNodeName } from "@/data/world/mapInstancingConfig";
+import { isInstancedMapNodeName } from "@/utils/map/isInstancedMapNodeName";
 
 const MAP_STRUCTURE_NODE_NAMES = new Set(["Scene", "blocking", "terrain"]);
 const RUNTIME_VEGETATION_NODE_NAMES = new Set([

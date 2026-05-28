@@ -8,6 +8,7 @@ export function GameFlow(): null {
   const setStep = useGameStore((state) => state.setIntroStep);
   const setActivityCity = useGameStore((state) => state.setActivityCity);
   const setCanMove = useGameStore((state) => state.setCanMove);
+  const completeIntro = useGameStore((state) => state.completeIntro);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -55,10 +56,17 @@ export function GameFlow(): null {
 
     if (step === "manipulation") {
       setCanMove(false);
+      const timeoutId = window.setTimeout(() => {
+        completeIntro();
+      }, 1000);
+
+      return () => {
+        window.clearTimeout(timeoutId);
+      };
     }
 
     return undefined;
-  }, [step, setStep, setActivityCity, setCanMove]);
+  }, [completeIntro, step, setStep, setActivityCity, setCanMove]);
 
   return null;
 }

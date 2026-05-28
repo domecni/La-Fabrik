@@ -4,14 +4,14 @@ import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
 import { useTerrainSurfaceData } from "@/hooks/world/useTerrainSurfaceData";
 import type { Vector3Tuple } from "@/types/three/three";
 import { sampleTerrainSurfaceAtXZ } from "@/utils/world/terrainSurfaceSampler";
-import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
+import type { MapAssetInstance } from "@/hooks/world/useMapInstancingData";
 import {
   PATH_TILE_MAX_COUNT,
   PATH_SURFACE_KEY,
   PATH_TILE_ROTATION,
   PATH_TILE_SAMPLE_STEP,
   PATH_TILE_SCALE,
-} from "@/world/paths/pathConfig";
+} from "@/data/world/pathConfig";
 
 function createSampleCenters(min: number, max: number, step: number): number[] {
   const start = Math.ceil(min / step) * step + step * 0.5;

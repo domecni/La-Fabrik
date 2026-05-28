@@ -6,7 +6,7 @@ import type { TerrainSurfaceBounds } from "@/types/world/terrainSurface";
 import type { Vector3Tuple } from "@/types/three/three";
 import { logger } from "@/utils/core/Logger";
 import { getMapNodesByName } from "@/utils/map/loadMapSceneData";
-import { GRASS_CONFIG } from "@/world/grass/grassConfig";
+import { GRASS_CONFIG } from "@/data/world/grassConfig";
 
 const RAYCAST_Y = 500;
 const RAYCAST_FAR = 1000;

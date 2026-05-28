@@ -3,7 +3,7 @@ import {
   useDynamicGrass,
   useGrassDensity,
 } from "@/hooks/world/useGraphicsSettings";
-import { GRASS_CONFIG } from "@/world/grass/grassConfig";
+import { GRASS_CONFIG } from "@/data/world/grassConfig";
 import { GrassPatch } from "@/world/grass/GrassPatch";
 import { useTerrainGrassSampler } from "@/world/grass/useTerrainGrassSampler";
 

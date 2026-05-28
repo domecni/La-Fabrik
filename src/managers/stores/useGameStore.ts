@@ -1,15 +1,13 @@
 import { create } from "zustand";
+import { isGameStep, isMainGameState } from "@/data/game/gameStateConfig";
 import {
-  isGameStep,
-  isMainGameState,
-  type GameStep,
-  type MainGameState,
-} from "@/types/game";
-import {
-  isRepairMissionId,
-  isMissionStep,
   getNextMissionStep,
   getPreviousMissionStep,
+  isMissionStep,
+  isRepairMissionId,
+} from "@/data/gameplay/repairMissionState";
+import type { GameStep, MainGameState } from "@/types/game";
+import {
   type MissionStep,
   type RepairMissionId,
 } from "@/types/gameplay/repairMission";
@@ -49,10 +47,10 @@ export interface GameState {
   ebike: MissionState & {
     isRepaired: boolean;
   };
-  pylone: MissionState & {
+  pylon: MissionState & {
     isPowered: boolean;
   };
-  ferme: MissionState & {
+  farm: MissionState & {
     irrigationFixed: boolean;
   };
   outro: {
@@ -71,14 +69,14 @@ interface GameActions {
   setIntroState: (intro: Partial<IntroState>) => void;
   setPlayerName: (playerName: string) => void;
   setEbikeState: (ebike: Partial<GameState["ebike"]>) => void;
-  setPyloneState: (pylone: Partial<GameState["pylone"]>) => void;
-  setFermeState: (ferme: Partial<GameState["ferme"]>) => void;
+  setPylonState: (pylon: Partial<GameState["pylon"]>) => void;
+  setFarmState: (farm: Partial<GameState["farm"]>) => void;
   setOutroState: (outro: Partial<GameState["outro"]>) => void;
   setMissionStep: (mission: RepairMissionId, step: MissionStep) => void;
   completeIntro: () => void;
   completeEbike: () => void;
-  completePylone: () => void;
-  completeFerme: () => void;
+  completePylon: () => void;
+  completeFarm: () => void;
   completeMission: (mission: RepairMissionId) => void;
   startOutro: () => void;
   advanceGameState: () => void;
@@ -110,6 +108,10 @@ function completeIntroState(state: GameState): GameStateUpdate {
       hasCompleted: true,
       isEbikeUnlocked: true,
     },
+    missionFlow: {
+      ...state.missionFlow,
+      canMove: true,
+    },
     ebike: {
       ...state.ebike,
       currentStep: "locked",
@@ -119,39 +121,39 @@ function completeIntroState(state: GameState): GameStateUpdate {
 
 function completeEbikeState(state: GameState): GameStateUpdate {
   return {
-    mainState: "pylone",
+    mainState: "pylon",
     ebike: {
       ...state.ebike,
       currentStep: "done",
       isRepaired: true,
     },
-    pylone: {
-      ...state.pylone,
+    pylon: {
+      ...state.pylon,
       currentStep: "waiting",
     },
   };
 }
 
-function completePyloneState(state: GameState): GameStateUpdate {
+function completePylonState(state: GameState): GameStateUpdate {
   return {
-    mainState: "ferme",
-    pylone: {
-      ...state.pylone,
+    mainState: "farm",
+    pylon: {
+      ...state.pylon,
       currentStep: "done",
       isPowered: true,
     },
-    ferme: {
-      ...state.ferme,
+    farm: {
+      ...state.farm,
       currentStep: "waiting",
     },
   };
 }
 
-function completeFermeState(state: GameState): GameStateUpdate {
+function completeFarmState(state: GameState): GameStateUpdate {
   return {
     mainState: "outro",
-    ferme: {
-      ...state.ferme,
+    farm: {
+      ...state.farm,
       currentStep: "done",
       irrigationFixed: true,
     },
@@ -182,10 +184,10 @@ function completeMissionState(
   switch (mission) {
     case "ebike":
       return completeEbikeState(state);
-    case "pylone":
-      return completePyloneState(state);
-    case "ferme":
-      return completeFermeState(state);
+    case "pylon":
+      return completePylonState(state);
+    case "farm":
+      return completeFarmState(state);
   }
 }
 
@@ -243,12 +245,12 @@ function createInitialGameState(): GameState {
       dialogueAudio: null,
       isRepaired: false,
     },
-    pylone: {
+    pylon: {
       currentStep: "locked",
       dialogueAudio: null,
       isPowered: false,
     },
-    ferme: {
+    farm: {
       currentStep: "locked",
       dialogueAudio: null,
       irrigationFixed: false,
@@ -321,8 +323,8 @@ function hydrateDebugGameState(initial: GameState, value: unknown): GameState {
   if (!isRecord(value)) return initial;
 
   const ebike = hydrateMissionState(initial.ebike, value.ebike);
-  const pylone = hydrateMissionState(initial.pylone, value.pylone);
-  const ferme = hydrateMissionState(initial.ferme, value.ferme);
+  const pylon = hydrateMissionState(initial.pylon, value.pylon);
+  const farm = hydrateMissionState(initial.farm, value.farm);
   const outro = isRecord(value.outro) ? value.outro : null;
 
   return {
@@ -344,19 +346,19 @@ function hydrateDebugGameState(initial: GameState, value: unknown): GameState {
           ? value.ebike.isRepaired
           : initial.ebike.isRepaired,
     },
-    pylone: {
-      ...pylone,
+    pylon: {
+      ...pylon,
       isPowered:
-        isRecord(value.pylone) && isBoolean(value.pylone.isPowered)
-          ? value.pylone.isPowered
-          : initial.pylone.isPowered,
+        isRecord(value.pylon) && isBoolean(value.pylon.isPowered)
+          ? value.pylon.isPowered
+          : initial.pylon.isPowered,
     },
-    ferme: {
-      ...ferme,
+    farm: {
+      ...farm,
       irrigationFixed:
-        isRecord(value.ferme) && isBoolean(value.ferme.irrigationFixed)
-          ? value.ferme.irrigationFixed
-          : initial.ferme.irrigationFixed,
+        isRecord(value.farm) && isBoolean(value.farm.irrigationFixed)
+          ? value.farm.irrigationFixed
+          : initial.farm.irrigationFixed,
     },
     outro: {
       dialogueAudio:
@@ -385,8 +387,8 @@ function pickGameState(state: GameStore): GameState {
     missionFlow: state.missionFlow,
     intro: state.intro,
     ebike: state.ebike,
-    pylone: state.pylone,
-    ferme: state.ferme,
+    pylon: state.pylon,
+    farm: state.farm,
     outro: state.outro,
   };
 }
@@ -417,18 +419,18 @@ export const useGameStore = create<GameStore>()((set) => ({
     })),
   setEbikeState: (ebike) =>
     set((state) => ({ ebike: { ...state.ebike, ...ebike } })),
-  setPyloneState: (pylone) =>
-    set((state) => ({ pylone: { ...state.pylone, ...pylone } })),
-  setFermeState: (ferme) =>
-    set((state) => ({ ferme: { ...state.ferme, ...ferme } })),
+  setPylonState: (pylon) =>
+    set((state) => ({ pylon: { ...state.pylon, ...pylon } })),
+  setFarmState: (farm) =>
+    set((state) => ({ farm: { ...state.farm, ...farm } })),
   setOutroState: (outro) =>
     set((state) => ({ outro: { ...state.outro, ...outro } })),
   setMissionStep: (mission, step) =>
     set((state) => setMissionStepState(state, mission, step)),
   completeIntro: () => set(completeIntroState),
   completeEbike: () => set((state) => completeMissionState(state, "ebike")),
-  completePylone: () => set((state) => completeMissionState(state, "pylone")),
-  completeFerme: () => set((state) => completeMissionState(state, "ferme")),
+  completePylon: () => set((state) => completeMissionState(state, "pylon")),
+  completeFarm: () => set((state) => completeMissionState(state, "farm")),
   completeMission: (mission) =>
     set((state) => completeMissionState(state, mission)),
   startOutro: () => set(startOutroState),

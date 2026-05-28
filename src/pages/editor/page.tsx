@@ -6,6 +6,7 @@ import { EditorScene } from "@/components/editor/scene/EditorScene";
 import type { EditorCinematicPreviewRequest } from "@/components/editor/scene/EditorScene";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { Subtitles } from "@/components/ui/Subtitles";
+import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
@@ -16,7 +17,6 @@ import type {
   TransformMode,
 } from "@/types/editor/editor";
 import {
-  INITIAL_SCENE_LOADING_STATE,
   type SceneLoadingChangeHandler,
   type SceneLoadingState,
 } from "@/types/world/sceneLoading";

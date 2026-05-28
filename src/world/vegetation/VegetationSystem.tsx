@@ -16,7 +16,7 @@ import {
   VEGETATION_TYPE_KEYS,
   VEGETATION_TYPES,
   type VegetationType,
-} from "@/world/vegetation/vegetationConfig";
+} from "@/data/world/vegetationConfig";
 
 interface VegetationChunk {
   key: string;

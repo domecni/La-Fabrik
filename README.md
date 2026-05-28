@@ -10,7 +10,7 @@ The current prototype puts the player in a repair-oriented world where they prog
 - Production map loaded from `public/map.json`
 - Progressive map/model/collision/stage loading overlay
 - Player controller with pointer lock, `ZQSD` movement, jump, octree collision, trigger input, and grab input
-- Reusable repair-game flow for `bike`, `pylone`, and `ferme`
+- Reusable repair-game flow for `ebike`, `pylon`, and `farm`
 - Repair case animation, exploded model scan, broken-part markers, grabbable replacements, snap-to-placeholder placement, install validation, reassembly, and completion
 - Shared interaction system for trigger and grab objects
 - Rapier physics for gameplay objects while the player keeps a Three.js octree collision controller
@@ -112,7 +112,7 @@ npm run build
 
 ## Optional Hand-Tracking Backend
 
-The app can use browser-side MediaPipe, but the default debug source is the local backend.
+The app can use the local Python backend, but the default debug source is browser-side MediaPipe.
 
 ```bash
 python3.11 -m venv backend/.venv

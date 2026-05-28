@@ -5,8 +5,8 @@ import {
   HAND_TRACKING_JPEG_QUALITY,
   HAND_TRACKING_RESPONSE_TIMEOUT_MS,
   HAND_TRACKING_TARGET_FPS,
-  getHandTrackingWsUrl,
 } from "@/data/handTrackingConfig";
+import { getHandTrackingWsUrl } from "@/utils/handTracking/handTrackingEndpoint";
 import {
   INITIAL_HAND_TRACKING_SNAPSHOT,
   getCameraStreamWithTimeout,

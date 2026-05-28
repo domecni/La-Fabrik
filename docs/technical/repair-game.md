@@ -8,11 +8,11 @@ The repair game is the current core gameplay loop. It gives three missions the s
 
 Implemented missions:
 
-| Mission  | Object        | Role                                          |
-| -------- | ------------- | --------------------------------------------- |
-| `bike`   | E-bike        | Repair a damaged cooling core                 |
-| `pylone` | Power pylon   | Restore relay/panel-like broken parts         |
-| `ferme`  | Vertical farm | Stabilize irrigation/sensor-like broken parts |
+| Mission | Object        | Role                                          |
+| ------- | ------------- | --------------------------------------------- |
+| `ebike` | E-bike        | Repair a damaged cooling core                 |
+| `pylon` | Power pylon   | Restore relay/panel-like broken parts         |
+| `farm`  | Vertical farm | Stabilize irrigation/sensor-like broken parts |
 
 ## Main Files
 
@@ -79,7 +79,7 @@ src/managers/stores/useGameStore.ts
 - `setMissionStep(mission, nextStep)`
 - `completeMission(mission)`
 
-The important architectural choice is that reusable repair components do not call `setBikeState`, `setPyloneState`, or `setFermeState` directly. They use generic mission actions so the same component can run for all three missions.
+The important architectural choice is that reusable repair components do not call `setEbikeState`, `setPylonState`, or `setFarmState` directly. They use generic mission actions so the same component can run for all three missions.
 
 ## Data-Driven Mission Config
 
@@ -324,9 +324,9 @@ src/world/GameStageContent.tsx
 Current positions:
 
 ```tsx
-<RepairGame mission="bike" position={[8, 0, -6]} />
-<RepairGame mission="pylone" position={[64, 0, -66]} />
-<RepairGame mission="ferme" position={[-24, 0, 42]} />
+<RepairGame mission="ebike" position={[42.2399, 4.5484, 34.6468]} />
+<RepairGame mission="pylon" position={[64, 0, -66]} />
+<RepairGame mission="farm" position={[-24, 0, 42]} />
 ```
 
 Only the repair game whose `mission` matches `useGameStore().mainState` renders active content.

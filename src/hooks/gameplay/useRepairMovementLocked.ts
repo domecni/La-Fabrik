@@ -6,10 +6,10 @@ export function useRepairMovementLocked(): boolean {
     switch (state.mainState) {
       case "ebike":
         return isRepairMovementLocked(state.ebike.currentStep);
-      case "pylone":
-        return isRepairMovementLocked(state.pylone.currentStep);
-      case "ferme":
-        return isRepairMovementLocked(state.ferme.currentStep);
+      case "pylon":
+        return isRepairMovementLocked(state.pylon.currentStep);
+      case "farm":
+        return isRepairMovementLocked(state.farm.currentStep);
       case "intro":
       case "outro":
         return false;
@@ -23,6 +23,7 @@ function isRepairMovementLocked(step: MissionStep): boolean {
     step === "fragmented" ||
     step === "scanning" ||
     step === "repairing" ||
-    step === "reassembling"
+    step === "reassembling" ||
+    step === "done"
   );
 }

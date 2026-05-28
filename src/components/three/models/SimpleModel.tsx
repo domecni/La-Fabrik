@@ -2,7 +2,6 @@ import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
-import { disposeObject3D } from "@/utils/three/dispose";
 
 function applyShadowSettings(
   object: THREE.Object3D,
@@ -47,12 +46,6 @@ export function SimpleModel({
   useEffect(() => {
     applyShadowSettings(model, castShadow, receiveShadow);
   }, [castShadow, model, receiveShadow]);
-
-  useEffect(() => {
-    return () => {
-      disposeObject3D(model);
-    };
-  }, [model]);
 
   const parsedScale =
     typeof scale === "number" ? ([scale, scale, scale] as Vector3Tuple) : scale;

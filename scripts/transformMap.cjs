@@ -26,6 +26,32 @@ const IDENTITY_NODE = {
   scale: [1, 1, 1],
 };
 const MAX_MESH_Y_PLACEMENT_OFFSET = 2;
+const RAW_INDEX = {
+  directionGroup: 5,
+  fermeGroup: 4798,
+  energieGroup: 4800,
+  lafabrikGroup: 4873,
+  ecoleGroup: 4895,
+  residenceZoneSources: [830, 874, 892],
+};
+const RAW_RANGES = {
+  directionPrimary: [6, 12],
+  residenceZone1: [831, 873],
+  residenceZone2: [875, 891],
+  residenceZone3: [893, 942],
+  residenceBikes: [14, 23],
+  residenceMailboxes: [25, 58],
+  energyPylones: [61, 96],
+  vegetationPrimary: [98, 829],
+  lakePipes: [944, 944],
+  fields: [946, 4594],
+  farm: [4595, 4799],
+  vegetationFarmArea: [4750, 4797],
+  energy: [4801, 4872],
+  lafabrik: [4874, 4894],
+  directionSecondary: [4896, 4897],
+  vegetationSecondary: [4898, 4997],
+};
 
 function cloneNode(node) {
   return {
@@ -67,6 +93,15 @@ function getOrCreateModelGroup(parent, modelName) {
   }
 
   return group;
+}
+
+function getRequiredRawNode(rawData, index, label) {
+  const node = rawData[index];
+  if (!node) {
+    throw new Error(`Missing raw map node for ${label} at index ${index}`);
+  }
+
+  return node;
 }
 
 function createRenderableObject(objectNode, meshNode) {
@@ -177,28 +212,53 @@ function getNearestGroup(groups, node) {
 }
 
 function createResidenceZones(rawData, residence) {
-  const zoneSources = [rawData[830], rawData[874], rawData[892]];
+  const zoneSources = RAW_INDEX.residenceZoneSources.map((index) =>
+    getRequiredRawNode(rawData, index, `residence zone ${index}`),
+  );
   const zones = zoneSources.map((sourceNode, index) => {
     const zone = createGroup(`zone${index + 1}_residence`, sourceNode);
     residence.children.push(zone);
     return zone;
   });
 
-  addBuildingsByRange(rawData, zones[0], 831, 873);
-  addBuildingsByRange(rawData, zones[1], 875, 891);
-  addBuildingsByRange(rawData, zones[2], 893, 942);
-  addObjectsByRange(rawData, zones[0], 831, 873, RESIDENCE_MESH_NAMES);
-  addObjectsByRange(rawData, zones[1], 875, 891, RESIDENCE_MESH_NAMES);
-  addObjectsByRange(rawData, zones[2], 893, 942, RESIDENCE_MESH_NAMES);
+  addBuildingsByRange(rawData, zones[0], ...RAW_RANGES.residenceZone1);
+  addBuildingsByRange(rawData, zones[1], ...RAW_RANGES.residenceZone2);
+  addBuildingsByRange(rawData, zones[2], ...RAW_RANGES.residenceZone3);
+  addObjectsByRange(
+    rawData,
+    zones[0],
+    ...RAW_RANGES.residenceZone1,
+    RESIDENCE_MESH_NAMES,
+  );
+  addObjectsByRange(
+    rawData,
+    zones[1],
+    ...RAW_RANGES.residenceZone2,
+    RESIDENCE_MESH_NAMES,
+  );
+  addObjectsByRange(
+    rawData,
+    zones[2],
+    ...RAW_RANGES.residenceZone3,
+    RESIDENCE_MESH_NAMES,
+  );
 
-  for (let i = 14; i <= 23; i++) {
+  for (
+    let i = RAW_RANGES.residenceBikes[0];
+    i <= RAW_RANGES.residenceBikes[1];
+    i++
+  ) {
     const node = rawData[i];
     if (node?.type === "Mesh" && node.name === "parcebike") {
       addRenderable(getNearestGroup(zones, node), null, node);
     }
   }
 
-  for (let i = 25; i <= 58; i++) {
+  for (
+    let i = RAW_RANGES.residenceMailboxes[0];
+    i <= RAW_RANGES.residenceMailboxes[1];
+    i++
+  ) {
     const node = rawData[i];
     if (node?.type === "Mesh" && node.name === "boitesauxlettres") {
       addRenderable(getNearestGroup(zones, node), null, node);
@@ -266,12 +326,27 @@ function transformMap() {
   const vegetation = createGroup("vegetation");
   const agriculture = createGroup("agriculture");
   const champs = createGroup("champs");
-  const ferme = createGroup("ferme", rawData[4798]);
+  const ferme = createGroup(
+    "ferme",
+    getRequiredRawNode(rawData, RAW_INDEX.fermeGroup, "ferme group"),
+  );
   const residence = createGroup("residence");
-  const energie = createGroup("energie", rawData[4800]);
-  const direction = createGroup("direction", rawData[5]);
-  const lafabrik = createGroup("lafabrik", rawData[4873]);
-  const ecole = createGroup("ecole", rawData[4895]);
+  const energie = createGroup(
+    "energie",
+    getRequiredRawNode(rawData, RAW_INDEX.energieGroup, "energie group"),
+  );
+  const direction = createGroup(
+    "direction",
+    getRequiredRawNode(rawData, RAW_INDEX.directionGroup, "direction group"),
+  );
+  const lafabrik = createGroup(
+    "lafabrik",
+    getRequiredRawNode(rawData, RAW_INDEX.lafabrikGroup, "lafabrik group"),
+  );
+  const ecole = createGroup(
+    "ecole",
+    getRequiredRawNode(rawData, RAW_INDEX.ecoleGroup, "ecole group"),
+  );
   delete ecole.role;
   const unclassified = createGroup("unclassified");
 
@@ -288,20 +363,60 @@ function transformMap() {
   );
   agriculture.children.push(champs, ferme);
 
-  addObjectsByRange(rawData, direction, 6, 12, DIRECTION_MESH_NAMES);
+  addObjectsByRange(
+    rawData,
+    direction,
+    ...RAW_RANGES.directionPrimary,
+    DIRECTION_MESH_NAMES,
+  );
   addStandaloneObject(rawData, residence, "ebike");
   createResidenceZones(rawData, residence);
-  addObjectsByRange(rawData, energie, 61, 96, new Set(["pyloneelectrique"]));
-  addObjectsByRange(rawData, vegetation, 98, 829, VEGETATION_MESH_NAMES);
-  addObjectsByRange(rawData, agriculture, 944, 944, new Set(["tuyauxlac"]));
-  addObjectsByRange(rawData, champs, 946, 4594, CHAMP_MESH_NAMES);
-  addObjectsByRange(rawData, ferme, 4595, 4799, FERME_MESH_NAMES);
-  addObjectsByRange(rawData, vegetation, 4750, 4797, VEGETATION_MESH_NAMES);
-  addObjectsByRange(rawData, energie, 4801, 4872, ENERGIE_MESH_NAMES);
-  addBuildingsByRange(rawData, lafabrik, 4874, 4894);
-  addObjectsByRange(rawData, lafabrik, 4874, 4894, LAFABRIK_MESH_NAMES);
-  addObjectsByRange(rawData, direction, 4896, 4897, DIRECTION_MESH_NAMES);
-  addObjectsByRange(rawData, vegetation, 4898, 4997, VEGETATION_MESH_NAMES);
+  addObjectsByRange(
+    rawData,
+    energie,
+    ...RAW_RANGES.energyPylones,
+    new Set(["pyloneelectrique"]),
+  );
+  addObjectsByRange(
+    rawData,
+    vegetation,
+    ...RAW_RANGES.vegetationPrimary,
+    VEGETATION_MESH_NAMES,
+  );
+  addObjectsByRange(
+    rawData,
+    agriculture,
+    ...RAW_RANGES.lakePipes,
+    new Set(["tuyauxlac"]),
+  );
+  addObjectsByRange(rawData, champs, ...RAW_RANGES.fields, CHAMP_MESH_NAMES);
+  addObjectsByRange(rawData, ferme, ...RAW_RANGES.farm, FERME_MESH_NAMES);
+  addObjectsByRange(
+    rawData,
+    vegetation,
+    ...RAW_RANGES.vegetationFarmArea,
+    VEGETATION_MESH_NAMES,
+  );
+  addObjectsByRange(rawData, energie, ...RAW_RANGES.energy, ENERGIE_MESH_NAMES);
+  addBuildingsByRange(rawData, lafabrik, ...RAW_RANGES.lafabrik);
+  addObjectsByRange(
+    rawData,
+    lafabrik,
+    ...RAW_RANGES.lafabrik,
+    LAFABRIK_MESH_NAMES,
+  );
+  addObjectsByRange(
+    rawData,
+    direction,
+    ...RAW_RANGES.directionSecondary,
+    DIRECTION_MESH_NAMES,
+  );
+  addObjectsByRange(
+    rawData,
+    vegetation,
+    ...RAW_RANGES.vegetationSecondary,
+    VEGETATION_MESH_NAMES,
+  );
 
   for (let i = 0; i < rawData.length; i++) {
     const node = rawData[i];

@@ -53,8 +53,8 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
       },
     ],
   },
-  pylone: {
-    id: "pylone",
+  pylon: {
+    id: "pylon",
     label: "Power pylon",
     description:
       "Restore the pylon lamp relay and damaged panel before reconnecting the grid",
@@ -64,17 +64,17 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
     brokenUiPath: REPAIR_BROKEN_UI_PATH,
     case: DEFAULT_REPAIR_CASE,
     reassemblySeconds: 1.8,
-    requiredReplacementPartId: "pylone-grid-relay-replacement",
+    requiredReplacementPartId: "pylon-grid-relay-replacement",
     scanPartSeconds: 1.4,
     brokenParts: [
       {
-        id: "pylone-grid-relay",
+        id: "pylon-grid-relay",
         label: "Grid relay",
         nodeName: "lampe",
         caseSlotName: "placeholder_1",
       },
       {
-        id: "pylone-damaged-panel",
+        id: "pylon-damaged-panel",
         label: "Damaged solar panel",
         nodeName: "panneau2",
         caseSlotName: "placeholder_2",
@@ -82,24 +82,24 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
     ],
     replacementParts: [
       {
-        id: "pylone-grid-relay-replacement",
+        id: "pylon-grid-relay-replacement",
         label: "Replacement grid relay",
         modelPath: "/models/pylone/model.gltf",
       },
       {
-        id: "pylone-stone-distractor",
+        id: "pylon-stone-distractor",
         label: "Stone counterweight",
         modelPath: "/models/galet/model.gltf",
       },
       {
-        id: "pylone-cooling-distractor",
+        id: "pylon-cooling-distractor",
         label: "Cooling core",
         modelPath: "/models/refroidisseur/model.gltf",
       },
     ],
   },
-  ferme: {
-    id: "ferme",
+  farm: {
+    id: "farm",
     label: "Vertical farm",
     description:
       "Stabilize the irrigation loop and humidity sensor before restarting the farm",
@@ -109,33 +109,33 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
     brokenUiPath: REPAIR_BROKEN_UI_PATH,
     case: DEFAULT_REPAIR_CASE,
     reassemblySeconds: 1.2,
-    requiredReplacementPartId: "ferme-irrigation-pump-replacement",
+    requiredReplacementPartId: "farm-irrigation-pump-replacement",
     scanPartSeconds: 0.9,
     brokenParts: [
       {
-        id: "ferme-irrigation-pump",
+        id: "farm-irrigation-pump",
         label: "Irrigation pump",
         caseSlotName: "placeholder_1",
       },
       {
-        id: "ferme-humidity-sensor",
+        id: "farm-humidity-sensor",
         label: "Humidity sensor",
         caseSlotName: "placeholder_2",
       },
     ],
     replacementParts: [
       {
-        id: "ferme-irrigation-pump-replacement",
+        id: "farm-irrigation-pump-replacement",
         label: "Replacement irrigation pump",
         modelPath: "/models/fermeverticale/model.gltf",
       },
       {
-        id: "ferme-tree-distractor",
+        id: "farm-tree-distractor",
         label: "Tree sensor",
         modelPath: "/models/sapin/model.gltf",
       },
       {
-        id: "ferme-radio-distractor",
+        id: "farm-radio-distractor",
         label: "Radio module",
         modelPath: "/models/talkie/model.gltf",
       },

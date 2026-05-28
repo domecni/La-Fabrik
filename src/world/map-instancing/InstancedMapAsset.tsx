@@ -27,6 +27,8 @@ interface MeshMergeGroup {
   material: THREE.Material | THREE.Material[];
 }
 
+const meshDataCache = new Map<string, MeshData[]>();
+
 function cloneMaterial(
   material: THREE.Material | THREE.Material[],
 ): THREE.Material | THREE.Material[] {
@@ -49,8 +51,6 @@ function disposeMaterialOnly(
 }
 
 function disposeInstancedMapMesh(mesh: THREE.InstancedMesh): void {
-  mesh.geometry.dispose();
-  disposeMaterialOnly(mesh.material);
   mesh.dispose();
 }
 
@@ -183,6 +183,15 @@ export function InstancedMapAsset({
     state.gl.capabilities.getMaxAnisotropy(),
   );
   const groupRef = useRef<THREE.Group>(null);
+  const meshDataList = useMemo(() => {
+    const cached = meshDataCache.get(modelPath);
+    if (cached) return cached;
+
+    optimizeGLTFSceneTextures(scene, maxAnisotropy);
+    const extracted = extractMeshes(scene);
+    meshDataCache.set(modelPath, extracted);
+    return extracted;
+  }, [maxAnisotropy, modelPath, scene]);
   const groundedInstances = useMemo(
     () =>
       instances.map((instance) => {
@@ -202,8 +211,6 @@ export function InstancedMapAsset({
     const group = groupRef.current;
     if (!group || groundedInstances.length === 0) return;
 
-    optimizeGLTFSceneTextures(scene, maxAnisotropy);
-    const meshDataList = extractMeshes(scene);
     const geometryBottomY = getMeshBottomY(meshDataList);
     const instancedMeshes = meshDataList.map((meshData, index) => {
       const instancedMesh = new THREE.InstancedMesh(
@@ -232,7 +239,7 @@ export function InstancedMapAsset({
         disposeInstancedMapMesh(mesh);
       }
     };
-  }, [castShadow, groundedInstances, maxAnisotropy, receiveShadow, scene]);
+  }, [castShadow, groundedInstances, meshDataList, receiveShadow]);
 
   if (instances.length === 0) {
     return null;

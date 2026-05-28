@@ -5,9 +5,9 @@ import {
   PATH_DEBUG_PREVIEW_ENABLED,
   PATH_TILE_RENDER_ENABLED,
   PATH_TILE_MODEL_PATH,
-} from "@/world/paths/pathConfig";
+} from "@/data/world/pathConfig";
 import { usePathTileData } from "@/world/paths/usePathTileData";
-import type { MapAssetInstance } from "@/world/map-instancing/useMapInstancingData";
+import type { MapAssetInstance } from "@/hooks/world/useMapInstancingData";
 
 export function PathSystem(): React.JSX.Element | null {
   if (!PATH_DEBUG_PREVIEW_ENABLED && !PATH_TILE_RENDER_ENABLED) {

@@ -107,7 +107,7 @@ It owns:
 
 - `mainState`
 - intro state
-- `bike`, `pylone`, and `ferme` mission state
+- `ebike`, `pylon`, and `farm` mission state
 - outro state
 - `isCinematicPlaying`
 - progression actions

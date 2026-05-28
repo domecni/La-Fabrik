@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { INSTANCED_MAP_EXCEPTIONS } from "@/world/vegetation/vegetationConfig";
+import { INSTANCED_MAP_EXCEPTIONS } from "@/data/world/vegetationConfig";
 import type { MapNode } from "@/types/map/mapScene";
 import {
   type MapNodeInstanceTransform,

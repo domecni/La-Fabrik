@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { ZONES } from "@/data/zones";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { Debug } from "@/utils/debug/Debug";
-import { GAME_STEPS } from "@/types/game";
+import { GAME_STEPS } from "@/data/game/gameStateConfig";
 
 const _playerPos = new THREE.Vector3();
 const _zonePos = new THREE.Vector3();

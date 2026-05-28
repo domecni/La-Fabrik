@@ -16,6 +16,24 @@ interface TerrainHeightSampler {
   getHeight: (x: number, z: number) => number | null;
 }
 
+interface CachedTerrainHeightSampler {
+  key: string;
+  sampler: TerrainHeightSampler;
+}
+
+const terrainSamplerCache = new WeakMap<
+  THREE.Object3D,
+  CachedTerrainHeightSampler
+>();
+
+function createTerrainSamplerCacheKey(
+  position: Vector3Tuple,
+  rotation: Vector3Tuple,
+  scale: Vector3Tuple,
+): string {
+  return `${position.join(",")}|${rotation.join(",")}|${scale.join(",")}`;
+}
+
 function createTerrainHeightSampler(
   scene: THREE.Object3D,
   position: Vector3Tuple,
@@ -64,10 +82,23 @@ export function useTerrainHeightSampler(): TerrainHeightSampler {
   const rotation = terrainNode?.rotation ?? DEFAULT_TERRAIN_ROTATION;
   const scale = terrainNode?.scale ?? DEFAULT_TERRAIN_SCALE;
 
-  return useMemo(
-    () => createTerrainHeightSampler(scene, position, rotation, scale),
-    [position, rotation, scale, scene],
-  );
+  return useMemo(() => {
+    const key = createTerrainSamplerCacheKey(position, rotation, scale);
+    const cached = terrainSamplerCache.get(scene);
+
+    if (cached?.key === key) {
+      return cached.sampler;
+    }
+
+    const sampler = createTerrainHeightSampler(
+      scene,
+      position,
+      rotation,
+      scale,
+    );
+    terrainSamplerCache.set(scene, { key, sampler });
+    return sampler;
+  }, [position, rotation, scale, scene]);
 }
 
 export function useTerrainSnappedPosition(

@@ -36,6 +36,8 @@ interface VegetationWindUniforms {
   noiseScale: { value: number };
 }
 
+const meshDataCache = new Map<string, MeshData[]>();
+
 function updateVegetationWindUniforms(
   uniforms: VegetationWindUniforms,
   elapsedTime: number,
@@ -242,9 +244,14 @@ export function InstancedVegetation({
   const windUniformsRef = useRef<VegetationWindUniforms[]>([]);
 
   const meshDataList = useMemo(() => {
+    const cached = meshDataCache.get(modelPath);
+    if (cached) return cached;
+
     optimizeGLTFSceneTextures(scene, maxAnisotropy);
-    return extractMeshes(scene);
-  }, [maxAnisotropy, scene]);
+    const extracted = extractMeshes(scene);
+    meshDataCache.set(modelPath, extracted);
+    return extracted;
+  }, [maxAnisotropy, modelPath, scene]);
   const groundedInstances = useMemo(
     () =>
       instances.map((instance) => {
@@ -325,20 +332,8 @@ export function InstancedVegetation({
         (uniforms): uniforms is VegetationWindUniforms =>
           uniforms !== undefined,
       );
-
     return () => {
       windUniformsRef.current = [];
-
-      for (const meshData of meshDataList) {
-        meshData.geometry.dispose();
-        if (Array.isArray(meshData.material)) {
-          for (const mat of meshData.material) {
-            mat.dispose();
-          }
-        } else {
-          meshData.material.dispose();
-        }
-      }
     };
   }, [meshDataList]);
 

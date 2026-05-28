@@ -12,40 +12,7 @@ export type GameStep =
   | "manipulation"
   | "outOfFabrik";
 
-export const GAME_STEPS: readonly GameStep[] = [
-  "intro",
-  "start-intro",
-  "naming",
-  "bienvenue",
-  "star-move",
-  "mission2",
-  "searching",
-  "helped",
-  "manipulation",
-  "outOfFabrik",
-] as const;
-
-const GAME_STEP_VALUES: ReadonlySet<string> = new Set(GAME_STEPS);
-
-export type MainGameState = "intro" | "ebike" | "pylone" | "ferme" | "outro";
-
-export const MAIN_GAME_STATES: readonly MainGameState[] = [
-  "intro",
-  "ebike",
-  "pylone",
-  "ferme",
-  "outro",
-] as const;
-
-const MAIN_GAME_STATE_VALUES: ReadonlySet<string> = new Set(MAIN_GAME_STATES);
-
-export function isGameStep(value: unknown): value is GameStep {
-  return typeof value === "string" && GAME_STEP_VALUES.has(value);
-}
-
-export function isMainGameState(value: unknown): value is MainGameState {
-  return typeof value === "string" && MAIN_GAME_STATE_VALUES.has(value);
-}
+export type MainGameState = "intro" | "ebike" | "pylon" | "farm" | "outro";
 
 export interface Zone {
   id: string;

@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORY_VOLUMES } from "@/data/audioConfig";
 import { logger } from "@/utils/core/Logger";
 
 export type AudioCategory = "music" | "sfx" | "dialogue";
@@ -6,12 +7,6 @@ export type OneShotAudioCategory = Exclude<AudioCategory, "music">;
 interface AudioContextWindow extends Window {
   webkitAudioContext?: typeof AudioContext;
 }
-
-const DEFAULT_CATEGORY_VOLUMES: Record<AudioCategory, number> = {
-  music: 1,
-  sfx: 1,
-  dialogue: 1,
-};
 
 interface PlaySoundOptions {
   category?: OneShotAudioCategory;

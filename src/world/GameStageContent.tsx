@@ -1,8 +1,9 @@
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import {
-  EBIKE_REPAIR_POSITION,
   REPAIR_MISSION_POSITION_ENTRIES,
+  REPAIR_MISSION_TRIGGERS,
+  type RepairMissionTriggerConfig,
 } from "@/data/gameplay/repairMissionAnchors";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { Vector3Tuple } from "@/types/three/three";
@@ -32,21 +33,31 @@ function StageAnchor({
   );
 }
 
-function EbikeMissionTrigger(): React.JSX.Element | null {
+function RepairMissionTrigger({
+  config,
+}: {
+  config: RepairMissionTriggerConfig;
+}): React.JSX.Element | null {
   const mainState = useGameStore((state) => state.mainState);
-  const ebikeStep = useGameStore((state) => state.ebike.currentStep);
+  const missionStep = useGameStore(
+    (state) => state[config.mission].currentStep,
+  );
   const setMissionStep = useGameStore((state) => state.setMissionStep);
+  const position = REPAIR_MISSION_POSITION_ENTRIES.find(
+    (entry) => entry.mission === config.mission,
+  )?.position;
 
-  if (mainState !== "ebike" || ebikeStep !== "locked") return null;
+  if (!position) return null;
+  if (mainState !== config.mission || missionStep !== "locked") return null;
 
   return (
-    <group position={EBIKE_REPAIR_POSITION}>
+    <group position={position}>
       <InteractableObject
         kind="trigger"
-        label="Réparer l'e-bike"
-        position={EBIKE_REPAIR_POSITION}
-        radius={4}
-        onPress={() => setMissionStep("ebike", "waiting")}
+        label={config.label}
+        position={position}
+        radius={config.radius}
+        onPress={() => setMissionStep(config.mission, "waiting")}
       >
         <mesh>
           <sphereGeometry args={[1.3, 16, 16]} />
@@ -68,7 +79,9 @@ export function GameStageContent(): React.JSX.Element {
       {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission, position }) => (
         <RepairGame key={mission} mission={mission} position={position} />
       ))}
-      <EbikeMissionTrigger />
+      {REPAIR_MISSION_TRIGGERS.map((config) => (
+        <RepairMissionTrigger key={config.mission} config={config} />
+      ))}
       {mainState === "outro" ? (
         <StageAnchor color="#fb7185" position={[0, 6, 10]} scale={1.25} />
       ) : null}

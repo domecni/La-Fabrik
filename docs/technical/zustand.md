@@ -65,18 +65,18 @@ Main states:
 | Main state | Role                            |
 | ---------- | ------------------------------- |
 | `intro`    | Onboarding and opening sequence |
-| `bike`     | E-bike repair sequence          |
-| `pylone`   | Power pylon repair sequence     |
-| `ferme`    | Vertical farm repair sequence   |
+| `ebike`    | E-bike repair sequence          |
+| `pylon`    | Power pylon repair sequence     |
+| `farm`     | Vertical farm repair sequence   |
 | `outro`    | Ending sequence                 |
 
 Other important state:
 
 - `isCinematicPlaying`
 - `intro`
-- `bike`
-- `pylone`
-- `ferme`
+- `ebike`
+- `pylon`
+- `farm`
 - `outro`
 
 Mission steps:
@@ -125,28 +125,28 @@ For development and debug tooling, direct setters also exist:
 ```ts
 const setMainState = useGameStore((state) => state.setMainState);
 
-setMainState("bike");
+setMainState("ebike");
 ```
 
 Direct setters are useful for debug panels, but production gameplay should prefer business actions such as:
 
 - `advanceGameState`
-- `completeBike`
-- `completePylone`
-- `completeFerme`
+- `completeEbike`
+- `completePylon`
+- `completeFarm`
 - `completeMission`
 
-Mission gameplay that can target `bike`, `pylone`, or `ferme` should prefer generic mission actions:
+Mission gameplay that can target `ebike`, `pylon`, or `farm` should prefer generic mission actions:
 
 ```ts
 const setMissionStep = useGameStore((state) => state.setMissionStep);
 const completeMission = useGameStore((state) => state.completeMission);
 
-setMissionStep("bike", "inspected");
-completeMission("bike");
+setMissionStep("ebike", "inspected");
+completeMission("ebike");
 ```
 
-This keeps reusable gameplay components such as `RepairGame` from duplicating mission-specific branches like `setBikeState`, `setPyloneState`, and `setFermeState`.
+This keeps reusable gameplay components such as `RepairGame` from duplicating mission-specific branches like `setEbikeState`, `setPylonState`, and `setFarmState`.
 
 ## Settings Store
 
@@ -188,9 +188,9 @@ State/actions:
 Current production repair placement:
 
 ```tsx
-<RepairGame mission="bike" position={[8, 0, -6]} />
-<RepairGame mission="pylone" position={[64, 0, -66]} />
-<RepairGame mission="ferme" position={[-24, 0, 42]} />
+<RepairGame mission="ebike" position={[42.2399, 4.5484, 34.6468]} />
+<RepairGame mission="pylon" position={[64, 0, -66]} />
+<RepairGame mission="farm" position={[-24, 0, 42]} />
 ```
 
 `RepairGame` reads the active mission step from the store and writes transitions through generic actions such as `setMissionStep` and `completeMission`.

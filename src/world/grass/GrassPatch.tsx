@@ -7,7 +7,7 @@ import {
   GRASS_BASE_COLOR,
   GRASS_COLORS,
   GRASS_CONFIG,
-} from "@/world/grass/grassConfig";
+} from "@/data/world/grassConfig";
 import {
   grassFragmentShader,
   grassVertexShader,

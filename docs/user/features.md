@@ -63,12 +63,12 @@ This document lists the user-visible and developer-facing features implemented i
 
 ## Repair Gameplay
 
-- Reusable `RepairGame` mounted for `bike`, `pylone`, and `ferme`
+- Reusable `RepairGame` mounted for `ebike`, `pylon`, and `farm`
 - Mission progression driven by Zustand and shared `MissionStep` types
 - Production repair positions:
-  - `bike` at `[8, 0, -6]`
-  - `pylone` at `[64, 0, -66]`
-  - `ferme` at `[-24, 0, 42]`
+  - `ebike` at `[42.2399, 4.5484, 34.6468]`
+  - `pylon` at `[64, 0, -66]`
+  - `farm` at `[-24, 0, 42]`
 - Debug physics repair playground zones for all three missions
 - Data-driven mission config in `src/data/gameplay/repairMissions.ts`
 - Mission flow: `locked -> waiting -> inspected -> fragmented -> scanning -> repairing -> reassembling -> done`
@@ -95,7 +95,7 @@ This document lists the user-visible and developer-facing features implemented i
 ## Game Progression Store
 
 - Zustand `useGameStore` for durable gameplay progression
-- Main states: `intro`, `bike`, `pylone`, `ferme`, `outro`
+- Main states: `intro`, `ebike`, `pylon`, `farm`, `outro`
 - Per-mission repair step state
 - Per-mission completion flags
 - Generic mission helpers: `setMissionStep`, `completeMission`, `advanceGameState`, `rewindGameState`, `resetGame`

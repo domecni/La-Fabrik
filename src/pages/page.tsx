@@ -6,12 +6,10 @@ import { DialogMessage } from "@/components/ui/DialogMessage";
 import { GameUI } from "@/components/ui/GameUI";
 import { BienvenueDisplay, IntroUI } from "@/components/ui/IntroUI";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
+import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
-import {
-  INITIAL_SCENE_LOADING_STATE,
-  type SceneLoadingState,
-} from "@/types/world/sceneLoading";
+import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 import { World } from "@/world/World";
 

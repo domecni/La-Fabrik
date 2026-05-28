@@ -28,10 +28,10 @@ export function HandTrackingProvider({
     switch (state.mainState) {
       case "ebike":
         return REPAIR_HAND_TRACKING_STEPS.has(state.ebike.currentStep);
-      case "pylone":
-        return REPAIR_HAND_TRACKING_STEPS.has(state.pylone.currentStep);
-      case "ferme":
-        return REPAIR_HAND_TRACKING_STEPS.has(state.ferme.currentStep);
+      case "pylon":
+        return REPAIR_HAND_TRACKING_STEPS.has(state.pylon.currentStep);
+      case "farm":
+        return REPAIR_HAND_TRACKING_STEPS.has(state.farm.currentStep);
       case "intro":
       case "outro":
         return false;
