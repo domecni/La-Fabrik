@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useRef } from "react";
-import { OrbitControls } from "@react-three/drei";
+import { Suspense, useCallback, useEffect, useRef } from "react";
+import { Grid, OrbitControls } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { EditorMap } from "@/components/editor/scene/EditorMap";
 import { FlyController } from "@/controls/editor/FlyController";
-import { PersonnageSystem } from "@/world/personnages/PersonnageSystem";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import type { MapNode, TransformMode, SceneData } from "@/types/editor/editor";
 
@@ -214,26 +213,41 @@ export function EditorScene({
         />
       )}
 
-      <EditorMap
-        sceneData={sceneData}
-        selectedNodeIndex={selectedNodeIndex}
-        selectedNodeIndexes={selectedNodeIndexes}
-        onSelectNode={onSelectNode}
-        onToggleNodeSelection={onToggleNodeSelection}
-        isSelectionLocked={isSelectionLocked}
-        hoveredNodeIndex={hoveredNodeIndex}
-        onHoverNode={onHoverNode}
-        transformMode={transformMode}
-        snapToTerrain={snapToTerrain}
-        lockTerrainSelection={lockTerrainSelection}
-        onTransformStart={onTransformStart}
-        onTransformEnd={onTransformEnd}
-        onNodeTransform={onNodeTransform}
-        snapAllToTerrainRequest={snapAllToTerrainRequest}
-        onSnapAllToTerrain={onSnapAllToTerrain}
+      <Grid
+        args={[100, 100]}
+        cellSize={1}
+        cellThickness={0.5}
+        cellColor="#242424"
+        sectionSize={5}
+        sectionThickness={1}
+        sectionColor="#3a3a3a"
+        fadeDistance={50}
+        fadeStrength={1}
+        followCamera={false}
+        infiniteGrid={false}
       />
+      <axesHelper args={[10]} />
 
-      <PersonnageSystem />
+      <Suspense fallback={null}>
+        <EditorMap
+          sceneData={sceneData}
+          selectedNodeIndex={selectedNodeIndex}
+          selectedNodeIndexes={selectedNodeIndexes}
+          onSelectNode={onSelectNode}
+          onToggleNodeSelection={onToggleNodeSelection}
+          isSelectionLocked={isSelectionLocked}
+          hoveredNodeIndex={hoveredNodeIndex}
+          onHoverNode={onHoverNode}
+          transformMode={transformMode}
+          snapToTerrain={snapToTerrain}
+          lockTerrainSelection={lockTerrainSelection}
+          onTransformStart={onTransformStart}
+          onTransformEnd={onTransformEnd}
+          onNodeTransform={onNodeTransform}
+          snapAllToTerrainRequest={snapAllToTerrainRequest}
+          onSnapAllToTerrain={onSnapAllToTerrain}
+        />
+      </Suspense>
 
       <ambientLight intensity={0.6} />
       <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow />

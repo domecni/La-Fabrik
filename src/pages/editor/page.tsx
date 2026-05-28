@@ -1,12 +1,10 @@
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useProgress } from "@react-three/drei";
 import { EditorControls } from "@/components/editor/EditorControls";
 import { EditorScene } from "@/components/editor/scene/EditorScene";
 import type { EditorCinematicPreviewRequest } from "@/components/editor/scene/EditorScene";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { Subtitles } from "@/components/ui/Subtitles";
-import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
 import { useEditorHistory } from "@/hooks/editor/useEditorHistory";
 import type { CinematicDefinition } from "@/types/cinematics/cinematics";
 import { useEditorSceneData } from "@/hooks/editor/useEditorSceneData";
@@ -16,18 +14,11 @@ import type {
   SceneData,
   TransformMode,
 } from "@/types/editor/editor";
-import {
-  type SceneLoadingChangeHandler,
-  type SceneLoadingState,
-} from "@/types/world/sceneLoading";
+import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { logger } from "@/utils/core/Logger";
 
 const SAVE_ERROR_MESSAGE = "Erreur lors de l'enregistrement";
 const DEFAULT_NEW_NODE_NAME = "new-model";
-
-interface EditorSceneLoadingTrackerProps {
-  onLoadingStateChange: SceneLoadingChangeHandler;
-}
 
 function serializeMapNodes(sceneData: SceneData): string {
   const mapPayload = sceneData.mapTree
@@ -43,6 +34,7 @@ function createSourcePathKey(sourcePath: readonly number[]): string {
 
 function removeEditorMetadata(node: MapNode): MapNode {
   return {
+    ...(node.id ? { id: node.id } : {}),
     name: node.name,
     type: node.type,
     position: node.position,
@@ -67,6 +59,9 @@ function mergeFlatNodeTransformsIntoTree(
   ): HierarchicalMapNode => {
     const updatedNode = nodesBySourcePath.get(createSourcePathKey(path));
     const nextNode: HierarchicalMapNode = {
+      ...((updatedNode?.id ?? node.id)
+        ? { id: updatedNode?.id ?? node.id }
+        : {}),
       name: node.name,
       type: node.type,
       position: updatedNode?.position ?? node.position,
@@ -116,6 +111,7 @@ function collectEditableMapNodes(
   function visit(node: HierarchicalMapNode, path: number[]): void {
     if (node.role !== "group" && node.type !== "Mesh") {
       nodes.push({
+        ...(node.id ? { id: node.id } : {}),
         name: node.name,
         position: node.position,
         rotation: node.rotation,
@@ -276,31 +272,6 @@ function createNewMapNode(name: string): HierarchicalMapNode {
   };
 }
 
-function EditorSceneLoadingTracker({
-  onLoadingStateChange,
-}: EditorSceneLoadingTrackerProps): null {
-  const { active, progress } = useProgress();
-
-  useEffect(() => {
-    if (active) {
-      onLoadingStateChange({
-        currentStep: "Importation des models",
-        progress: 0.2 + (progress / 100) * 0.7,
-        status: "loading",
-      });
-      return;
-    }
-
-    onLoadingStateChange({
-      currentStep: "Gameplay prêt",
-      progress: 1,
-      status: "ready",
-    });
-  }, [active, onLoadingStateChange, progress]);
-
-  return null;
-}
-
 export function EditorPage(): React.JSX.Element {
   const {
     hasMapJson,
@@ -329,35 +300,17 @@ export function EditorPage(): React.JSX.Element {
   const [cameraViewMode, setCameraViewMode] = useState<"home" | "object">(
     "home",
   );
-  const [sceneLoadingState, setSceneLoadingState] = useState<SceneLoadingState>(
-    {
-      ...INITIAL_SCENE_LOADING_STATE,
-      currentStep: "Montage progressif des models",
-      progress: 0.2,
-    },
-  );
-  const handleSceneLoadingStateChange = useCallback(
-    (nextState: SceneLoadingState) => {
-      setSceneLoadingState((currentState) => {
-        const shouldRestartProgress = currentState.status === "ready";
-
-        return {
-          ...nextState,
-          progress: shouldRestartProgress
-            ? nextState.progress
-            : Math.max(currentState.progress, nextState.progress),
-        };
-      });
-    },
-    [],
-  );
-  const editorLoadingState = isMapLoading
+  const editorLoadingState: SceneLoadingState = isMapLoading
     ? {
         currentStep: "Récupération blocking",
         progress: 0.08,
         status: "loading" as const,
       }
-    : sceneLoadingState;
+    : {
+        currentStep: "Gameplay prêt",
+        progress: 1,
+        status: "ready" as const,
+      };
   const [cinematicPreviewRequest, setCinematicPreviewRequest] =
     useState<EditorCinematicPreviewRequest | null>(null);
 
@@ -720,37 +673,32 @@ export function EditorPage(): React.JSX.Element {
           );
         }}
       >
-        <EditorSceneLoadingTracker
-          onLoadingStateChange={handleSceneLoadingStateChange}
+        <EditorScene
+          sceneData={sceneData!}
+          selectedNodeIndex={selectedNodeIndex}
+          selectedNodeIndexes={selectedNodeIndexes}
+          onSelectNode={handleSelectNode}
+          onToggleNodeSelection={handleToggleNodeSelection}
+          isSelectionLocked={isSelectionLocked}
+          hoveredNodeIndex={hoveredNodeIndex}
+          onHoverNode={handleHoverNode}
+          transformMode={transformMode}
+          snapToTerrain={snapToTerrain}
+          lockTerrainSelection={lockTerrainSelection}
+          onTransformModeChange={handleTransformModeChange}
+          onTransformStart={handleTransformStart}
+          onTransformEnd={handleTransformEnd}
+          onNodeTransform={handleNodeTransform}
+          snapAllToTerrainRequest={snapAllToTerrainRequest}
+          onSnapAllToTerrain={handleSnapAllToTerrain}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          resetCameraRequest={resetCameraRequest}
+          focusSelectedCameraRequest={focusSelectedCameraRequest}
+          isPlayerMode={isPlayerMode}
+          cinematicPreviewRequest={cinematicPreviewRequest}
+          onCinematicPreviewComplete={handleCinematicPreviewComplete}
         />
-        <Suspense fallback={null}>
-          <EditorScene
-            sceneData={sceneData!}
-            selectedNodeIndex={selectedNodeIndex}
-            selectedNodeIndexes={selectedNodeIndexes}
-            onSelectNode={handleSelectNode}
-            onToggleNodeSelection={handleToggleNodeSelection}
-            isSelectionLocked={isSelectionLocked}
-            hoveredNodeIndex={hoveredNodeIndex}
-            onHoverNode={handleHoverNode}
-            transformMode={transformMode}
-            snapToTerrain={snapToTerrain}
-            lockTerrainSelection={lockTerrainSelection}
-            onTransformModeChange={handleTransformModeChange}
-            onTransformStart={handleTransformStart}
-            onTransformEnd={handleTransformEnd}
-            onNodeTransform={handleNodeTransform}
-            snapAllToTerrainRequest={snapAllToTerrainRequest}
-            onSnapAllToTerrain={handleSnapAllToTerrain}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            resetCameraRequest={resetCameraRequest}
-            focusSelectedCameraRequest={focusSelectedCameraRequest}
-            isPlayerMode={isPlayerMode}
-            cinematicPreviewRequest={cinematicPreviewRequest}
-            onCinematicPreviewComplete={handleCinematicPreviewComplete}
-          />
-        </Suspense>
       </Canvas>
 
       <SceneLoadingOverlay state={editorLoadingState} />

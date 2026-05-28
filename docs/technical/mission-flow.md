@@ -14,7 +14,6 @@ The store owns the `missionFlow` slice:
 
 ```ts
 missionFlow: {
-  step: GameStep;
   activityCity: boolean;
   playerName: string;
   canMove: boolean;
@@ -31,14 +30,14 @@ Managers stay responsible for local runtime services:
 - `AudioManager` owns audio elements, audio pools, music playback, category volume, and stereo pan.
 - `InteractionManager` owns transient focused/nearby/held interaction handles.
 
-Mission progression is not owned by a manager. Components update the store through explicit actions such as `setFlowStep`, `setCanMove`, `showDialog`, and `hideDialog`.
+Mission progression is not owned by a manager. Components update the store through explicit actions such as `setIntroStep`, `setCanMove`, `showDialog`, and `hideDialog`.
 
 ## Runtime Components
 
-- `src/components/game/GameFlow.tsx` reacts to `missionFlow.step` and triggers one-off side effects such as intro audio and movement unlocks.
+- `src/components/game/GameFlow.tsx` reacts to intro state and triggers one-off side effects such as intro audio and movement unlocks.
 - `src/components/zone/ZoneDetection.tsx` reads the camera position and moves the flow to a target step when the player enters a configured zone.
 - `src/world/GameStageContent.tsx` mounts repair games and their mission-start triggers.
-- `src/pages/page.tsx` mounts mission HTML overlays: `IntroUI`, `BienvenueDisplay`, and `DialogMessage`.
+- `src/pages/page.tsx` mounts mission HTML overlays: `IntroUI`, `DialogMessage`, and subtitles.
 - `src/world/player/PlayerController.tsx` reads `missionFlow.canMove` as an additional movement lock.
 
 ## Step Sequence

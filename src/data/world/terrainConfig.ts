@@ -3,7 +3,7 @@ import type { TerrainSurfaceColorConfig } from "@/types/world/terrainSurface";
 export const TERRAIN_MODEL_PATH = "/models/terrain/model.gltf";
 export const TERRAIN_WATER_HEIGHT = 0.8;
 
-export const TERRAIN_TILE_SIZE = 1;
+const TERRAIN_TILE_SIZE = 1;
 
 export const TERRAIN_COLORS = {
   grass1: {

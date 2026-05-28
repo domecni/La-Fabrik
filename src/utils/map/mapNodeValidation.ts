@@ -23,6 +23,7 @@ function isMapNode(value: unknown): value is MapNode {
   }
 
   return (
+    (value.id === undefined || typeof value.id === "string") &&
     typeof value.name === "string" &&
     typeof value.type === "string" &&
     isVector3Tuple(value.position) &&
@@ -53,6 +54,7 @@ function isHierarchicalMapNode(value: unknown): value is HierarchicalMapNode {
 
 function flattenMapNode(node: HierarchicalMapNode, path: number[]): MapNode[] {
   const mapNode: MapNode = {
+    ...(node.id ? { id: node.id } : {}),
     name: node.name,
     type: node.type,
     position: node.position,

@@ -7,12 +7,7 @@ import {
   type MapPerformanceModelName,
 } from "@/data/world/mapPerformanceConfig";
 
-export {
-  MAP_PERFORMANCE_GROUP_NAMES,
-  MAP_PERFORMANCE_MODEL_NAMES,
-  type MapPerformanceGroupName,
-  type MapPerformanceModelName,
-};
+export { MAP_PERFORMANCE_GROUP_NAMES, MAP_PERFORMANCE_MODEL_NAMES };
 
 export interface MapPerformanceVisibility {
   groups: Record<MapPerformanceGroupName, boolean>;

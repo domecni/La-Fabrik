@@ -1,5 +1,6 @@
 import {
   GAME_SCENE_FALLBACK_BACKGROUND_COLOR,
+  GAME_SCENE_SKY_FALLBACK_MODEL_PATH,
   GAME_SCENE_SKY_MODEL_PATH,
   GAME_SCENE_SKY_MODEL_SCALE,
   PHYSICS_SCENE_BACKGROUND_COLOR,
@@ -35,6 +36,7 @@ export function Environment(): React.JSX.Element {
       {showSky ? (
         <SkyModel
           fallbackColor={GAME_SCENE_FALLBACK_BACKGROUND_COLOR}
+          fallbackModelPath={GAME_SCENE_SKY_FALLBACK_MODEL_PATH}
           modelPath={GAME_SCENE_SKY_MODEL_PATH}
           scale={GAME_SCENE_SKY_MODEL_SCALE}
         />

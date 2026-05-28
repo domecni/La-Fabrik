@@ -194,17 +194,18 @@ function createInstanceMatrices(
   const position = new THREE.Vector3();
   const rotation = new THREE.Euler();
   const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3(
-    scaleMultiplier,
-    scaleMultiplier,
-    scaleMultiplier,
-  );
+  const scale = new THREE.Vector3();
 
   for (const instance of instances) {
     const matrix = new THREE.Matrix4();
 
     position.set(...instance.position);
-    position.y += -geometryBottomY * scaleMultiplier;
+    scale.set(
+      instance.scale[0] * scaleMultiplier,
+      instance.scale[1] * scaleMultiplier,
+      instance.scale[2] * scaleMultiplier,
+    );
+    position.y += -geometryBottomY * scale.y;
     rotation.set(
       instance.rotation[0] + rotationOffset[0],
       instance.rotation[1] + rotationOffset[1],

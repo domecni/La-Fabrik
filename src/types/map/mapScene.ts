@@ -1,6 +1,7 @@
 import type { Vector3Tuple } from "@/types/three/three";
 
 export interface MapNode {
+  id?: string;
   name: string;
   type: string;
   position: Vector3Tuple;

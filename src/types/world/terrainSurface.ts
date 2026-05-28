@@ -1,4 +1,4 @@
-export type TerrainSurfaceKind =
+type TerrainSurfaceKind =
   | "grass"
   | "path"
   | "water"
@@ -6,7 +6,7 @@ export type TerrainSurfaceKind =
   | "dirt"
   | "rock";
 
-export type TerrainSurfaceRgb = readonly [number, number, number];
+type TerrainSurfaceRgb = readonly [number, number, number];
 
 export interface TerrainSurfaceBounds {
   minX: number;

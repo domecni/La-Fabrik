@@ -90,7 +90,7 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
             onLoadingStateChange={onLoadingStateChange}
             onOctreeReady={handleOctreeReady}
           />
-          <PersonnageSystem />
+          {showGameStage ? <PersonnageSystem /> : null}
           {showGameStage ? (
             <Physics>
               <GameStageLoaded onLoaded={handleGameStageLoaded} />

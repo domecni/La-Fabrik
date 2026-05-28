@@ -1,9 +1,9 @@
 import type { MapNode } from "@/types/map/mapScene";
 
 export const POTAGER_MAP_NAME = "potager";
-export const POTAGER_DEFAULT_ROTATION_OFFSET = [0, 0, 0] as const;
+const POTAGER_DEFAULT_ROTATION_OFFSET = [0, 0, 0] as const;
 
-export const POTAGER_SOURCE_MAP_NAMES = new Set([
+const POTAGER_SOURCE_MAP_NAMES = new Set([
   "champdeble",
   "champdesoja",
   "champsdetournesol",

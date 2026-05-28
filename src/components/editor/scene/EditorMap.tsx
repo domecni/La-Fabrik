@@ -1,12 +1,22 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { Grid, TransformControls } from "@react-three/drei";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  Suspense,
+} from "react";
+import { TransformControls } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { TerrainModel } from "@/components/three/world/TerrainModel";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
-import { useTerrainHeightSampler } from "@/hooks/three/useTerrainHeight";
+import {
+  getObjectBottomOffset,
+  useTerrainHeightSampler,
+} from "@/hooks/three/useTerrainHeight";
 import type { SceneData, MapNode, TransformMode } from "@/types/editor/editor";
 import {
   isEditorVisibleMapNode,
@@ -92,6 +102,30 @@ function getEditorModelVisualScaleMultiplier(name: string): number {
   return (
     getMapModelScaleMultiplier(name) * getVegetationModelScaleMultiplier(name)
   );
+}
+
+function getEditorModelVisualYOffset(
+  object: THREE.Object3D,
+  node: MapNode,
+  terrainHeight: ReturnType<typeof useTerrainHeightSampler>,
+  visualScaleMultiplier: number,
+): number {
+  const [x, y, z] = node.position;
+  const height = terrainHeight.getHeight(x, z);
+  if (height === null) return 0;
+
+  const finalScale: [number, number, number] = [
+    node.scale[0] * visualScaleMultiplier,
+    node.scale[1] * visualScaleMultiplier,
+    node.scale[2] * visualScaleMultiplier,
+  ];
+  const originalPosition = object.position.clone();
+  object.position.set(0, 0, 0);
+  const bottomOffset = getObjectBottomOffset(object, finalScale);
+  object.position.copy(originalPosition);
+  const parentScaleY = Math.abs(node.scale[1]) > 0.0001 ? node.scale[1] : 1;
+
+  return (height + bottomOffset - y) / parentScaleY;
 }
 
 function applyNodeTransform(object: THREE.Object3D, node: MapNode): void {
@@ -222,7 +256,6 @@ export function EditorMap({
     selectedNodeIndex !== null
       ? (sceneData.mapNodes[selectedNodeIndex]?.name ?? null)
       : null;
-
   const getTransformObject = useCallback(() => {
     if (isMultiSelection) {
       return transformGroupRef.current;
@@ -407,35 +440,22 @@ export function EditorMap({
 
   return (
     <>
-      <Grid
-        args={[100, 100]}
-        cellSize={1}
-        cellThickness={0.5}
-        cellColor="#242424"
-        sectionSize={5}
-        sectionThickness={1}
-        sectionColor="#3a3a3a"
-        fadeDistance={50}
-        fadeStrength={1}
-        followCamera={false}
-        infiniteGrid={false}
-      />
-      <axesHelper args={[10]} />
-
       <group>
         {terrainNode ? (
-          <EditorTerrainNode
-            index={terrainNodeIndex}
-            node={terrainNode}
-            isSelected={selectedIndexSet.has(terrainNodeIndex)}
-            isHovered={hoveredNodeIndex === terrainNodeIndex}
-            lockTerrainSelection={lockTerrainSelection}
-            objectsMapRef={objectsMapRef}
-            onSelectNode={onSelectNode}
-            onToggleNodeSelection={onToggleNodeSelection}
-            isSelectionLocked={isSelectionLocked}
-            onHoverNode={onHoverNode}
-          />
+          <Suspense fallback={null}>
+            <EditorTerrainNode
+              index={terrainNodeIndex}
+              node={terrainNode}
+              isSelected={selectedIndexSet.has(terrainNodeIndex)}
+              isHovered={hoveredNodeIndex === terrainNodeIndex}
+              lockTerrainSelection={lockTerrainSelection}
+              objectsMapRef={objectsMapRef}
+              onSelectNode={onSelectNode}
+              onToggleNodeSelection={onToggleNodeSelection}
+              isSelectionLocked={isSelectionLocked}
+              onHoverNode={onHoverNode}
+            />
+          </Suspense>
         ) : null}
         {sceneData.mapNodes.map((node, index) => {
           if (!shouldRenderEditorNode(node, selectedNodeName)) {
@@ -446,19 +466,35 @@ export function EditorMap({
 
           if (modelUrl) {
             return (
-              <EditorModelNode
+              <Suspense
                 key={index}
-                index={index}
-                node={node}
-                modelUrl={modelUrl}
-                isSelected={selectedIndexSet.has(index)}
-                isHovered={hoveredNodeIndex === index}
-                objectsMapRef={objectsMapRef}
-                onSelectNode={onSelectNode}
-                onToggleNodeSelection={onToggleNodeSelection}
-                isSelectionLocked={isSelectionLocked}
-                onHoverNode={onHoverNode}
-              />
+                fallback={
+                  <EditorFallbackNode
+                    index={index}
+                    node={node}
+                    isSelected={selectedIndexSet.has(index)}
+                    isHovered={hoveredNodeIndex === index}
+                    objectsMapRef={objectsMapRef}
+                    onSelectNode={onSelectNode}
+                    onToggleNodeSelection={onToggleNodeSelection}
+                    isSelectionLocked={isSelectionLocked}
+                    onHoverNode={onHoverNode}
+                  />
+                }
+              >
+                <EditorModelNode
+                  index={index}
+                  node={node}
+                  modelUrl={modelUrl}
+                  isSelected={selectedIndexSet.has(index)}
+                  isHovered={hoveredNodeIndex === index}
+                  objectsMapRef={objectsMapRef}
+                  onSelectNode={onSelectNode}
+                  onToggleNodeSelection={onToggleNodeSelection}
+                  isSelectionLocked={isSelectionLocked}
+                  onHoverNode={onHoverNode}
+                />
+              </Suspense>
             );
           } else {
             return (
@@ -519,7 +555,18 @@ function EditorModelNode({
     scale: node.scale,
   });
   const sceneInstance = useClonedObject(scene);
+  const terrainHeight = useTerrainHeightSampler();
   const visualScaleMultiplier = getEditorModelVisualScaleMultiplier(node.name);
+  const visualYOffset = useMemo(
+    () =>
+      getEditorModelVisualYOffset(
+        sceneInstance,
+        node,
+        terrainHeight,
+        visualScaleMultiplier,
+      ),
+    [node, sceneInstance, terrainHeight, visualScaleMultiplier],
+  );
   const pointerHandlers = createEditorNodePointerHandlers(
     index,
     onSelectNode,
@@ -588,7 +635,11 @@ function EditorModelNode({
       scale={node.scale}
       {...pointerHandlers}
     >
-      <primitive object={sceneInstance} scale={visualScaleMultiplier} />
+      <primitive
+        object={sceneInstance}
+        position={[0, visualYOffset, 0]}
+        scale={visualScaleMultiplier}
+      />
     </group>
   );
 }

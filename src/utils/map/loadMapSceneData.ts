@@ -99,6 +99,7 @@ function flattenMapNode(node: HierarchicalMapNode, path: number[]): MapNode[] {
 
   return [
     {
+      ...(node.id ? { id: node.id } : {}),
       name: node.name,
       type: node.type,
       position: node.position,

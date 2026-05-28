@@ -81,7 +81,7 @@ export const MAP_INSTANCING_ASSETS = {
   },
 } as const;
 
-export const MAP_SINGLE_MODEL_SCALE_MULTIPLIERS = {
+const MAP_SINGLE_MODEL_SCALE_MULTIPLIERS = {
   ebike: 0.3,
 } as const satisfies Record<string, number>;
 
@@ -93,7 +93,7 @@ export function getMapSingleModelScaleMultiplier(name: string): number {
   );
 }
 
-export function getMapInstancedModelScaleMultiplier(name: string): number {
+function getMapInstancedModelScaleMultiplier(name: string): number {
   return (
     Object.values(MAP_INSTANCING_ASSETS).find(
       (config) => config.mapName === name,

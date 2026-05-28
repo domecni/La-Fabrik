@@ -110,6 +110,12 @@ npm run format:check
 npm run build
 ```
 
+Regenerate runtime map data after editing `public/map_raw.json`:
+
+```bash
+npm run map:transform
+```
+
 ## Optional Hand-Tracking Backend
 
 The app can use the local Python backend, but the default debug source is browser-side MediaPipe.

@@ -25,6 +25,8 @@ const IDENTITY_NODE = {
   rotation: [0, 0, 0],
   scale: [1, 1, 1],
 };
+const REPAIR_PYLON_ANCHOR_ID = "repair:pylon";
+const REPAIR_PYLON_FALLBACK_POSITION = [64, 0, -66];
 const MAX_MESH_Y_PLACEMENT_OFFSET = 2;
 const RAW_INDEX = {
   directionGroup: 5,
@@ -55,12 +57,67 @@ const RAW_RANGES = {
 
 function cloneNode(node) {
   return {
+    ...(node.id ? { id: node.id } : {}),
     name: node.name,
     type: node.type,
     position: node.position,
     rotation: node.rotation,
     scale: node.scale,
   };
+}
+
+function isOriginPosition(position) {
+  return position.every((value) => Math.abs(value) < 0.0001);
+}
+
+function hasDistinctPylonTransform(node) {
+  return (
+    node.rotation.some((value) => Math.abs(value) > 0.0001) ||
+    node.scale.some((value) => Math.abs(value - 1) > 0.0001)
+  );
+}
+
+function distanceToPosition(node, position) {
+  return Math.hypot(
+    node.position[0] - position[0],
+    node.position[2] - position[2],
+  );
+}
+
+function collectMapNodes(root, predicate) {
+  const results = [];
+  const stack = [root];
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (predicate(node)) {
+      results.push(node);
+    }
+    stack.push(...(node.children ?? []));
+  }
+
+  return results;
+}
+
+function assignRepairPylonAnchorId(root) {
+  const pylones = collectMapNodes(
+    root,
+    (node) =>
+      node.name === "pylone" &&
+      node.type === "Object3D" &&
+      !isOriginPosition(node.position),
+  );
+  const distinctPylones = pylones.filter(hasDistinctPylonTransform);
+  const candidates = distinctPylones.length > 0 ? distinctPylones : pylones;
+  if (candidates.length === 0) return;
+
+  const anchor = [...candidates].sort(
+    (a, b) =>
+      distanceToPosition(a, REPAIR_PYLON_FALLBACK_POSITION) -
+      distanceToPosition(b, REPAIR_PYLON_FALLBACK_POSITION),
+  )[0];
+
+  anchor.id = REPAIR_PYLON_ANCHOR_ID;
 }
 
 function createGroup(name, sourceNode) {
@@ -433,6 +490,8 @@ function transformMap() {
   if (unclassified.children.length > 0) {
     blocking.children.push(unclassified);
   }
+
+  assignRepairPylonAnchorId(scene);
 
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(scene, null, 2));
   console.log(`Written hierarchical map to ${OUTPUT_PATH}`);

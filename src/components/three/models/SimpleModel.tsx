@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import * as THREE from "three";
+import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 
@@ -41,7 +42,7 @@ export function SimpleModel({
     rotation,
     scale,
   });
-  const model = useMemo(() => scene.clone(true), [scene]);
+  const model = useClonedObject(scene);
 
   useEffect(() => {
     applyShadowSettings(model, castShadow, receiveShadow);
