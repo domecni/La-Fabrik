@@ -4,23 +4,22 @@ export interface GalleryModel {
   path: string;
 }
 
+/**
+ * List of 3D models available in the gallery.
+ * Only includes models that exist in `/public/models/`.
+ */
 export const galleryModels: GalleryModel[] = [
   { id: "arbre", name: "Arbre", path: "/models/arbre/model.gltf" },
-  {
-    id: "arbre-animated",
-    name: "Arbre animé",
-    path: "/models/arbre-animated/model.gltf",
-  },
-  { id: "blocking", name: "Blocking", path: "/models/blocking/model.gltf" },
-  {
-    id: "boiteauxlettres",
-    name: "Boîte aux lettres",
-    path: "/models/boiteauxlettres/model.gltf",
-  },
+  { id: "blocking", name: "Blocking", path: "/models/blocking/terrain.gltf" },
   {
     id: "boiteimmeuble",
     name: "Boîte immeuble",
     path: "/models/boiteimmeuble/model.gltf",
+  },
+  {
+    id: "boitesimple",
+    name: "Boîte simple",
+    path: "/models/boitesimple/model.gltf",
   },
   { id: "buisson", name: "Buisson", path: "/models/buisson/model.gltf" },
   {
@@ -30,38 +29,7 @@ export const galleryModels: GalleryModel[] = [
   },
   { id: "cable1", name: "Câble 1", path: "/models/cable1/model.gltf" },
   { id: "cable2", name: "Câble 2", path: "/models/cable2/model.gltf" },
-  {
-    id: "champdeble",
-    name: "Champ de blé",
-    path: "/models/champdeble/model.gltf",
-  },
-  {
-    id: "champdeble-animated",
-    name: "Champ de blé animé",
-    path: "/models/champdeble-animated/model.gltf",
-  },
-  {
-    id: "champdesoja",
-    name: "Champ de soja",
-    path: "/models/champdesoja/model.gltf",
-  },
-  {
-    id: "champdesoja-animated",
-    name: "Champ de soja animé",
-    path: "/models/champdesoja-animated/model.gltf",
-  },
-  {
-    id: "champsdetournesol",
-    name: "Champ de tournesol",
-    path: "/models/champsdetournesol/model.gltf",
-  },
-  {
-    id: "champsdetournesol-animated",
-    name: "Champ de tournesol animé",
-    path: "/models/champsdetournesol-animated/model.gltf",
-  },
   { id: "chemins", name: "Chemins", path: "/models/chemins/model.gltf" },
-  { id: "cloud", name: "Nuage", path: "/models/cloud/model.glb" },
   {
     id: "createurdepluie",
     name: "Créateur de pluie",
@@ -112,9 +80,9 @@ export const galleryModels: GalleryModel[] = [
   },
   { id: "gerant", name: "Gérant", path: "/models/gerant/model.gltf" },
   {
-    id: "gerant-animated",
+    id: "gerant_anim",
     name: "Gérant animé",
-    path: "/models/gerant-animated/model.gltf",
+    path: "/models/gerant_anim/model.gltf",
   },
   {
     id: "habitant1",
@@ -160,16 +128,6 @@ export const galleryModels: GalleryModel[] = [
     path: "/models/panneaufleche/model.gltf",
   },
   {
-    id: "panneausolaire",
-    name: "Panneau solaire",
-    path: "/models/panneausolaire/model.gltf",
-  },
-  {
-    id: "parcebike",
-    name: "Parc e-bike",
-    path: "/models/parcebike/model.gltf",
-  },
-  {
     id: "persoprincipal",
     name: "Personnage principal",
     path: "/models/persoprincipal/model.gltf",
@@ -188,11 +146,7 @@ export const galleryModels: GalleryModel[] = [
     path: "/models/refroidisseur/model.gltf",
   },
   { id: "sapin", name: "Sapin", path: "/models/sapin/model.gltf" },
-  {
-    id: "sapin-animated",
-    name: "Sapin animé",
-    path: "/models/sapin-animated/model.gltf",
-  },
+  { id: "skybox", name: "Skybox", path: "/models/skybox/skybox.gltf" },
   { id: "talkie", name: "Talkie", path: "/models/talkie/model.gltf" },
   { id: "terrain", name: "Terrain", path: "/models/terrain/model.gltf" },
   {

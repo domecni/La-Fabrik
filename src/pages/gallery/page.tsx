@@ -1,14 +1,17 @@
 import {
   Bounds,
   Center,
+  Html,
   OrbitControls,
   useAnimations,
   useGLTF,
+  useProgress,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import {
   Component,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -19,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Loader2,
   SlidersHorizontal,
   TriangleAlert,
 } from "lucide-react";
@@ -26,9 +30,24 @@ import * as THREE from "three";
 import { SkyModel } from "@/components/three/world/SkyModel";
 import { galleryModels, type GalleryModel } from "@/data/galleryModels";
 import {
+  AMBIENT_INTENSITY_MAX,
+  AMBIENT_INTENSITY_MIN,
+  AMBIENT_INTENSITY_STEP,
   AMBIENT_LIGHT_COLOR,
   LIGHTING_DEFAULTS,
+  SUN_INTENSITY_MAX,
+  SUN_INTENSITY_MIN,
+  SUN_INTENSITY_STEP,
   SUN_LIGHT_COLOR,
+  SUN_X_MAX,
+  SUN_X_MIN,
+  SUN_X_STEP,
+  SUN_Y_MAX,
+  SUN_Y_MIN,
+  SUN_Y_STEP,
+  SUN_Z_MAX,
+  SUN_Z_MIN,
+  SUN_Z_STEP,
 } from "@/data/world/lightingConfig";
 import {
   GAME_SCENE_FALLBACK_SKY_MODEL_PATH,
@@ -104,12 +123,61 @@ const LOADING_TEXTURE_DIAGNOSTIC: TextureDiagnostic = {
 };
 
 const GALLERY_LIGHT_CONTROLS: GalleryLightControl[] = [
-  { key: "ambientIntensity", label: "Ambiance", min: 0, max: 5, step: 0.1 },
-  { key: "sunIntensity", label: "Soleil", min: 0, max: 8, step: 0.1 },
-  { key: "sunX", label: "Soleil X", min: -100, max: 100, step: 1 },
-  { key: "sunY", label: "Soleil Y", min: -100, max: 150, step: 1 },
-  { key: "sunZ", label: "Soleil Z", min: -100, max: 100, step: 1 },
+  {
+    key: "ambientIntensity",
+    label: "Ambiance",
+    min: AMBIENT_INTENSITY_MIN,
+    max: AMBIENT_INTENSITY_MAX,
+    step: AMBIENT_INTENSITY_STEP,
+  },
+  {
+    key: "sunIntensity",
+    label: "Soleil",
+    min: SUN_INTENSITY_MIN,
+    max: SUN_INTENSITY_MAX,
+    step: SUN_INTENSITY_STEP,
+  },
+  {
+    key: "sunX",
+    label: "Soleil X",
+    min: SUN_X_MIN,
+    max: SUN_X_MAX,
+    step: SUN_X_STEP,
+  },
+  {
+    key: "sunY",
+    label: "Soleil Y",
+    min: SUN_Y_MIN,
+    max: SUN_Y_MAX,
+    step: SUN_Y_STEP,
+  },
+  {
+    key: "sunZ",
+    label: "Soleil Z",
+    min: SUN_Z_MIN,
+    max: SUN_Z_MAX,
+    step: SUN_Z_STEP,
+  },
 ];
+
+function GalleryLoadingIndicator(): React.JSX.Element {
+  const { progress } = useProgress();
+
+  return (
+    <Html center>
+      <div className="gallery-loading">
+        <Loader2
+          className="gallery-loading-spinner"
+          size={32}
+          strokeWidth={2}
+        />
+        <span className="gallery-loading-text">
+          {progress < 100 ? `${Math.round(progress)}%` : "Préparation..."}
+        </span>
+      </div>
+    </Html>
+  );
+}
 
 class GalleryViewerErrorBoundary extends Component<
   GalleryViewerErrorBoundaryProps,
@@ -134,7 +202,8 @@ class GalleryViewerErrorBoundary extends Component<
     if (this.state.hasError) {
       return (
         <div className="gallery-viewer-error" role="status">
-          Ce modèle ne peut pas être affiché pour le moment.
+          <TriangleAlert size={24} strokeWidth={1.8} />
+          <span>Ce modèle ne peut pas être affiché pour le moment.</span>
         </div>
       );
     }
@@ -321,7 +390,23 @@ function TextureStatusBadge({
 }: {
   diagnostic: TextureDiagnostic;
 }): React.JSX.Element {
+  const isLoading = diagnostic.status === "loading";
   const hasWarning = diagnostic.status === "warning";
+
+  if (isLoading) {
+    return (
+      <div className="gallery-texture-status gallery-texture-status--loading">
+        <Loader2
+          className="gallery-texture-status-spinner"
+          aria-hidden="true"
+          size={14}
+          strokeWidth={2.2}
+        />
+        <span>{diagnostic.summary}</span>
+      </div>
+    );
+  }
+
   const Icon = hasWarning ? TriangleAlert : CheckCircle2;
 
   return (
@@ -387,6 +472,18 @@ function GalleryLightingPanel({
         ))}
       </div>
     </aside>
+  );
+}
+
+function GalleryEmptyState(): React.JSX.Element {
+  return (
+    <main className="gallery-page gallery-page--empty">
+      <div className="gallery-empty-state">
+        <TriangleAlert size={48} strokeWidth={1.5} />
+        <h1>Aucun modèle disponible</h1>
+        <p>La galerie ne contient aucun modèle à afficher pour le moment.</p>
+      </div>
+    </main>
   );
 }
 
@@ -462,38 +559,114 @@ export function GalleryPage(): React.JSX.Element {
   const [textureDiagnostic, setTextureDiagnostic] = useState<TextureDiagnostic>(
     LOADING_TEXTURE_DIAGNOSTIC,
   );
-  const activeModel = galleryModels[activeModelIndex] ?? galleryModels[0]!;
+
   const modelCount = galleryModels.length;
+  const activeModel = galleryModels[activeModelIndex] ?? galleryModels[0];
+
   const activeTextureDiagnostic =
-    textureDiagnostic.modelId === activeModel.id
+    activeModel && textureDiagnostic.modelId === activeModel.id
       ? textureDiagnostic
       : LOADING_TEXTURE_DIAGNOSTIC;
 
-  const goToPreviousModel = (): void => {
+  // Preload adjacent models for smoother navigation
+  useEffect(() => {
+    if (modelCount <= 1) return;
+
+    const prevIndex =
+      activeModelIndex === 0 ? modelCount - 1 : activeModelIndex - 1;
+    const nextIndex =
+      activeModelIndex === modelCount - 1 ? 0 : activeModelIndex + 1;
+
+    const prevModel = galleryModels[prevIndex];
+    const nextModel = galleryModels[nextIndex];
+
+    if (prevModel) {
+      useGLTF.preload(prevModel.path);
+    }
+    if (nextModel) {
+      useGLTF.preload(nextModel.path);
+    }
+  }, [activeModelIndex, modelCount]);
+
+  // Memoized callbacks to prevent unnecessary re-renders
+  const goToPreviousModel = useCallback((): void => {
     setActiveModelIndex((currentIndex) =>
       currentIndex === 0 ? modelCount - 1 : currentIndex - 1,
     );
-  };
+  }, [modelCount]);
 
-  const goToNextModel = (): void => {
+  const goToNextModel = useCallback((): void => {
     setActiveModelIndex((currentIndex) =>
       currentIndex === modelCount - 1 ? 0 : currentIndex + 1,
     );
-  };
+  }, [modelCount]);
 
-  const handleLightChange = (
-    key: keyof GalleryLightingConfig,
-    value: number,
-  ): void => {
-    setLighting((currentLighting) => ({
-      ...currentLighting,
-      [key]: value,
-    }));
-  };
+  const handleLightChange = useCallback(
+    (key: keyof GalleryLightingConfig, value: number): void => {
+      setLighting((currentLighting) => ({
+        ...currentLighting,
+        [key]: value,
+      }));
+    },
+    [],
+  );
 
-  const resetLighting = (): void => {
+  const resetLighting = useCallback((): void => {
     setLighting({ ...LIGHTING_DEFAULTS });
-  };
+  }, []);
+
+  const toggleLightPanel = useCallback((): void => {
+    setLightPanelOpen((open) => !open);
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      // Ignore if user is typing in an input
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowLeft":
+          event.preventDefault();
+          goToPreviousModel();
+          break;
+        case "ArrowRight":
+          event.preventDefault();
+          goToNextModel();
+          break;
+        case "l":
+        case "L":
+          event.preventDefault();
+          toggleLightPanel();
+          break;
+        case "r":
+        case "R":
+          if (!lightPanelOpen) return;
+          event.preventDefault();
+          resetLighting();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    goToPreviousModel,
+    goToNextModel,
+    toggleLightPanel,
+    resetLighting,
+    lightPanelOpen,
+  ]);
+
+  // Guard against empty gallery (after all hooks)
+  if (modelCount === 0 || !activeModel) {
+    return <GalleryEmptyState />;
+  }
 
   return (
     <main className="gallery-page">
@@ -502,7 +675,7 @@ export function GalleryPage(): React.JSX.Element {
       <div className="gallery-canvas-frame" aria-label="Viewer 3D">
         <GalleryViewerErrorBoundary resetKey={activeModel.id}>
           <Canvas camera={{ position: [3.5, 2.4, 4.5], fov: 45 }} dpr={[1, 2]}>
-            <Suspense fallback={null}>
+            <Suspense fallback={<GalleryLoadingIndicator />}>
               <GalleryScene
                 lighting={lighting}
                 model={activeModel}
@@ -516,21 +689,23 @@ export function GalleryPage(): React.JSX.Element {
       <nav className="gallery-bottom-bar" aria-label="Navigation des modèles">
         <button
           type="button"
+          className="gallery-nav-button"
           onClick={goToPreviousModel}
-          aria-label="Modèle précédent"
+          aria-label="Modèle précédent (flèche gauche)"
         >
           <ArrowLeft aria-hidden="true" size={22} strokeWidth={1.8} />
         </button>
         <div className="gallery-model-info">
-          <span>{activeModel.name}</span>
-          <small>
+          <span className="gallery-model-name">{activeModel.name}</span>
+          <small className="gallery-model-counter">
             {activeModelIndex + 1} / {modelCount}
           </small>
         </div>
         <button
           type="button"
+          className="gallery-nav-button"
           onClick={goToNextModel}
-          aria-label="Modèle suivant"
+          aria-label="Modèle suivant (flèche droite)"
         >
           <ArrowRight aria-hidden="true" size={22} strokeWidth={1.8} />
         </button>
@@ -541,7 +716,7 @@ export function GalleryPage(): React.JSX.Element {
         lighting={lighting}
         onChange={handleLightChange}
         onReset={resetLighting}
-        onToggle={() => setLightPanelOpen((open) => !open)}
+        onToggle={toggleLightPanel}
         open={lightPanelOpen}
       />
     </main>
