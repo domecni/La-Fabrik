@@ -21,6 +21,7 @@ export function SiteButton({
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
+      className="site-button"
       style={{
         display: "inline-flex",
         padding: "12px 20px",

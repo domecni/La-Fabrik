@@ -1,13 +1,12 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useGameStore } from "@/managers/stores/useGameStore";
 
 const INTRO_VIDEO_PATH = "/cinematics/intro.mp4";
+const SKIP_KEYS = new Set(["Enter", " "]);
 
 /**
- * Full-screen video player for intro cinematic
- * - Plays intro.mp4 in fullscreen
- * - Automatically advances to dialogue-intro step when video ends
- * - Allows skipping with Enter/Space/Click
+ * Full-screen video player for the intro cinematic.
+ * Advances to the dialogue-intro step when the video ends or the user skips.
  */
 export function IntroVideoPlayer(): React.JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,16 +17,13 @@ export function IntroVideoPlayer(): React.JSX.Element {
   }, [setIntroStep]);
 
   const handleSkip = useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
+    videoRef.current?.pause();
     setIntroStep("dialogue-intro");
   }, [setIntroStep]);
 
-  // Handle keyboard skip (Enter/Space)
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter" || event.key === " ") {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (SKIP_KEYS.has(event.key)) {
         event.preventDefault();
         handleSkip();
       }
@@ -39,6 +35,8 @@ export function IntroVideoPlayer(): React.JSX.Element {
 
   return (
     <div
+      role="region"
+      aria-label="Vidéo d'introduction. Appuyez sur Entrée pour passer."
       onClick={handleSkip}
       style={{
         position: "fixed",
@@ -56,6 +54,7 @@ export function IntroVideoPlayer(): React.JSX.Element {
         src={INTRO_VIDEO_PATH}
         autoPlay
         playsInline
+        preload="auto"
         onEnded={handleVideoEnd}
         style={{
           width: "100%",
@@ -64,6 +63,7 @@ export function IntroVideoPlayer(): React.JSX.Element {
         }}
       />
       <span
+        aria-hidden="true"
         style={{
           position: "absolute",
           bottom: 32,

@@ -22,23 +22,18 @@ export function SiteCard({
     return "#b8b8b8";
   };
 
-  const getBorder = (): string => {
-    if (selected) return "3px solid #a8d5a2";
-    if (isSituation) return "3px solid rgba(255, 255, 255, 0.55)";
-    if (disabled) return "3px solid rgba(255, 255, 255, 0.55)";
-    return "3px solid rgba(255, 255, 255, 0.55)";
-  };
+  const borderColor = selected ? "#a8d5a2" : "rgba(255, 255, 255, 0.55)";
 
-  const getTextColor = (): string => {
-    if (disabled) return "rgba(77, 77, 77, 0.72)";
-    return "#4d4d4d";
-  };
+  const textColor = disabled ? "rgba(77, 77, 77, 0.72)" : "#4d4d4d";
 
   return (
     <button
       type="button"
       onClick={onSelect}
       disabled={disabled}
+      aria-pressed={selected}
+      aria-label={label}
+      className="site-card-button"
       style={{
         width: isSituation
           ? "clamp(220px, 24vw, 300px)"
@@ -46,21 +41,20 @@ export function SiteCard({
         height: isSituation
           ? "clamp(48px, 6vw, 60px)"
           : "clamp(140px, 18vw, 180px)",
-        border: getBorder(),
+        border: `3px solid ${borderColor}`,
         background: getBackground(),
         cursor: disabled ? "not-allowed" : "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         transition: "all 0.15s ease",
-        outline: "none",
         flexShrink: 0,
       }}
     >
       {!imagePath && (
         <span
           style={{
-            color: getTextColor(),
+            color: textColor,
             fontSize: isSituation
               ? "clamp(14px, 1.8vw, 22px)"
               : "clamp(10px, 1.5vw, 14px)",

@@ -44,6 +44,18 @@ select {
   font: inherit;
 }
 
+/* Site onboarding — accessible focus rings (WCAG 2.4.7) */
+.site-card-button:focus-visible,
+.site-button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.55);
+}
+
+.site-card-button[aria-pressed="true"]:focus-visible {
+  outline-color: #a8d5a2;
+}
+
 canvas {
   display: block;
 }
