@@ -24,11 +24,11 @@ export const EXPERIENCE_CARDS: readonly SiteCardConfig[] = [
  * Cards for screen 2: "Quelle est votre situation ?"
  */
 export const SITUATION_CARDS: readonly SiteCardConfig[] = [
-  { id: "sit-refugie-climat", label: "Réfugié.e climatique", disabled: true },
+  { id: "sit-refugie-climat", label: "Sans domicile fixe", disabled: true },
   { id: "sit-refugie-guerre", label: "Réfugié.e de guerre", disabled: true },
   {
     id: "sit-sans-domicile",
-    label: "Sans domicile fixe",
+    label: "Réfugié.e climatique",
     disabled: false,
   },
   { id: "sit-autre", label: "Autre", disabled: true },

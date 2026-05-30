@@ -18,24 +18,20 @@ export function SiteCard({
 
   const getBackground = (): string => {
     if (imagePath) return `url(${imagePath}) center/cover`;
-    if (isSituation) return "rgba(255, 255, 255, 0.42)";
-    if (disabled) return "#b8b8b8";
-    if (selected) return "#d9d9d9";
-    return "#e8e8e8";
+    if (disabled) return "rgba(255, 255, 255, 0.42)";
+    return "#b8b8b8";
   };
 
   const getBorder = (): string => {
     if (selected) return "3px solid #a8d5a2";
     if (isSituation) return "3px solid rgba(255, 255, 255, 0.55)";
-    if (disabled) return "none";
-    return "2px solid #ffffff";
+    if (disabled) return "3px solid rgba(255, 255, 255, 0.55)";
+    return "3px solid rgba(255, 255, 255, 0.55)";
   };
 
   const getTextColor = (): string => {
-    if (isSituation && disabled) return "rgba(77, 77, 77, 0.72)";
-    if (isSituation) return "#4d4d4d";
-    if (disabled) return "#888888";
-    return "#666666";
+    if (disabled) return "rgba(77, 77, 77, 0.72)";
+    return "#4d4d4d";
   };
 
   return (

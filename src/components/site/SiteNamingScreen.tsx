@@ -38,16 +38,12 @@ export function SiteNamingScreen(): React.JSX.Element {
     inputRef.current?.focus();
   }, []);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>): void => {
-      e.preventDefault();
-
-      // Only process if not complete and it's a letter key
-      if (!isComplete && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
-        setCharIndex((prev) => Math.min(prev + 1, forcedName.length));
-      }
+  const handleNameChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const nextLength = Math.min(event.target.value.length, forcedName.length);
+      setCharIndex(nextLength);
     },
-    [isComplete, forcedName.length],
+    [forcedName.length],
   );
 
   const handleConfirm = (): void => {
@@ -99,8 +95,7 @@ export function SiteNamingScreen(): React.JSX.Element {
           ref={inputRef}
           type="text"
           value={displayValue}
-          onKeyDown={handleKeyDown}
-          readOnly
+          onChange={handleNameChange}
           placeholder="Écrivez votre prénom ici"
           style={{
             display: "flex",
@@ -114,7 +109,7 @@ export function SiteNamingScreen(): React.JSX.Element {
             background: "#D9D9D9",
             outline: "none",
             color: "#333",
-            caretColor: "transparent",
+            caretColor: "#333",
             fontFamily: "Inter, system-ui, sans-serif",
             fontSize: "clamp(16px, 2.5vw, 20px)",
             textAlign: "left",

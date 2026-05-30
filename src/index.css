@@ -1,5 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+@font-face {
+  font-family: "Nersans One";
+  src:
+    url("/fonts/NersansOne.woff2") format("woff2"),
+    url("/fonts/NersansOne.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Base document reset */
 :root {
   color-scheme: dark;
