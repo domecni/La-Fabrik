@@ -255,7 +255,7 @@ function createInitialGameState(): GameState {
       currentSpeed: PLAYER_WALK_SPEED,
     },
     intro: {
-      currentStep: "intro",
+      currentStep: "loading-map",
       dialogueAudio: null,
       hasCompleted: false,
       isEbikeUnlocked: false,

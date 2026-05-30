@@ -4,7 +4,6 @@ import * as THREE from "three";
 import { DebugPerf } from "@/components/debug/DebugPerf";
 import { DialogMessage } from "@/components/ui/DialogMessage";
 import { GameUI } from "@/components/ui/GameUI";
-import { BienvenueDisplay, IntroUI } from "@/components/ui/IntroUI";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
 import { useGameStore } from "@/managers/stores/useGameStore";
@@ -94,8 +93,6 @@ export function HomePage(): React.JSX.Element {
         </Suspense>
       </Canvas>
       <GameUI />
-      <IntroUI />
-      <BienvenueDisplay />
       {dialogMessage ? (
         <DialogMessage
           message={dialogMessage}

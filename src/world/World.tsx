@@ -12,16 +12,9 @@ import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { useHandTrackingSnapshot } from "@/hooks/handTracking/useHandTrackingSnapshot";
 import { useWorldSceneLoading } from "@/hooks/world/useWorldSceneLoading";
 import { useGameStore } from "@/managers/stores/useGameStore";
-import { GameFlow } from "@/components/game/GameFlow";
-import {
-  ZoneDebugVisuals,
-  ZoneDetection,
-} from "@/components/zone/ZoneDetection";
 import { DebugCameraControls } from "@/components/debug/scene/DebugCameraControls";
 import { DebugHelpers } from "@/components/debug/scene/DebugHelpers";
 import { HandTrackingGlove } from "@/components/three/handTracking/HandTrackingGlove";
-import { PyloneDestroyed } from "@/components/three/interaction/PyloneDestroyed";
-import { NPCHelper } from "@/components/three/interaction/NPCHelper";
 import { Environment } from "@/world/Environment";
 import { GameCinematics } from "@/world/GameCinematics";
 import { GameDialogues } from "@/world/GameDialogues";
@@ -80,11 +73,6 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
       {cameraMode === "debug" ? <DebugCameraControls /> : null}
       {sceneMode === "game" ? (
         <>
-          <GameFlow />
-          <ZoneDetection />
-          <ZoneDebugVisuals />
-          <NPCHelper position={[1, 12, -55]} />
-          <PyloneDestroyed position={[1, 15, -45]} />
           <GameMap
             onLoaded={handleGameMapLoaded}
             onLoadingStateChange={onLoadingStateChange}
