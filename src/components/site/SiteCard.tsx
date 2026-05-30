@@ -4,17 +4,21 @@ interface SiteCardProps {
   config: SiteCardConfig;
   selected: boolean;
   onSelect: () => void;
+  variant?: "default" | "situation";
 }
 
 export function SiteCard({
   config,
   selected,
   onSelect,
+  variant = "default",
 }: SiteCardProps): React.JSX.Element {
   const { label, imagePath, disabled } = config;
+  const isSituation = variant === "situation";
 
   const getBackground = (): string => {
     if (imagePath) return `url(${imagePath}) center/cover`;
+    if (isSituation) return "rgba(255, 255, 255, 0.42)";
     if (disabled) return "#b8b8b8";
     if (selected) return "#d9d9d9";
     return "#e8e8e8";
@@ -22,11 +26,14 @@ export function SiteCard({
 
   const getBorder = (): string => {
     if (selected) return "3px solid #a8d5a2";
+    if (isSituation) return "3px solid rgba(255, 255, 255, 0.55)";
     if (disabled) return "none";
     return "2px solid #ffffff";
   };
 
   const getTextColor = (): string => {
+    if (isSituation && disabled) return "rgba(77, 77, 77, 0.72)";
+    if (isSituation) return "#4d4d4d";
     if (disabled) return "#888888";
     return "#666666";
   };
@@ -37,8 +44,12 @@ export function SiteCard({
       onClick={onSelect}
       disabled={disabled}
       style={{
-        width: "clamp(120px, 15vw, 160px)",
-        height: "clamp(140px, 18vw, 180px)",
+        width: isSituation
+          ? "clamp(220px, 24vw, 300px)"
+          : "clamp(120px, 15vw, 160px)",
+        height: isSituation
+          ? "clamp(48px, 6vw, 60px)"
+          : "clamp(140px, 18vw, 180px)",
         border: getBorder(),
         background: getBackground(),
         cursor: disabled ? "not-allowed" : "pointer",
@@ -54,10 +65,13 @@ export function SiteCard({
         <span
           style={{
             color: getTextColor(),
-            fontSize: "clamp(10px, 1.5vw, 14px)",
-            fontWeight: 500,
+            fontSize: isSituation
+              ? "clamp(18px, 2.3vw, 27px)"
+              : "clamp(10px, 1.5vw, 14px)",
+            fontWeight: isSituation ? 700 : 500,
             textAlign: "center",
             padding: 8,
+            lineHeight: 1,
           }}
         >
           {label}

@@ -24,12 +24,12 @@ export const EXPERIENCE_CARDS: readonly SiteCardConfig[] = [
  * Cards for screen 2: "Quelle est votre situation ?"
  */
 export const SITUATION_CARDS: readonly SiteCardConfig[] = [
-  { id: "sit-habitants", label: "Habitants d'Altera", disabled: true },
-  { id: "sit-apprentis", label: "Apprentis-Citoyens", disabled: true },
+  { id: "sit-refugie-climat", label: "Réfugié.e climatique", disabled: true },
+  { id: "sit-refugie-guerre", label: "Réfugié.e de guerre", disabled: true },
   {
-    id: "sit-refugies",
-    label: "Réfugiés Climatiques arrivants",
+    id: "sit-sans-domicile",
+    label: "Sans domicile fixe",
     disabled: false,
   },
-  { id: "sit-seniors", label: "Seniors Hyper-Connectés", disabled: true },
+  { id: "sit-autre", label: "Autre", disabled: true },
 ];

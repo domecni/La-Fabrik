@@ -52,10 +52,11 @@ export function SiteSituationScreen(): React.JSX.Element {
 
       <div
         style={{
-          display: "flex",
-          gap: 16,
-          flexWrap: "wrap",
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(220px, 300px))",
+          gap: "24px 28px",
           justifyContent: "center",
+          width: "100%",
         }}
       >
         {SITUATION_CARDS.map((card, index) => (
@@ -63,6 +64,7 @@ export function SiteSituationScreen(): React.JSX.Element {
             key={card.id}
             config={card}
             selected={selectedSituation === index}
+            variant="situation"
             onSelect={() => {
               if (!card.disabled) {
                 setSelectedSituation(index);
