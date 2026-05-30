@@ -15,6 +15,7 @@ export type SiteStep =
  */
 export type GameStep =
   | "loading-map" // Chargement des assets
+  | "fade-to-video" // Fondu noir entre chargement et vidéo
   | "video" // Vidéo intro.mp4
   | "dialogue-intro" // Dialogues post-vidéo (écran noir)
   | "reveal" // Fondu noir → jeu visible

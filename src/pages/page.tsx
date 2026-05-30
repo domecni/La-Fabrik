@@ -6,18 +6,22 @@ import { DebugPerf } from "@/components/debug/DebugPerf";
 import { DialogMessage } from "@/components/ui/DialogMessage";
 import { GameUI } from "@/components/ui/GameUI";
 import {
+  FadeToVideoOverlay,
   IntroDialogueOverlay,
   IntroRevealOverlay,
   IntroVideoPlayer,
 } from "@/components/ui/intro";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
+import { AudioManager } from "@/managers/AudioManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { hasSiteBeenVisitedToday } from "@/utils/cookies/siteVisitCookie";
 import { logger } from "@/utils/core/Logger";
 import { World } from "@/world/World";
+
+const LOADING_TO_VIDEO_FADE_MS = 500;
 
 export function HomePage(): React.JSX.Element | null {
   const navigate = useNavigate();
@@ -67,9 +71,22 @@ export function HomePage(): React.JSX.Element | null {
 
   useEffect(() => {
     if (introStep === "loading-map" && sceneLoadingState.status === "ready") {
-      setIntroStep("video");
+      AudioManager.getInstance().stopMusic();
+      setIntroStep("fade-to-video");
     }
   }, [introStep, sceneLoadingState.status, setIntroStep]);
+
+  useEffect(() => {
+    if (introStep !== "fade-to-video") return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setIntroStep("video");
+    }, LOADING_TO_VIDEO_FADE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [introStep, setIntroStep]);
 
   const handleCanvasCreated = useCallback(
     ({ gl }: { gl: THREE.WebGLRenderer }) => {
@@ -106,6 +123,8 @@ export function HomePage(): React.JSX.Element | null {
 
   const renderIntroOverlay = () => {
     switch (introStep) {
+      case "fade-to-video":
+        return <FadeToVideoOverlay />;
       case "video":
         return <IntroVideoPlayer />;
       case "dialogue-intro":
@@ -142,7 +161,7 @@ export function HomePage(): React.JSX.Element | null {
           onClose={hideDialog}
         />
       ) : null}
-      {introStep === "loading-map" && (
+      {(introStep === "loading-map" || introStep === "fade-to-video") && (
         <SceneLoadingOverlay state={sceneLoadingState} />
       )}
       {renderIntroOverlay()}

@@ -15,6 +15,7 @@ export const SITE_STEPS: readonly SiteStep[] = [
  */
 export const GAME_STEPS: readonly GameStep[] = [
   "loading-map",
+  "fade-to-video",
   "video",
   "dialogue-intro",
   "reveal",
