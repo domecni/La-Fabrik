@@ -19,17 +19,10 @@ import { hasSiteBeenVisitedToday } from "@/utils/cookies/siteVisitCookie";
 import { logger } from "@/utils/core/Logger";
 import { World } from "@/world/World";
 
-export function HomePage(): React.JSX.Element {
+export function HomePage(): React.JSX.Element | null {
   const navigate = useNavigate();
   const introStep = useGameStore((state) => state.intro.currentStep);
   const setIntroStep = useGameStore((state) => state.setIntroStep);
-
-  useEffect(() => {
-    if (!hasSiteBeenVisitedToday()) {
-      navigate({ to: "/site", replace: true });
-    }
-  }, [navigate]);
-
   const dialogMessage = useGameStore(
     (state) => state.missionFlow.dialogMessage,
   );
@@ -37,6 +30,12 @@ export function HomePage(): React.JSX.Element {
   const [sceneLoadingState, setSceneLoadingState] = useState<SceneLoadingState>(
     INITIAL_SCENE_LOADING_STATE,
   );
+
+  useEffect(() => {
+    if (!hasSiteBeenVisitedToday()) {
+      navigate({ to: "/site", replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     if (!dialogMessage) return undefined;
@@ -97,6 +96,13 @@ export function HomePage(): React.JSX.Element {
     },
     [],
   );
+
+  // Don't mount the Canvas until we know we will not redirect to /site.
+  // Without this guard the Canvas would mount, the effect above would fire
+  // navigate, and the Canvas would unmount mid-load — leaking GLTF requests
+  // and a WebGL context. The synchronous cookie check happens here AFTER
+  // all hooks (rules of hooks) but BEFORE any expensive render.
+  if (!hasSiteBeenVisitedToday()) return null;
 
   const renderIntroOverlay = () => {
     switch (introStep) {
