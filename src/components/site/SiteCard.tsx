@@ -66,7 +66,7 @@ export function SiteCard({
           style={{
             color: getTextColor(),
             fontSize: isSituation
-              ? "clamp(18px, 2.3vw, 27px)"
+              ? "clamp(14px, 1.8vw, 22px)"
               : "clamp(10px, 1.5vw, 14px)",
             fontWeight: isSituation ? 700 : 500,
             textAlign: "center",
