@@ -6,6 +6,7 @@ import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useDebugStore } from "@/hooks/debug/useDebugStore";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
 import { useFogSettings } from "@/hooks/world/useFogSettings";
+import { useGraphicsPresetConfig } from "@/hooks/world/useGraphicsSettings";
 import { LIGHTING_STATE } from "@/world/lightingState";
 
 const tempSunFogColor = new THREE.Color();
@@ -23,11 +24,14 @@ export function FogSystem(): React.JSX.Element | null {
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
   const fog = useFogSettings();
+  const graphicsPreset = useGraphicsPresetConfig();
   const fogEnabled = useDebugStore((debug) => debug.getFogEnabled());
   const scene = useThree((state) => state.scene);
   const fogColor = useMemo(() => getLightingFogColor(new THREE.Color()), []);
   const shouldShowFog =
-    fogEnabled && sceneMode === "game" && cameraMode === "player";
+    (fogEnabled || graphicsPreset.fogEnabled) &&
+    sceneMode === "game" &&
+    cameraMode === "player";
 
   useFrame(() => {
     if (!scene.fog) return;

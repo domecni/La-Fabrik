@@ -2,6 +2,7 @@ import { Suspense, useMemo } from "react";
 import { CHUNK_CONFIG } from "@/data/world/chunkStreamingConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
 import { useSceneMode } from "@/hooks/debug/useSceneMode";
+import { useGraphicsPresetConfig } from "@/hooks/world/useGraphicsSettings";
 import { useVisibleWorldChunks } from "@/hooks/world/useVisibleWorldChunks";
 import {
   isMapModelVisible,
@@ -65,6 +66,7 @@ export function VegetationSystem({
 }: VegetationSystemProps): React.JSX.Element | null {
   const cameraMode = useCameraMode();
   const sceneMode = useSceneMode();
+  const graphicsPreset = useGraphicsPresetConfig();
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
   const { data, isLoading } = useVegetationData();
@@ -92,7 +94,10 @@ export function VegetationSystem({
     });
   }, [data, groups, models, onlyMapName]);
 
-  const visibleChunks = useVisibleWorldChunks(chunks, streamingEnabled);
+  const visibleChunks = useVisibleWorldChunks(chunks, streamingEnabled, {
+    loadRadius: graphicsPreset.chunkLoadRadius,
+    unloadRadius: graphicsPreset.chunkUnloadRadius,
+  });
 
   if (isLoading || !data) {
     return null;

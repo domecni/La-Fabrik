@@ -4,6 +4,7 @@ import { FOG_CONFIG, type FogState } from "@/data/world/fogConfig";
 import { WIND_DEFAULTS, type WindState } from "@/data/world/windConfig";
 import {
   GRAPHICS_DEFAULTS,
+  type GraphicsPreset,
   type GraphicsState,
 } from "@/data/world/graphicsConfig";
 
@@ -21,6 +22,7 @@ interface WorldSettingsActions {
   setWindSpeed: (speed: number) => void;
   setWindDirection: (direction: number) => void;
   setWindStrength: (strength: number) => void;
+  setGraphicsPreset: (preset: GraphicsPreset) => void;
   setGraphics: (graphics: Partial<GraphicsState>) => void;
   setDynamicGrass: (enabled: boolean) => void;
   setDynamicTrees: (enabled: boolean) => void;
@@ -80,6 +82,11 @@ export const useWorldSettingsStore = create<WorldSettingsStore>()((set) => ({
   setGraphics: (graphicsUpdate) =>
     set((state) => ({
       graphics: { ...state.graphics, ...graphicsUpdate },
+    })),
+
+  setGraphicsPreset: (preset) =>
+    set((state) => ({
+      graphics: { ...state.graphics, preset },
     })),
 
   setDynamicGrass: (dynamicGrass) =>

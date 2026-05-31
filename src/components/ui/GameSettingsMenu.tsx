@@ -1,7 +1,22 @@
 import { useEffect } from "react";
-import { RotateCcw, X } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  Captions,
+  Gauge,
+  LogOut,
+  Music2,
+  RotateCcw,
+  Volume2,
+  X,
+} from "lucide-react";
+import {
+  GRAPHICS_PRESET_KEYS,
+  GRAPHICS_PRESETS,
+  type GraphicsPreset,
+} from "@/data/world/graphicsConfig";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
+import { useWorldSettingsStore } from "@/managers/stores/useWorldSettingsStore";
 import type { SubtitleLanguage } from "@/types/settings/settings";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 
@@ -21,6 +36,7 @@ function clearCookies(): void {
 interface VolumeSliderProps {
   id: string;
   label: string;
+  icon: ReactNode;
   value: number;
   onChange: (value: number) => void;
 }
@@ -28,13 +44,17 @@ interface VolumeSliderProps {
 function VolumeSlider({
   id,
   label,
+  icon,
   value,
   onChange,
 }: VolumeSliderProps): React.JSX.Element {
   return (
     <label className="game-settings-menu__slider" htmlFor={id}>
       <span>
-        {label}
+        <em>
+          {icon}
+          {label}
+        </em>
         <strong>{formatPercent(value)}</strong>
       </span>
       <input
@@ -50,8 +70,50 @@ function VolumeSlider({
   );
 }
 
+function formatChunkDistance(distance: number): string {
+  return `${distance}m`;
+}
+
+interface GraphicsPresetButtonProps {
+  active: boolean;
+  preset: GraphicsPreset;
+  onSelect: (preset: GraphicsPreset) => void;
+}
+
+function GraphicsPresetButton({
+  active,
+  preset,
+  onSelect,
+}: GraphicsPresetButtonProps): React.JSX.Element {
+  const config = GRAPHICS_PRESETS[preset];
+  const lodLabel = config.forceLodModels
+    ? "LOD forcé"
+    : `HD ${config.lodHighDetailDistance}m`;
+
+  return (
+    <button
+      type="button"
+      className={active ? "active" : undefined}
+      onClick={() => onSelect(preset)}
+      aria-pressed={active}
+    >
+      <span>{config.label}</span>
+      <small>
+        {formatChunkDistance(config.chunkLoadRadius)} · {lodLabel} ·{" "}
+        {config.fogEnabled ? "Fog" : "Clear"}
+      </small>
+    </button>
+  );
+}
+
 export function GameSettingsMenu(): React.JSX.Element | null {
   const resetGame = useGameStore((state) => state.resetGame);
+  const graphicsPreset = useWorldSettingsStore(
+    (state) => state.graphics.preset,
+  );
+  const setGraphicsPreset = useWorldSettingsStore(
+    (state) => state.setGraphicsPreset,
+  );
   const {
     isSettingsMenuOpen,
     musicVolume,
@@ -103,8 +165,8 @@ export function GameSettingsMenu(): React.JSX.Element | null {
       <div className="game-settings-menu__panel">
         <header className="game-settings-menu__header">
           <div>
-            <span>Pause</span>
-            <h2>Options</h2>
+            <span>La Fabrik</span>
+            <h2>Pause</h2>
           </div>
           <button
             className="game-settings-menu__close"
@@ -116,62 +178,98 @@ export function GameSettingsMenu(): React.JSX.Element | null {
           </button>
         </header>
 
-        <section
-          className="game-settings-menu__section"
-          aria-labelledby="audio-settings-heading"
-        >
-          <h3 id="audio-settings-heading">Audio</h3>
-          <VolumeSlider
-            id="music-volume"
-            label="Musique"
-            value={musicVolume}
-            onChange={setMusicVolume}
-          />
-          <VolumeSlider
-            id="sfx-volume"
-            label="Sound effects"
-            value={sfxVolume}
-            onChange={setSfxVolume}
-          />
-          <VolumeSlider
-            id="dialogue-volume"
-            label="Dialogue"
-            value={dialogueVolume}
-            onChange={setDialogueVolume}
-          />
-        </section>
-
-        <section
-          className="game-settings-menu__section"
-          aria-labelledby="subtitle-settings-heading"
-        >
-          <h3 id="subtitle-settings-heading">Sous-titres</h3>
-          <label className="game-settings-menu__checkbox">
-            <input
-              type="checkbox"
-              checked={subtitlesEnabled}
-              onChange={(event) => setSubtitlesEnabled(event.target.checked)}
-            />
-            Afficher sous-titres
-          </label>
-
-          <div
-            className="game-settings-menu__choice-group"
-            aria-label="Langue des sous-titres"
+        <div className="game-settings-menu__grid">
+          <section
+            className="game-settings-menu__section game-settings-menu__section--wide"
+            aria-labelledby="graphics-settings-heading"
           >
-            {(["fr", "en"] satisfies SubtitleLanguage[]).map((language) => (
-              <button
-                key={language}
-                type="button"
-                className={subtitleLanguage === language ? "active" : undefined}
-                onClick={() => setSubtitleLanguage(language)}
-                aria-pressed={subtitleLanguage === language}
-              >
-                {language === "fr" ? "Francais" : "English"}
-              </button>
-            ))}
-          </div>
-        </section>
+            <div className="game-settings-menu__section-title">
+              <Gauge size={16} aria-hidden="true" />
+              <h3 id="graphics-settings-heading">Performance</h3>
+            </div>
+            <div
+              className="game-settings-menu__choice-group game-settings-menu__choice-group--presets"
+              aria-label="Preset graphique"
+            >
+              {GRAPHICS_PRESET_KEYS.map((preset) => (
+                <GraphicsPresetButton
+                  key={preset}
+                  preset={preset}
+                  active={graphicsPreset === preset}
+                  onSelect={setGraphicsPreset}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section
+            className="game-settings-menu__section"
+            aria-labelledby="audio-settings-heading"
+          >
+            <div className="game-settings-menu__section-title">
+              <Volume2 size={16} aria-hidden="true" />
+              <h3 id="audio-settings-heading">Audio</h3>
+            </div>
+            <VolumeSlider
+              id="music-volume"
+              icon={<Music2 size={14} aria-hidden="true" />}
+              label="Musique"
+              value={musicVolume}
+              onChange={setMusicVolume}
+            />
+            <VolumeSlider
+              id="sfx-volume"
+              icon={<Volume2 size={14} aria-hidden="true" />}
+              label="Effets"
+              value={sfxVolume}
+              onChange={setSfxVolume}
+            />
+            <VolumeSlider
+              id="dialogue-volume"
+              icon={<Captions size={14} aria-hidden="true" />}
+              label="Dialogue"
+              value={dialogueVolume}
+              onChange={setDialogueVolume}
+            />
+          </section>
+
+          <section
+            className="game-settings-menu__section"
+            aria-labelledby="subtitle-settings-heading"
+          >
+            <div className="game-settings-menu__section-title">
+              <Captions size={16} aria-hidden="true" />
+              <h3 id="subtitle-settings-heading">Sous-titres</h3>
+            </div>
+            <label className="game-settings-menu__checkbox">
+              <input
+                type="checkbox"
+                checked={subtitlesEnabled}
+                onChange={(event) => setSubtitlesEnabled(event.target.checked)}
+              />
+              Afficher sous-titres
+            </label>
+
+            <div
+              className="game-settings-menu__choice-group"
+              aria-label="Langue des sous-titres"
+            >
+              {(["fr", "en"] satisfies SubtitleLanguage[]).map((language) => (
+                <button
+                  key={language}
+                  type="button"
+                  className={
+                    subtitleLanguage === language ? "active" : undefined
+                  }
+                  onClick={() => setSubtitleLanguage(language)}
+                  aria-pressed={subtitleLanguage === language}
+                >
+                  <span>{language === "fr" ? "Français" : "English"}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
 
         {showDebugRestart ? (
           <button
@@ -189,6 +287,7 @@ export function GameSettingsMenu(): React.JSX.Element | null {
           type="button"
           onClick={handleQuit}
         >
+          <LogOut size={14} aria-hidden="true" />
           Quitter
         </button>
       </div>

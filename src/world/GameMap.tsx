@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 import {
   Component,
   Suspense,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  useCallback,
 } from "react";
 import * as THREE from "three";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
@@ -23,6 +23,7 @@ import {
 } from "@/managers/stores/useMapPerformanceStore";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useRepairMissionAnchorStore } from "@/managers/stores/useRepairMissionAnchorStore";
+import { useMapLodModelPath } from "@/hooks/world/useMapLodModelPath";
 import { GameMapCollision } from "@/world/GameMapCollision";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
 import { isGeneratedMapModelName } from "@/data/world/generatedMapModelConfig";
@@ -362,6 +363,11 @@ function ModelInstance({
   const { position, rotation, scale } = node;
   const scaleMultiplier = getMapSingleModelScaleMultiplier(node.name);
   const baseScale = normalizeMapScale(scale);
+  const activeModelUrl = useMapLodModelPath({
+    modelName: node.name,
+    modelPath: modelUrl,
+    position: node.position,
+  });
   const normalizedScale = useMemo(
     () =>
       [
@@ -372,7 +378,7 @@ function ModelInstance({
     [baseScale, scaleMultiplier],
   );
   const terrainHeight = useTerrainHeightSampler();
-  const { scene } = useLoggedGLTF(modelUrl, {
+  const { scene } = useLoggedGLTF(activeModelUrl, {
     scope: "GameMap.ModelInstance",
     position,
     rotation,
