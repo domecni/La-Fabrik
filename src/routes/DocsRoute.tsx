@@ -107,6 +107,10 @@ const LazyDocsMapPerformancePage = lazyNamed(
   () => import("@/pages/docs/map-performance/page"),
   "DocsMapPerformancePage",
 );
+const LazyDocsMapLodPage = lazyNamed(
+  () => import("@/pages/docs/map-lod/page"),
+  "DocsMapLodPage",
+);
 
 export const DocsLayoutRoute = createDocsRoute(LazyDocsLayout);
 export const DocsReadmeRoute = createDocsRoute(LazyDocsReadmePage);
@@ -136,3 +140,4 @@ export const DocsThreeDebuggingRoute = createDocsRoute(
 export const DocsMapPerformanceRoute = createDocsRoute(
   LazyDocsMapPerformancePage,
 );
+export const DocsMapLodRoute = createDocsRoute(LazyDocsMapLodPage);

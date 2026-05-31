@@ -1,9 +1,10 @@
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { DebugPerf } from "@/components/debug/DebugPerf";
 import { EbikeIntroSequence } from "@/components/game/EbikeIntroSequence";
+import { AppLoadingIndicator } from "@/components/ui/AppLoadingIndicator";
 import { DialogMessage } from "@/components/ui/DialogMessage";
 import { GameUI } from "@/components/ui/GameUI";
 import {
@@ -14,8 +15,10 @@ import {
 } from "@/components/ui/intro";
 import { SceneLoadingOverlay } from "@/components/ui/SceneLoadingOverlay";
 import { INITIAL_SCENE_LOADING_STATE } from "@/data/world/sceneLoadingConfig";
+import { useTransientLoadingIndicator } from "@/hooks/ui/useTransientLoadingIndicator";
 import { AudioManager } from "@/managers/AudioManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
+import { useWorldSettingsStore } from "@/managers/stores/useWorldSettingsStore";
 import { HandTrackingProvider } from "@/providers/gameplay/HandTrackingProvider";
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
 import { hasSiteBeenVisitedToday } from "@/utils/cookies/siteVisitCookie";
@@ -26,15 +29,31 @@ const LOADING_TO_VIDEO_FADE_MS = 500;
 
 export function HomePage(): React.JSX.Element | null {
   const navigate = useNavigate();
+  const mainState = useGameStore((state) => state.mainState);
   const introStep = useGameStore((state) => state.intro.currentStep);
+  const ebikeStep = useGameStore((state) => state.ebike.currentStep);
+  const pylonStep = useGameStore((state) => state.pylon.currentStep);
+  const farmStep = useGameStore((state) => state.farm.currentStep);
   const setIntroStep = useGameStore((state) => state.setIntroStep);
+  const graphicsPreset = useWorldSettingsStore(
+    (state) => state.graphics.preset,
+  );
   const dialogMessage = useGameStore(
     (state) => state.missionFlow.dialogMessage,
   );
   const hideDialog = useGameStore((state) => state.hideDialog);
+  const { showLoading, visible: showTransientLoading } =
+    useTransientLoadingIndicator();
   const [sceneLoadingState, setSceneLoadingState] = useState<SceneLoadingState>(
     INITIAL_SCENE_LOADING_STATE,
   );
+  const sceneReadyRef = useRef(false);
+  const runtimeLoadingSignal = `${graphicsPreset}:${mainState}:${ebikeStep}:${pylonStep}:${farmStep}`;
+  const previousRuntimeLoadingSignalRef = useRef(runtimeLoadingSignal);
+
+  useEffect(() => {
+    sceneReadyRef.current = sceneLoadingState.status === "ready";
+  }, [sceneLoadingState.status]);
 
   useEffect(() => {
     if (!hasSiteBeenVisitedToday()) {
@@ -56,6 +75,11 @@ export function HomePage(): React.JSX.Element | null {
 
   const handleSceneLoadingStateChange = useCallback(
     (nextState: SceneLoadingState) => {
+      if (sceneReadyRef.current && nextState.status === "loading") {
+        showLoading();
+        return;
+      }
+
       setSceneLoadingState((currentState) => {
         if (currentState.status === "ready" && nextState.status === "loading") {
           return currentState;
@@ -67,8 +91,19 @@ export function HomePage(): React.JSX.Element | null {
         };
       });
     },
-    [],
+    [showLoading],
   );
+
+  useEffect(() => {
+    if (previousRuntimeLoadingSignalRef.current === runtimeLoadingSignal) {
+      return;
+    }
+
+    previousRuntimeLoadingSignalRef.current = runtimeLoadingSignal;
+    if (sceneLoadingState.status !== "ready") return;
+
+    showLoading();
+  }, [runtimeLoadingSignal, sceneLoadingState.status, showLoading]);
 
   useEffect(() => {
     if (introStep === "loading-map" && sceneLoadingState.status === "ready") {
@@ -132,6 +167,8 @@ export function HomePage(): React.JSX.Element | null {
   const showFadeToVideoOverlay =
     introStep === "fade-to-video" ||
     (introStep === "loading-map" && sceneLoadingState.status === "ready");
+  const showSceneLoadingOverlay =
+    introStep === "loading-map" || introStep === "fade-to-video";
 
   const renderIntroOverlay = () => {
     if (showFadeToVideoOverlay) return <FadeToVideoOverlay />;
@@ -173,9 +210,12 @@ export function HomePage(): React.JSX.Element | null {
           onClose={hideDialog}
         />
       ) : null}
-      {(introStep === "loading-map" || introStep === "fade-to-video") && (
+      {showSceneLoadingOverlay ? (
         <SceneLoadingOverlay state={sceneLoadingState} />
-      )}
+      ) : null}
+      {showTransientLoading && !showSceneLoadingOverlay ? (
+        <AppLoadingIndicator floating />
+      ) : null}
       {renderIntroOverlay()}
       <EbikeIntroSequence />
     </HandTrackingProvider>

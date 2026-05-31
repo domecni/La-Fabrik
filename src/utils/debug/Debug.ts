@@ -244,6 +244,11 @@ export class Debug {
     return this.controls.handTrackingSource;
   }
 
+  setHandTrackingSource(value: HandTrackingSource): void {
+    this.controls.handTrackingSource = value;
+    this.emit();
+  }
+
   getFogEnabled(): boolean {
     return this.controls.fogEnabled;
   }

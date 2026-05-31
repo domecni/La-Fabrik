@@ -101,7 +101,7 @@ export const galleryModels: GalleryModel[] = [
     path: "/models/habitant2-animated/model.gltf",
   },
   { id: "immeuble1", name: "Immeuble", path: "/models/immeuble1/model.gltf" },
-  { id: "lafabrik", name: "La Fabrik", path: "/models/lafabrik/model.gltf" },
+  { id: "lafabrik", name: "La Fabrik", path: "/models/lafabrik/model.glb" },
   { id: "maison1", name: "Maison", path: "/models/maison1/model.gltf" },
   {
     id: "packderelance",

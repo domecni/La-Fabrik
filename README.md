@@ -152,6 +152,7 @@ WS  ws://localhost:8000/ws
 | `docs/technical/zustand.md`             | Game, settings, and subtitle stores                        |
 | `docs/technical/three-debugging.md`     | DevTools workflow for stepping into Three.js internals     |
 | `docs/technical/map-performance.md`     | Map draw-call bottlenecks and optimization notes           |
+| `docs/technical/map-lod.md`             | Runtime map LOD presets, paths, and workflow               |
 | `docs/technical/editor.md`              | Editor implementation details                              |
 | `docs/technical/animation.md`           | Animated, explodable, and reusable 3D model components     |
 | `docs/user/features.md`                 | Implemented feature inventory                              |

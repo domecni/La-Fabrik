@@ -14,12 +14,12 @@ This document tracks the current map-rendering performance pass.
 
 The first performance bottleneck was draw calls. Some assets were exported as many small GLTF primitives even when they used only a few materials.
 
-| Model            | Instances | Meshes / primitives | Notes                                                            |
-| ---------------- | --------: | ------------------: | ---------------------------------------------------------------- |
-| `generateur`     |         3 |                3152 | Worst draw-call offender. Needs asset-side mesh merging.         |
-| `lafabrik`       |         4 |                  56 | Moderate draw calls, heavy 2048 texture set.                     |
-| `ecole`          |         1 |                 107 | One material but many primitives; should be merged.              |
-| `fermeverticale` |         3 |                   1 | Geometry is fine; textures are large for the visible complexity. |
+| Model            | Instances | Meshes / primitives | Notes                                                                                |
+| ---------------- | --------: | ------------------: | ------------------------------------------------------------------------------------ |
+| `generateur`     |         3 |                3152 | Worst draw-call offender. Needs asset-side mesh merging.                             |
+| `lafabrik`       |         4 |                 474 | High primitive count; current HD GLB has embedded geometry and no external textures. |
+| `ecole`          |         1 |                 107 | One material but many primitives; should be merged.                                  |
+| `fermeverticale` |         3 |                   1 | Geometry is fine; textures are large for the visible complexity.                     |
 
 `generateur` was especially expensive because three visible instances could multiply thousands of primitives into thousands of draw calls. Instancing reduces repeated instance cost, but the source asset still needs a cleaner export.
 
@@ -34,7 +34,7 @@ Estimated source primitive count versus runtime merged groups:
 | `generateur` |              3152 |                     8 |
 | `ecole`      |               107 |                     2 |
 | `eolienne`   |               118 |                     8 |
-| `lafabrik`   |                56 |                    14 |
+| `lafabrik`   |               474 |                   ~77 |
 
 This is a code-side safety net, not a replacement for clean asset exports. Clean GLB exports with merged meshes and fewer textures remain the preferred long-term path.
 
@@ -255,7 +255,7 @@ Design/export should prioritize:
 1. Produce lower-poly `buisson`, `arbre`, `sapin`, and crop assets.
 2. Add LOD or billboard variants for far vegetation.
 3. Merge `generateur` meshes from 3152 primitives to a small number of material groups.
-4. Reduce `lafabrik` texture count and downscale flat/low-detail maps.
+4. Keep `lafabrik` exports texture-light, and merge repeated material primitives where possible.
 5. Merge `ecole` primitives because it uses a single material.
 6. Prefer runtime `.glb` or compressed runtime textures when the pipeline supports it.
 

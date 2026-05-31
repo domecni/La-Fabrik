@@ -32,6 +32,8 @@ The loading progress in `HomePage` is monotonic:
 
 This prevents the overlay from jumping backward when nested loaders finish in a slightly different order.
 
+After the initial map boot is complete, late loading signals no longer reopen the full-screen loading overlay. Instead, `HomePage` shows the compact `AppLoadingIndicator` while the game remains visible. This is reserved for explicit runtime reload signals such as graphics preset changes, repair-state transitions, or late world loading events; chunk streaming intentionally does not drive this indicator.
+
 ## World Composition
 
 `src/world/World.tsx` is the main scene composer.
