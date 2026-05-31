@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 import {
   Captions,
   Gauge,
-  LogOut,
+  Hand,
+  Laptop,
   Music2,
   RotateCcw,
+  Server,
   Volume2,
   X,
 } from "lucide-react";
@@ -14,23 +16,17 @@ import {
   GRAPHICS_PRESETS,
   type GraphicsPreset,
 } from "@/data/world/graphicsConfig";
+import { useDebugStore } from "@/hooks/debug/useDebugStore";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import { useWorldSettingsStore } from "@/managers/stores/useWorldSettingsStore";
+import type { HandTrackingSource } from "@/types/handTracking/handTracking";
 import type { SubtitleLanguage } from "@/types/settings/settings";
-import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
+import { clearSiteVisited } from "@/utils/cookies/siteVisitCookie";
+import { Debug } from "@/utils/debug/Debug";
 
 function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
-}
-
-function clearCookies(): void {
-  document.cookie.split(";").forEach((cookie) => {
-    const cookieName = cookie.split("=")[0]?.trim();
-    if (!cookieName) return;
-
-    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-  });
 }
 
 interface VolumeSliderProps {
@@ -74,6 +70,26 @@ function formatChunkDistance(distance: number): string {
   return `${distance}m`;
 }
 
+const HAND_TRACKING_OPTIONS = [
+  {
+    description: "Calcul local",
+    icon: <Laptop size={14} aria-hidden="true" />,
+    label: "Sur cet ordi",
+    source: "browser",
+  },
+  {
+    description: "Soulage l'ordi",
+    icon: <Server size={14} aria-hidden="true" />,
+    label: "Mode assisté",
+    source: "backend",
+  },
+] as const satisfies readonly {
+  description: string;
+  icon: ReactNode;
+  label: string;
+  source: HandTrackingSource;
+}[];
+
 interface GraphicsPresetButtonProps {
   active: boolean;
   preset: GraphicsPreset;
@@ -108,6 +124,9 @@ function GraphicsPresetButton({
 
 export function GameSettingsMenu(): React.JSX.Element | null {
   const resetGame = useGameStore((state) => state.resetGame);
+  const handTrackingSource = useDebugStore((debug) =>
+    debug.getHandTrackingSource(),
+  );
   const graphicsPreset = useWorldSettingsStore(
     (state) => state.graphics.preset,
   );
@@ -148,17 +167,16 @@ export function GameSettingsMenu(): React.JSX.Element | null {
 
   if (!isSettingsMenuOpen) return null;
 
-  const handleQuit = (): void => {
-    clearCookies();
+  const handleRestart = (): void => {
+    resetGame();
+    clearSiteVisited();
+    setSettingsMenuOpen(false);
     window.location.assign("/");
   };
 
-  const handleRestart = (): void => {
-    resetGame();
-    window.location.reload();
+  const handleHandTrackingSourceChange = (source: HandTrackingSource): void => {
+    Debug.getInstance().setHandTrackingSource(source);
   };
-
-  const showDebugRestart = isDebugEnabled();
 
   return (
     <div className="game-settings-menu" role="dialog" aria-modal="true">
@@ -185,7 +203,7 @@ export function GameSettingsMenu(): React.JSX.Element | null {
           >
             <div className="game-settings-menu__section-title">
               <Gauge size={16} aria-hidden="true" />
-              <h3 id="graphics-settings-heading">Performance</h3>
+              <h3 id="graphics-settings-heading">Graphisme</h3>
             </div>
             <div
               className="game-settings-menu__choice-group game-settings-menu__choice-group--presets"
@@ -269,26 +287,45 @@ export function GameSettingsMenu(): React.JSX.Element | null {
               ))}
             </div>
           </section>
+
+          <section
+            className="game-settings-menu__section game-settings-menu__section--right"
+            aria-labelledby="hand-tracking-settings-heading"
+          >
+            <div className="game-settings-menu__section-title">
+              <Hand size={16} aria-hidden="true" />
+              <h3 id="hand-tracking-settings-heading">Détection des mains</h3>
+            </div>
+            <div
+              className="game-settings-menu__choice-group game-settings-menu__choice-group--hand-tracking"
+              aria-label="Mode de détection des mains"
+            >
+              {HAND_TRACKING_OPTIONS.map((option) => (
+                <button
+                  key={option.source}
+                  type="button"
+                  className={
+                    handTrackingSource === option.source ? "active" : undefined
+                  }
+                  onClick={() => handleHandTrackingSourceChange(option.source)}
+                  aria-pressed={handTrackingSource === option.source}
+                >
+                  {option.icon}
+                  <span>{option.label}</span>
+                  <small>{option.description}</small>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
-        {showDebugRestart ? (
-          <button
-            className="game-settings-menu__restart"
-            type="button"
-            onClick={handleRestart}
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-            Recommencer
-          </button>
-        ) : null}
-
         <button
-          className="game-settings-menu__quit"
+          className="game-settings-menu__restart"
           type="button"
-          onClick={handleQuit}
+          onClick={handleRestart}
         >
-          <LogOut size={14} aria-hidden="true" />
-          Quitter
+          <RotateCcw size={14} aria-hidden="true" />
+          Recommencer
         </button>
       </div>
     </div>
