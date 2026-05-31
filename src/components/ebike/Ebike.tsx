@@ -14,6 +14,7 @@ import { PLAYER_EYE_HEIGHT } from "@/data/player/playerConfig";
 import {
   EBIKE_CAMERA_TRANSFORM,
   EBIKE_DROP_PLAYER_TRANSFORM,
+  EBIKE_WORLD_SCALE,
   EBIKE_WORLD_ROTATION_Y,
 } from "@/data/ebike/ebikeConfig";
 import type { Vector3Tuple } from "@/types/three/three";
@@ -283,17 +284,18 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           ref={groupRef}
           position={position}
           rotation={[0, EBIKE_WORLD_ROTATION_Y, 0]}
+          scale={EBIKE_WORLD_SCALE}
         >
           <primitive object={model} />
           <InteractableObject
             kind="trigger"
             label={interactionLabel}
             position={position}
-            radius={15}
+            radius={5}
             onPress={handleInteract}
           >
             <mesh>
-              <boxGeometry args={[10, 13, 2]} />
+              <boxGeometry args={[8, 9, 2]} />
               <meshBasicMaterial colorWrite={false} depthWrite={false} />
             </mesh>
           </InteractableObject>

@@ -43,7 +43,6 @@ export const CHARACTER_CONFIGS = {
     scale: [1.55, 1.55, 1.55],
     animations: ["idle", "walk"],
     defaultAnimation: "idle",
-    snapToTerrain: false,
   },
   fermier: {
     id: "fermier",
