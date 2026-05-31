@@ -47,6 +47,9 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
     handleGameStageLoaded,
     handleGameMapLoaded,
     handleOctreeReady,
+    handleShadowWarmupReady,
+    handleShadowWarmupStarted,
+    shouldWarmUpShadows,
   } = useWorldSceneLoading({ sceneMode, onLoadingStateChange });
   const playerSpawnPosition =
     sceneMode === "game"
@@ -61,7 +64,13 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
 
   return (
     <>
-      <Environment />
+      <Environment
+        shadowWarmup={{
+          active: shouldWarmUpShadows,
+          onReady: handleShadowWarmupReady,
+          onStarted: handleShadowWarmupStarted,
+        }}
+      />
       <Lighting />
       <DebugHelpers />
       {showHandTrackingGloves ? (

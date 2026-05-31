@@ -72,13 +72,22 @@ It tracks:
 - `gameMapLoaded`: map data and visible map nodes settled
 - `gameStageLoaded`: Rapier gameplay stage mounted
 - `showGameStage`: true when the map is ready enough to mount gameplay content
-- `gameplayReady`: true when map, stage, and octree are all ready
+- `shadowsReady`: renderer, shadow lights, and scene matrices have been forced once after the scene is mounted
+- `gameplayReady`: true when map, stage, octree, and the shadow warmup are all ready
 
-The final game-scene readiness condition is:
+The base game-scene readiness condition before the shadow warmup is:
 
 ```ts
 showGameStage && gameStageLoaded && octree !== null;
 ```
+
+After that condition is met, `SceneShadowWarmup` runs one final loading step:
+
+```txt
+Activation des ombres -> Ombres prêtes -> Gameplay prêt
+```
+
+This keeps the loading overlay visible until the renderer shadow map, shadow-casting light, and mounted scene graph have all been explicitly refreshed.
 
 The debug physics scene is ready when:
 
