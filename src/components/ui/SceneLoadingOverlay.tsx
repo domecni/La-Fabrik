@@ -1,7 +1,7 @@
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
 
 const LOADING_BACKGROUND_PATH = "/assets/bg-site.png";
-const LOADING_LOGO_PATH = "/assets/logo/logo.jpg";
+const LOADING_LOGO_PATH = "/assets/logo.png";
 
 for (const path of [LOADING_BACKGROUND_PATH, LOADING_LOGO_PATH]) {
   const image = new Image();
