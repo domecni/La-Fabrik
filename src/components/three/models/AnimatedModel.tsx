@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAnimations } from "@react-three/drei";
+import { SkeletonUtils } from "three-stdlib";
 import type { AnimationAction } from "three";
 import {
   AnimatedModelContext,
@@ -43,7 +44,8 @@ export function AnimatedModel({
     rotation,
     scale,
   });
-  const { actions, names, mixer } = useAnimations(animations, scene);
+  const model = useMemo(() => SkeletonUtils.clone(scene), [scene]);
+  const { actions, names, mixer } = useAnimations(animations, model);
 
   const [currentAnim, setCurrentAnim] = useState(defaultAnimation);
   const isReady = names.length > 0;
@@ -154,21 +156,21 @@ export function AnimatedModel({
   };
 
   useEffect(() => {
-    scene.position.set(...position);
-    scene.rotation.set(rotation[0], rotation[1], rotation[2]);
+    model.position.set(...position);
+    model.rotation.set(rotation[0], rotation[1], rotation[2]);
 
     const parsedScale =
       typeof scale === "number" ? [scale, scale, scale] : (scale ?? [1, 1, 1]);
-    scene.scale.set(
+    model.scale.set(
       parsedScale[0] ?? 1,
       parsedScale[1] ?? 1,
       parsedScale[2] ?? 1,
     );
-  }, [scene, position, rotation, scale]);
+  }, [model, position, rotation, scale]);
 
   return (
     <AnimatedModelContext.Provider value={contextValue}>
-      <primitive object={scene} />
+      <primitive object={model} />
       {children}
     </AnimatedModelContext.Provider>
   );
