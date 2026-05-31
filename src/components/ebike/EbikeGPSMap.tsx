@@ -89,6 +89,8 @@ export interface EbikeGPSMapProps {
    * Default: 1
    */
   zoom?: number;
+
+  renderOrder?: number;
 }
 
 /**
@@ -107,6 +109,7 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
   position = [0, 0, 0],
   canvasSize = 1024,
   zoom = 1,
+  renderOrder = 10_000,
 }) => {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [mapImage, setMapImage] = useState<
@@ -506,12 +509,13 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
   }, [draw]);
 
   return (
-    <mesh castShadow receiveShadow position={position}>
+    <mesh position={position} renderOrder={renderOrder}>
       <planeGeometry args={[width, height]} />
       <meshBasicMaterial
         toneMapped={false}
         transparent={true}
         opacity={1}
+        depthTest={false}
         depthWrite={false}
         side={THREE.DoubleSide}
       >

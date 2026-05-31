@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { EbikeGPSMap } from "@/components/ebike/EbikeGPSMap";
+import { EbikeSpeedometer } from "@/components/ebike/EbikeSpeedometer";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
@@ -37,6 +38,11 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   const setMissionStep = useGameStore((state) => state.setMissionStep);
   const camera = useThree((state) => state.camera);
   const updateEbikeSounds = useEbikeSounds();
+  const repairGameOwnsEbikeModel =
+    mainState === "ebike" &&
+    ebikeStep !== "locked" &&
+    ebikeStep !== "waiting" &&
+    ebikeStep !== "inspected";
 
   // Map active mainState to target repair zone coordinate
   const destPos = useMemo(() => {
@@ -169,13 +175,27 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     debugRestingPosition[1] + EBIKE_DROP_PLAYER_TRANSFORM.position[1],
     debugRestingPosition[2] + EBIKE_DROP_PLAYER_TRANSFORM.position[2],
   ];
+  const interactionLabel =
+    mainState === "ebike"
+      ? "Réparer l'e-bike"
+      : movementMode === "walk"
+        ? "Monter sur le bike"
+        : "Descendre du bike";
 
   const handleInteract = useCallback((): void => {
     if (window.ebikeBreakdownActive === true) return;
 
     if (movementMode === "walk") {
-      if (mainState === "ebike" && ebikeStep === "waiting") {
+      if (
+        mainState === "ebike" &&
+        (ebikeStep === "locked" || ebikeStep === "waiting")
+      ) {
         setMissionStep("ebike", "inspected");
+        return;
+      }
+
+      if (mainState === "ebike" && ebikeStep === "inspected") {
+        setMissionStep("ebike", "fragmented");
         return;
       }
 
@@ -258,51 +278,50 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
 
   return (
     <>
-      <group
-        ref={groupRef}
-        position={position}
-        rotation={[0, EBIKE_WORLD_ROTATION_Y, 0]}
-      >
-        <primitive object={model} />
-        <InteractableObject
-          kind="trigger"
-          label={
-            mainState === "ebike" && ebikeStep === "waiting"
-              ? "Inspecter l'e-bike"
-              : movementMode === "walk"
-                ? "Monter sur le bike"
-                : "Descendre du bike"
-          }
+      {!repairGameOwnsEbikeModel ? (
+        <group
+          ref={groupRef}
           position={position}
-          radius={15}
-          onPress={handleInteract}
+          rotation={[0, EBIKE_WORLD_ROTATION_Y, 0]}
         >
-          <mesh>
-            <boxGeometry args={[10, 13, 2]} />
-            <meshBasicMaterial colorWrite={false} depthWrite={false} />
-          </mesh>
-        </InteractableObject>
+          <primitive object={model} />
+          <InteractableObject
+            kind="trigger"
+            label={interactionLabel}
+            position={position}
+            radius={15}
+            onPress={handleInteract}
+          >
+            <mesh>
+              <boxGeometry args={[10, 13, 2]} />
+              <meshBasicMaterial colorWrite={false} depthWrite={false} />
+            </mesh>
+          </InteractableObject>
 
-        {/* Dynamic 3D GPS Dashboard Screen */}
-        <group position={[0, 7, 0]} rotation={[0, 90, 0]}>
-          <EbikeGPSMap
-            width={0.8}
-            height={0.8}
-            startPos={gpsStartPos}
-            destPos={destPos}
-            mapImageUrl="/assets/world/gps/map_background.png"
-            worldBounds={{
-              minX: -166,
-              maxX: 163,
-              minZ: -142,
-              maxZ: 138,
-            }}
-            zoom={4}
-          />
+          {/* Dynamic 3D GPS Dashboard Screen */}
+          <group position={[0, 7, 0]} rotation={[0, 90, 0]}>
+            <EbikeGPSMap
+              width={0.8}
+              height={0.8}
+              startPos={gpsStartPos}
+              destPos={destPos}
+              mapImageUrl="/assets/world/gps/map_background.png"
+              worldBounds={{
+                minX: -166,
+                maxX: 163,
+                minZ: -142,
+                maxZ: 138,
+              }}
+              zoom={4}
+            />
+          </group>
+          <group position={[0, 6.35, 0]} rotation={[0, 90, 0]}>
+            <EbikeSpeedometer />
+          </group>
         </group>
-      </group>
+      ) : null}
 
-      {showCameraPoints && (
+      {showCameraPoints && !repairGameOwnsEbikeModel && (
         <>
           <mesh position={camPointPos}>
             <sphereGeometry args={[0.3, 16, 16]} />
