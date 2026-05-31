@@ -285,35 +285,36 @@ export function GameSettingsMenu(): React.JSX.Element | null {
                 </button>
               ))}
             </div>
-          </section>
 
-          <section
-            className="game-settings-menu__section game-settings-menu__section--right"
-            aria-labelledby="hand-tracking-settings-heading"
-          >
-            <div className="game-settings-menu__section-title">
-              <Hand size={16} aria-hidden="true" />
-              <h3 id="hand-tracking-settings-heading">Détection des mains</h3>
-            </div>
-            <div
-              className="game-settings-menu__choice-group game-settings-menu__choice-group--hand-tracking"
-              aria-label="Mode de détection des mains"
-            >
-              {HAND_TRACKING_OPTIONS.map((option) => (
-                <button
-                  key={option.source}
-                  type="button"
-                  className={
-                    handTrackingSource === option.source ? "active" : undefined
-                  }
-                  onClick={() => handleHandTrackingSourceChange(option.source)}
-                  aria-pressed={handTrackingSource === option.source}
-                >
-                  {option.icon}
-                  <span>{option.label}</span>
-                  <small>{option.description}</small>
-                </button>
-              ))}
+            <div className="game-settings-menu__subsection">
+              <div className="game-settings-menu__section-title">
+                <Hand size={16} aria-hidden="true" />
+                <h3 id="hand-tracking-settings-heading">Détection des mains</h3>
+              </div>
+              <div
+                className="game-settings-menu__choice-group game-settings-menu__choice-group--hand-tracking"
+                aria-labelledby="hand-tracking-settings-heading"
+              >
+                {HAND_TRACKING_OPTIONS.map((option) => (
+                  <button
+                    key={option.source}
+                    type="button"
+                    className={
+                      handTrackingSource === option.source
+                        ? "active"
+                        : undefined
+                    }
+                    onClick={() =>
+                      handleHandTrackingSourceChange(option.source)
+                    }
+                    aria-pressed={handTrackingSource === option.source}
+                  >
+                    {option.icon}
+                    <span>{option.label}</span>
+                    <small>{option.description}</small>
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
         </div>

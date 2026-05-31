@@ -1219,12 +1219,10 @@ canvas {
   display: grid;
   place-items: center;
   padding: clamp(18px, 4vw, 42px);
-  background:
-    linear-gradient(180deg, rgba(4, 10, 18, 0.72), rgba(2, 6, 12, 0.9)),
-    rgba(0, 0, 0, 0.82);
+  background: rgba(2, 8, 14, 0.28);
   color: #ffffff;
   pointer-events: auto;
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(8px) saturate(1.05);
 }
 
 .game-settings-menu__panel {
@@ -1236,12 +1234,13 @@ canvas {
   border: 1px solid rgba(125, 211, 252, 0.38);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(8, 20, 34, 0.98), rgba(3, 8, 14, 0.99)),
-    rgba(4, 8, 12, 0.99);
+    linear-gradient(180deg, rgba(8, 20, 34, 0.84), rgba(3, 8, 14, 0.78)),
+    rgba(4, 8, 12, 0.74);
   box-shadow:
     0 28px 90px rgba(0, 0, 0, 0.58),
     inset 0 0 0 1px rgba(255, 255, 255, 0.05),
     0 0 34px rgba(56, 189, 248, 0.16);
+  backdrop-filter: blur(18px) saturate(1.12);
   scrollbar-width: thin;
   scrollbar-color: rgba(125, 211, 252, 0.55) transparent;
 }
@@ -1327,15 +1326,11 @@ canvas {
   padding: 14px;
   border: 1px solid rgba(125, 211, 252, 0.2);
   border-radius: 8px;
-  background: rgba(5, 14, 24, 0.78);
+  background: rgba(5, 14, 24, 0.58);
 }
 
 .game-settings-menu__section--wide {
   grid-column: 1 / -1;
-}
-
-.game-settings-menu__section--right {
-  grid-column: 2;
 }
 
 .game-settings-menu__section-title {
@@ -1343,6 +1338,13 @@ canvas {
   align-items: center;
   gap: 8px;
   color: #7dd3fc;
+}
+
+.game-settings-menu__subsection {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(125, 211, 252, 0.16);
 }
 
 .game-settings-menu__section h3 {
@@ -1422,7 +1424,7 @@ canvas {
   padding: 11px 12px;
   border: 1px solid rgba(125, 211, 252, 0.2);
   border-radius: 8px;
-  background: rgba(6, 18, 30, 0.84);
+  background: rgba(6, 18, 30, 0.7);
   color: #edfaff;
   cursor: pointer;
   font-size: 0.88rem;
@@ -1516,10 +1518,6 @@ canvas {
   .game-settings-menu__grid,
   .game-settings-menu__choice-group--presets {
     grid-template-columns: 1fr;
-  }
-
-  .game-settings-menu__section--right {
-    grid-column: auto;
   }
 }
 
