@@ -14,6 +14,7 @@ import { useRepairMissionAnchorStore } from "@/managers/stores/useRepairMissionA
 import type { RepairMissionTriggerConfig } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 import { getRepairMissionPosition } from "@/utils/gameplay/repairMissionPosition";
+import { EBIKE_WORLD_POSITION } from "@/data/ebike/ebikeConfig";
 
 interface StageAnchorProps {
   color: string;
@@ -81,7 +82,7 @@ export function GameStageContent(): React.JSX.Element {
   return (
     <>
       {mainState === "intro" ? <StageAnchor {...INTRO_STAGE_ANCHOR} /> : null}
-      <Ebike position={[0, 10, 0]} />
+      <Ebike position={EBIKE_WORLD_POSITION} />
       {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission }) => {
         const position = getRepairMissionPosition(mission, anchors);
         if (!position) return null;

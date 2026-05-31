@@ -20,6 +20,7 @@ type ModelEntry = [modelName: string, modelUrl: string];
 
 let cachedSceneData: SceneData | null = null;
 let loadingPromise: Promise<SceneData | null> | null = null;
+const modelEntryCache = new Map<string, ModelEntry | null>();
 
 export async function loadMapSceneData(): Promise<SceneData | null> {
   if (cachedSceneData) {
@@ -223,24 +224,34 @@ async function loadMapModelUrls(
 }
 
 async function loadModelEntry(modelName: string): Promise<ModelEntry | null> {
-  for (const fileName of [...MODEL_FILE_NAMES, `${modelName}.gltf`]) {
-    const modelUrl = `/models/${modelName}/${fileName}`;
-
-    try {
-      const response = await fetch(modelUrl, { method: "HEAD" });
-      const contentType = response.headers.get("content-type") ?? "";
-      if (response.ok && !contentType.includes(HTML_CONTENT_TYPE)) {
-        return [modelName, modelUrl];
-      }
-    } catch (error) {
-      logger.warn("MapSceneData", "Failed to probe map model URL", {
-        modelName,
-        modelUrl,
-        error: error instanceof Error ? error : String(error),
-      });
-      continue;
-    }
+  if (modelEntryCache.has(modelName)) {
+    return modelEntryCache.get(modelName) ?? null;
   }
 
-  return null;
+  const modelUrls = [...MODEL_FILE_NAMES, `${modelName}.gltf`].map(
+    (fileName) => `/models/${modelName}/${fileName}`,
+  );
+
+  const results = await Promise.all(
+    modelUrls.map(async (modelUrl) => {
+      try {
+        const response = await fetch(modelUrl, { method: "HEAD" });
+        const contentType = response.headers.get("content-type") ?? "";
+        return response.ok && !contentType.includes(HTML_CONTENT_TYPE);
+      } catch (error) {
+        logger.warn("MapSceneData", "Failed to probe map model URL", {
+          modelName,
+          modelUrl,
+          error: error instanceof Error ? error : String(error),
+        });
+        return false;
+      }
+    }),
+  );
+
+  const modelUrl = modelUrls[results.findIndex(Boolean)] ?? null;
+  const entry = modelUrl ? ([modelName, modelUrl] satisfies ModelEntry) : null;
+
+  modelEntryCache.set(modelName, entry);
+  return entry;
 }

@@ -112,7 +112,7 @@ export function RepairGame({
         <RepairMissionAssetPreloader config={config} />
       </Suspense>
       <Suspense fallback={null}>
-        {step === "waiting" ? (
+        {step === "waiting" && mission !== "ebike" ? (
           <RepairInspectionObject
             config={config}
             worldPosition={snappedPosition}

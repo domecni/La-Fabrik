@@ -6,12 +6,14 @@ import { InteractableObject } from "@/components/three/interaction/InteractableO
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
+import { useEbikeSounds } from "@/hooks/ebike/useEbikeSounds";
 import { animateCameraTransformTransition } from "@/world/GameCinematics";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { PLAYER_EYE_HEIGHT } from "@/data/player/playerConfig";
 import {
   EBIKE_CAMERA_TRANSFORM,
   EBIKE_DROP_PLAYER_TRANSFORM,
+  EBIKE_WORLD_ROTATION_Y,
 } from "@/data/ebike/ebikeConfig";
 import type { Vector3Tuple } from "@/types/three/three";
 import "@/types/ebike/ebikeWindow";
@@ -31,7 +33,10 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   const model = useClonedObject(scene);
   const movementMode = useGameStore((state) => state.player.movementMode);
   const mainState = useGameStore((state) => state.mainState);
+  const ebikeStep = useGameStore((state) => state.ebike.currentStep);
+  const setMissionStep = useGameStore((state) => state.setMissionStep);
   const camera = useThree((state) => state.camera);
+  const updateEbikeSounds = useEbikeSounds();
 
   // Map active mainState to target repair zone coordinate
   const destPos = useMemo(() => {
@@ -67,7 +72,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     position[1] - PLAYER_EYE_HEIGHT,
     position[2],
   ]);
-  const restingRotationRef = useRef<number>(0);
+  const restingRotationRef = useRef<number>(EBIKE_WORLD_ROTATION_Y);
   const forkRef = useRef<THREE.Object3D | null>(null);
 
   // State for debug visualization (synced from refs during useFrame)
@@ -102,6 +107,12 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   useFrame((_, delta) => {
     if (groupRef.current) {
       if (movementMode === "ebike") {
+        updateEbikeSounds({
+          mounted: true,
+          driving: window.ebikeDriveInputActive === true,
+          breakdown: window.ebikeBreakdownActive === true,
+        });
+
         restingPositionRef.current = [
           groupRef.current.position.x,
           groupRef.current.position.y,
@@ -133,6 +144,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           setDebugRestingPosition([...restingPositionRef.current]);
         }
       } else {
+        updateEbikeSounds({ mounted: false, driving: false, breakdown: false });
         groupRef.current.position.set(...restingPositionRef.current);
         groupRef.current.rotation.set(0, restingRotationRef.current, 0);
 
@@ -159,7 +171,14 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   ];
 
   const handleInteract = useCallback((): void => {
+    if (window.ebikeBreakdownActive === true) return;
+
     if (movementMode === "walk") {
+      if (mainState === "ebike" && ebikeStep === "waiting") {
+        setMissionStep("ebike", "inspected");
+        return;
+      }
+
       const cameraOffset = new THREE.Vector3(
         ...EBIKE_CAMERA_TRANSFORM.position,
       );
@@ -213,7 +232,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
         useGameStore.getState().setPlayerMovementMode("walk");
       });
     }
-  }, [movementMode, camera, position]);
+  }, [movementMode, mainState, ebikeStep, setMissionStep, camera, position]);
 
   // Store handleInteract in a ref for use in debug folder callback
   const handleInteractRef = useRef(handleInteract);
@@ -239,12 +258,20 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
 
   return (
     <>
-      <group ref={groupRef} position={position}>
+      <group
+        ref={groupRef}
+        position={position}
+        rotation={[0, EBIKE_WORLD_ROTATION_Y, 0]}
+      >
         <primitive object={model} />
         <InteractableObject
           kind="trigger"
           label={
-            movementMode === "walk" ? "Monter sur le bike" : "Descendre du bike"
+            mainState === "ebike" && ebikeStep === "waiting"
+              ? "Inspecter l'e-bike"
+              : movementMode === "walk"
+                ? "Monter sur le bike"
+                : "Descendre du bike"
           }
           position={position}
           radius={15}
@@ -263,7 +290,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
             height={0.8}
             startPos={gpsStartPos}
             destPos={destPos}
-            mapImageUrl="/assets/gps/map_background.png"
+            mapImageUrl="/assets/world/gps/map_background.png"
             worldBounds={{
               minX: -166,
               maxX: 163,

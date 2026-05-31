@@ -157,7 +157,7 @@ function CameraManager({
       const dataUrl = gl.domElement.toDataURL("image/png");
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "/assets/gps/map_background.png";
+      a.download = "map_background.png";
       a.click();
     };
     return () => {

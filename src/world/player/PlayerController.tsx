@@ -29,7 +29,12 @@ import { InteractionManager } from "@/managers/InteractionManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import type { Vector3Tuple } from "@/types/three/three";
-import { EBIKE_CAMERA_TRANSFORM } from "@/data/ebike/ebikeConfig";
+import {
+  EBIKE_ACCELERATION_DURATION_MS,
+  EBIKE_CAMERA_TRANSFORM,
+  EBIKE_DECELERATION_DURATION_MS,
+  EBIKE_MAX_SPEED,
+} from "@/data/ebike/ebikeConfig";
 
 /** Global window properties used for ebike communication */
 interface EbikeGlobalState {
@@ -39,6 +44,9 @@ interface EbikeGlobalState {
   ebikeVisualGroup?: React.RefObject<THREE.Group>;
   playerPos?: Vector3Tuple;
   ebikeAngle?: number;
+  ebikeBreakdownActive?: boolean;
+  ebikeDriveInputActive?: boolean;
+  ebikeSpeedFactor?: number;
 }
 
 declare global {
@@ -156,6 +164,7 @@ export function PlayerController({
   const movementModeRef = useRef(movementMode);
   const prevMovementModeRef = useRef(movementMode);
   const ebikeAngle = useRef(0);
+  const ebikeSpeedFactor = useRef(0);
   const capsule = useRef(createSpawnCapsule(spawnPosition));
 
   useEffect(() => {
@@ -175,6 +184,7 @@ export function PlayerController({
       velocity.current.set(0, 0, 0);
       onFloor.current = false;
       wantsJump.current = false;
+      ebikeSpeedFactor.current = 0;
 
       ebikeAngle.current = targetRot;
 
@@ -215,6 +225,7 @@ export function PlayerController({
       const shift = rightDir.multiplyScalar(3);
       capsule.current.translate(shift);
       camera.position.copy(capsule.current.end);
+      ebikeSpeedFactor.current = 0;
     }
     prevMovementModeRef.current = movementMode;
   }, [movementMode, camera]);
@@ -347,7 +358,10 @@ export function PlayerController({
       return;
     }
 
-    if (movementModeRef.current === "ebike") {
+    const isEbikeMounted = movementModeRef.current === "ebike";
+    const isEbikeBreakdown = window.ebikeBreakdownActive === true;
+
+    if (isEbikeMounted && !isEbikeBreakdown) {
       const turnSpeed = 1.8;
       if (keys.current.left) {
         ebikeAngle.current += turnSpeed * dt;
@@ -365,19 +379,41 @@ export function PlayerController({
     }
 
     _wishDir.set(0, 0, 0);
-    if (!movementLocked) {
+    if (!movementLocked && !isEbikeBreakdown) {
       if (keys.current.forward) _wishDir.add(_forward);
       if (keys.current.backward) _wishDir.sub(_forward);
-      if (movementModeRef.current !== "ebike") {
+      if (!isEbikeMounted) {
         if (keys.current.left) _wishDir.sub(_right);
         if (keys.current.right) _wishDir.add(_right);
       }
     }
     if (_wishDir.lengthSq() > 0) _wishDir.normalize();
 
+    if (isEbikeMounted) {
+      const isDriveInputActive = _wishDir.lengthSq() > 0 && !isEbikeBreakdown;
+      const durationMs = isDriveInputActive
+        ? EBIKE_ACCELERATION_DURATION_MS
+        : EBIKE_DECELERATION_DURATION_MS;
+      const factorDelta = durationMs > 0 ? (dt * 1000) / durationMs : 1;
+      ebikeSpeedFactor.current = THREE.MathUtils.clamp(
+        ebikeSpeedFactor.current +
+          (isDriveInputActive ? factorDelta : -factorDelta),
+        0,
+        1,
+      );
+      window.ebikeDriveInputActive = isDriveInputActive;
+      window.ebikeSpeedFactor = ebikeSpeedFactor.current;
+    } else {
+      window.ebikeDriveInputActive = false;
+      window.ebikeSpeedFactor = 0;
+    }
+
+    const movementSpeed = isEbikeMounted
+      ? EBIKE_MAX_SPEED * ebikeSpeedFactor.current
+      : currentSpeed;
     const accel = onFloor.current
-      ? currentSpeed
-      : currentSpeed * PLAYER_AIR_CONTROL_FACTOR;
+      ? movementSpeed
+      : movementSpeed * PLAYER_AIR_CONTROL_FACTOR;
     velocity.current.x +=
       _wishDir.x * accel * dt * PLAYER_ACCELERATION_MULTIPLIER;
     velocity.current.z +=
@@ -386,6 +422,18 @@ export function PlayerController({
     const damping = Math.exp(-PLAYER_XZ_DAMPING_FACTOR * dt);
     velocity.current.x *= damping;
     velocity.current.z *= damping;
+
+    if (
+      isEbikeMounted &&
+      isEbikeBreakdown &&
+      ebikeSpeedFactor.current <= 0.001 &&
+      Math.hypot(velocity.current.x, velocity.current.z) <= 0.05
+    ) {
+      velocity.current.setX(0);
+      velocity.current.setZ(0);
+      useGameStore.getState().setPlayerMovementMode("walk");
+      return;
+    }
 
     if (onFloor.current) {
       velocity.current.y = Math.max(0, velocity.current.y);

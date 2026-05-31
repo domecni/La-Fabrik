@@ -5,6 +5,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { HomePage } from "@/pages/page";
+import { SitePage } from "@/pages/site/page";
 import { EditorPage } from "@/pages/editor/page";
 import { GalleryPage } from "@/pages/gallery/page";
 import { WaypointEditorPage } from "@/pages/waypoint/page";
@@ -40,6 +41,12 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: HomePage,
+});
+
+const siteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/site",
+  component: SitePage,
 });
 
 const editorRoute = createRoute({
@@ -102,6 +109,7 @@ const docsChildRoutes = [
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  siteRoute,
   editorRoute,
   galleryRoute,
   waypointRoute,

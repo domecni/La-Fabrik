@@ -93,13 +93,26 @@ function parseDialogueDefinition(
     throw new Error(`Dialogue ${data.id} has an invalid audio path`);
   }
 
+  // Support both subtitleCueIndex (legacy) and subtitleCueIndices (new)
   const subtitleCueIndex = data.subtitleCueIndex;
-  if (
-    typeof subtitleCueIndex !== "number" ||
-    !Number.isInteger(subtitleCueIndex) ||
-    subtitleCueIndex < 1
-  ) {
-    throw new Error(`Dialogue ${data.id} has an invalid subtitle cue index`);
+  const subtitleCueIndices = data.subtitleCueIndices;
+
+  const hasLegacyIndex =
+    typeof subtitleCueIndex === "number" &&
+    Number.isInteger(subtitleCueIndex) &&
+    subtitleCueIndex >= 1;
+
+  const hasNewIndices =
+    Array.isArray(subtitleCueIndices) &&
+    subtitleCueIndices.length > 0 &&
+    subtitleCueIndices.every(
+      (idx) => typeof idx === "number" && Number.isInteger(idx) && idx >= 1,
+    );
+
+  if (!hasLegacyIndex && !hasNewIndices) {
+    throw new Error(
+      `Dialogue ${data.id} must have subtitleCueIndex or subtitleCueIndices`,
+    );
   }
 
   const timecode = data.timecode;
@@ -111,8 +124,13 @@ function parseDialogueDefinition(
     id: data.id,
     voice: data.voice,
     audio: data.audio,
-    subtitleCueIndex,
   };
+
+  if (hasNewIndices) {
+    dialogue.subtitleCueIndices = subtitleCueIndices as number[];
+  } else if (hasLegacyIndex) {
+    dialogue.subtitleCueIndex = subtitleCueIndex;
+  }
 
   if (timecode !== undefined) dialogue.timecode = timecode;
 

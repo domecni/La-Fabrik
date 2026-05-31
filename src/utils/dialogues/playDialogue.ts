@@ -3,7 +3,8 @@ import { useSettingsStore } from "@/managers/stores/useSettingsStore";
 import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 import type { DialogueManifest } from "@/types/dialogues/dialogues";
 import { logger } from "@/utils/core/Logger";
-import { loadDialogueSubtitleCue } from "@/utils/dialogues/loadDialogueManifest";
+import { loadDialogueSubtitleCues } from "@/utils/dialogues/loadDialogueManifest";
+import type { SubtitleCue } from "@/utils/subtitles/parseSrt";
 
 interface QueuedDialogueRequest {
   manifest: DialogueManifest;
@@ -14,6 +15,8 @@ interface QueuedDialogueRequest {
 const DIALOGUE_PLAY_START_TIMEOUT_MS = 800;
 const dialogueQueue: QueuedDialogueRequest[] = [];
 let isDialogueQueuePlaying = false;
+
+let currentDialogueAudio: HTMLAudioElement | null = null;
 
 export function queueDialogueById(
   manifest: DialogueManifest,
@@ -31,15 +34,26 @@ export function clearQueuedDialogues(): void {
   }
 }
 
+export function stopCurrentDialogue(): void {
+  if (currentDialogueAudio && !currentDialogueAudio.paused) {
+    currentDialogueAudio.pause();
+    currentDialogueAudio.currentTime = 0;
+  }
+  currentDialogueAudio = null;
+  useSubtitleStore.getState().clearActiveSubtitle();
+}
+
 export async function playDialogueById(
   manifest: DialogueManifest,
   dialogueId: string,
 ): Promise<HTMLAudioElement | null> {
+  stopCurrentDialogue();
+
   const dialogue = manifest.dialogues.find((item) => item.id === dialogueId);
   if (!dialogue) return null;
 
   const subtitleLanguage = useSettingsStore.getState().subtitleLanguage;
-  const subtitle = await loadDialogueSubtitleCue(
+  const subtitleData = await loadDialogueSubtitleCues(
     manifest,
     dialogue,
     subtitleLanguage,
@@ -48,7 +62,11 @@ export async function playDialogueById(
     category: "dialogue",
   });
 
-  if (!subtitle) return audio;
+  currentDialogueAudio = audio;
+
+  if (!subtitleData || subtitleData.cues.length === 0) return audio;
+
+  const { voice, cues } = subtitleData;
 
   const clearSubtitle = (): void => {
     useSubtitleStore.getState().clearActiveSubtitle();
@@ -60,18 +78,28 @@ export async function playDialogueById(
     audio.removeEventListener("ended", cleanup);
     audio.removeEventListener("pause", cleanup);
     clearSubtitle();
+    if (currentDialogueAudio === audio) {
+      currentDialogueAudio = null;
+    }
+  };
+
+  const findActiveCue = (currentTime: number): SubtitleCue | null => {
+    for (const cue of cues) {
+      if (currentTime >= cue.startTime && currentTime <= cue.endTime) {
+        return cue;
+      }
+    }
+    return null;
   };
 
   const syncSubtitle = (): void => {
     const currentTime = audio.currentTime;
-    const shouldShowSubtitle =
-      currentTime >= subtitle.cue.startTime &&
-      currentTime <= subtitle.cue.endTime;
+    const activeCue = findActiveCue(currentTime);
 
-    if (shouldShowSubtitle) {
+    if (activeCue) {
       useSubtitleStore.getState().setActiveSubtitle({
-        speaker: subtitle.voice.speaker,
-        text: subtitle.cue.text,
+        speaker: voice.speaker,
+        text: activeCue.text,
       });
       return;
     }

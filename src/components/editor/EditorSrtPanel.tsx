@@ -7,6 +7,10 @@ import type {
   DialogueSpeaker,
   DialogueVoiceId,
 } from "@/types/dialogues/dialogues";
+import {
+  getDialogueCueIndices,
+  getDialogueFirstCueIndex,
+} from "@/types/dialogues/dialogues";
 import { logger } from "@/utils/core/Logger";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import {
@@ -181,7 +185,7 @@ function getExpectedCueIndexes(
   voice: DialogueVoiceId,
 ): number[] {
   return getExpectedDialogues(manifest, voice)
-    .map((dialogue) => dialogue.subtitleCueIndex)
+    .flatMap((dialogue) => getDialogueCueIndices(dialogue))
     .filter(
       (cueIndex, index, cueIndexes) => cueIndexes.indexOf(cueIndex) === index,
     )
@@ -196,7 +200,11 @@ function getExpectedDialogues(
 
   return [...manifest.dialogues]
     .filter((dialogue) => dialogue.voice === voice)
-    .sort((a, b) => a.subtitleCueIndex - b.subtitleCueIndex);
+    .sort((a, b) => {
+      const aIndex = getDialogueFirstCueIndex(a) ?? 0;
+      const bIndex = getDialogueFirstCueIndex(b) ?? 0;
+      return aIndex - bIndex;
+    });
 }
 
 function findCueBlockRange(
@@ -577,7 +585,7 @@ export function EditorSrtPanel(): React.JSX.Element {
             )}
             {expectedDialogues.map((dialogue) => (
               <option key={dialogue.id} value={dialogue.id}>
-                Cue {dialogue.subtitleCueIndex} - {dialogue.id}
+                Cue {getDialogueFirstCueIndex(dialogue) ?? "?"} - {dialogue.id}
               </option>
             ))}
           </select>
@@ -585,7 +593,7 @@ export function EditorSrtPanel(): React.JSX.Element {
 
         {selectedDialogue && (
           <div className="editor-srt-audio-card">
-            <span>Cue {selectedDialogue.subtitleCueIndex}</span>
+            <span>Cue {getDialogueFirstCueIndex(selectedDialogue) ?? "?"}</span>
             <strong>{selectedDialogue.id}</strong>
             <audio
               key={selectedDialogue.audio}
@@ -609,39 +617,52 @@ export function EditorSrtPanel(): React.JSX.Element {
             <div className="editor-srt-time-actions">
               <button
                 type="button"
-                onClick={() =>
-                  handleSetCueTime(selectedDialogue.subtitleCueIndex, "start")
+                disabled={
+                  getDialogueFirstCueIndex(selectedDialogue) === undefined
                 }
+                onClick={() => {
+                  const cueIndex = getDialogueFirstCueIndex(selectedDialogue);
+                  if (cueIndex !== undefined)
+                    handleSetCueTime(cueIndex, "start");
+                }}
               >
                 Set start
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleSetCueTime(selectedDialogue.subtitleCueIndex, "end")
+                disabled={
+                  getDialogueFirstCueIndex(selectedDialogue) === undefined
                 }
+                onClick={() => {
+                  const cueIndex = getDialogueFirstCueIndex(selectedDialogue);
+                  if (cueIndex !== undefined) handleSetCueTime(cueIndex, "end");
+                }}
               >
                 Set end
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleNudgeCue(
-                    selectedDialogue.subtitleCueIndex,
-                    -CUE_NUDGE_SECONDS,
-                  )
+                disabled={
+                  getDialogueFirstCueIndex(selectedDialogue) === undefined
                 }
+                onClick={() => {
+                  const cueIndex = getDialogueFirstCueIndex(selectedDialogue);
+                  if (cueIndex !== undefined)
+                    handleNudgeCue(cueIndex, -CUE_NUDGE_SECONDS);
+                }}
               >
                 -100ms
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  handleNudgeCue(
-                    selectedDialogue.subtitleCueIndex,
-                    CUE_NUDGE_SECONDS,
-                  )
+                disabled={
+                  getDialogueFirstCueIndex(selectedDialogue) === undefined
                 }
+                onClick={() => {
+                  const cueIndex = getDialogueFirstCueIndex(selectedDialogue);
+                  if (cueIndex !== undefined)
+                    handleNudgeCue(cueIndex, CUE_NUDGE_SECONDS);
+                }}
               >
                 +100ms
               </button>
@@ -649,9 +670,15 @@ export function EditorSrtPanel(): React.JSX.Element {
             <button
               className="editor-srt-jump-button"
               type="button"
-              onClick={() => handleJumpToCue(selectedDialogue.subtitleCueIndex)}
+              disabled={
+                getDialogueFirstCueIndex(selectedDialogue) === undefined
+              }
+              onClick={() => {
+                const cueIndex = getDialogueFirstCueIndex(selectedDialogue);
+                if (cueIndex !== undefined) handleJumpToCue(cueIndex);
+              }}
             >
-              Aller a la cue {selectedDialogue.subtitleCueIndex}
+              Aller a la cue {getDialogueFirstCueIndex(selectedDialogue) ?? "?"}
             </button>
           </div>
         )}

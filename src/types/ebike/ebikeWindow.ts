@@ -7,5 +7,8 @@ declare global {
     ebikeParkedPosition: Vector3Tuple | null;
     ebikeParkedRotation: number | null;
     ebikeSteerFactor: number | undefined;
+    ebikeBreakdownActive: boolean | undefined;
+    ebikeDriveInputActive: boolean | undefined;
+    ebikeSpeedFactor: number | undefined;
   }
 }

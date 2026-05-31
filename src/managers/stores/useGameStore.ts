@@ -121,6 +121,7 @@ function completeIntroState(state: GameState): GameStateUpdate {
     mainState: "ebike",
     intro: {
       ...state.intro,
+      currentStep: "completed",
       hasCompleted: true,
       isEbikeUnlocked: true,
     },
@@ -255,7 +256,7 @@ function createInitialGameState(): GameState {
       currentSpeed: PLAYER_WALK_SPEED,
     },
     intro: {
-      currentStep: "intro",
+      currentStep: "loading-map",
       dialogueAudio: null,
       hasCompleted: false,
       isEbikeUnlocked: false,

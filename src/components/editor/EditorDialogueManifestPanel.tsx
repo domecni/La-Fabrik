@@ -6,6 +6,10 @@ import type {
   DialogueSpeaker,
   DialogueVoiceId,
 } from "@/types/dialogues/dialogues";
+import {
+  getDialogueCueIndices,
+  getDialogueFirstCueIndex,
+} from "@/types/dialogues/dialogues";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import { playDialogueById } from "@/utils/dialogues/playDialogue";
 import { parseSrt } from "@/utils/subtitles/parseSrt";
@@ -34,7 +38,7 @@ function getNextCueIndex(
 ): number {
   const cueIndexes = manifest.dialogues
     .filter((dialogue) => dialogue.voice === voice)
-    .map((dialogue) => dialogue.subtitleCueIndex);
+    .flatMap((dialogue) => getDialogueCueIndices(dialogue));
 
   return Math.max(0, ...cueIndexes) + 1;
 }
@@ -93,12 +97,15 @@ async function createFrenchSrtCue(
   manifest: DialogueManifest,
   dialogue: DialogueDefinition,
 ): Promise<void> {
+  const firstCueIndex = getDialogueFirstCueIndex(dialogue);
+  if (firstCueIndex === undefined) return;
+
   const srtPath = getFrenchSrtPath(dialogue.voice);
   const response = await fetch(srtPath);
   const content = response.ok ? await response.text() : "";
   const nextContent = appendSrtCueIfMissing(
     content,
-    dialogue.subtitleCueIndex,
+    firstCueIndex,
     getVoiceSpeaker(manifest, dialogue.voice),
   );
 
@@ -122,7 +129,8 @@ function getManifestErrors(manifest: DialogueManifest | null): string[] {
       errors.push(`${label}: audio doit commencer par /sounds/dialogue/.`);
     }
 
-    if (!Number.isInteger(dialogue.subtitleCueIndex)) {
+    const cueIndices = getDialogueCueIndices(dialogue);
+    if (cueIndices.length === 0) {
       errors.push(`${label}: cue SRT invalide.`);
     }
 
@@ -160,8 +168,17 @@ function getPatchedDialogue(
     id: patch.id ?? dialogue.id,
     voice: patch.voice ?? dialogue.voice,
     audio: patch.audio ?? dialogue.audio,
-    subtitleCueIndex: patch.subtitleCueIndex ?? dialogue.subtitleCueIndex,
   };
+
+  if (patch.subtitleCueIndex !== undefined) {
+    nextDialogue.subtitleCueIndex = patch.subtitleCueIndex;
+  } else if (dialogue.subtitleCueIndex !== undefined) {
+    nextDialogue.subtitleCueIndex = dialogue.subtitleCueIndex;
+  }
+
+  if (dialogue.subtitleCueIndices !== undefined) {
+    nextDialogue.subtitleCueIndices = dialogue.subtitleCueIndices;
+  }
 
   if ("timecode" in patch) {
     if (patch.timecode !== undefined) nextDialogue.timecode = patch.timecode;
@@ -252,8 +269,9 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
 
     try {
       await createFrenchSrtCue(nextManifest, dialogue);
+      const cueIndex = getDialogueFirstCueIndex(dialogue) ?? "?";
       setStatus(
-        `Nouveau dialogue ajoute avec cue FR ${dialogue.subtitleCueIndex}. Sauvegarde le manifeste pour le garder.`,
+        `Nouveau dialogue ajoute avec cue FR ${cueIndex}. Sauvegarde le manifeste pour le garder.`,
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -333,12 +351,13 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
   async function handleCreateFrenchSrtCue(): Promise<void> {
     if (!manifest || !selectedDialogue) return;
 
+    const cueIndex = getDialogueFirstCueIndex(selectedDialogue) ?? "?";
     setIsCreatingSrtCue(true);
-    setStatus(`Creation de la cue FR ${selectedDialogue.subtitleCueIndex}...`);
+    setStatus(`Creation de la cue FR ${cueIndex}...`);
 
     try {
       await createFrenchSrtCue(manifest, selectedDialogue);
-      setStatus(`Cue FR ${selectedDialogue.subtitleCueIndex} prete.`);
+      setStatus(`Cue FR ${cueIndex} prete.`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
       setStatus(message);
@@ -478,7 +497,7 @@ export function EditorDialogueManifestPanel(): React.JSX.Element {
               type="number"
               min="1"
               step="1"
-              value={selectedDialogue.subtitleCueIndex}
+              value={getDialogueFirstCueIndex(selectedDialogue) ?? ""}
               onChange={(event) =>
                 updateSelectedDialogue({
                   subtitleCueIndex: Math.max(1, Number(event.target.value)),

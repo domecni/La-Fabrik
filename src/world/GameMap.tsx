@@ -175,7 +175,7 @@ export function GameMap({
           sceneData.mapNodes.length - visibleMapNodes.length;
 
         if (skippedMapNodeCount > 0) {
-          logger.warn("GameMap", "Lite map skipped heavy map nodes", {
+          logger.debug("GameMap", "Lite map skipped heavy map nodes", {
             skippedMapNodeCount,
           });
         }
