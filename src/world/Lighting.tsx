@@ -1,12 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
-  Mesh,
   PCFShadowMap,
   type AmbientLight,
   type DirectionalLight,
   type Object3D,
-  type Scene,
   type WebGLRenderer,
 } from "three";
 import {
@@ -29,6 +27,7 @@ import {
 } from "@/data/world/lightingConfig";
 import { LA_FABRIK_INTERIOR_LIGHT_POSITION } from "@/data/world/laFabrikConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
+import { useShadowMapWarmup } from "@/hooks/three/useShadowMapWarmup";
 import { LIGHTING_STATE } from "@/world/lightingState";
 
 function configureRendererShadows(gl: WebGLRenderer): void {
@@ -53,35 +52,17 @@ function configureSunShadow(sun: DirectionalLight, sunTarget: Object3D): void {
   sun.shadow.camera.updateProjectionMatrix();
 }
 
-function forceShadowPass(
-  gl: WebGLRenderer,
-  scene: Scene,
+function placeSunRelativeToCamera(
   sun: DirectionalLight,
+  sunTarget: Object3D,
+  cameraPosition: { x: number; z: number },
 ): void {
-  scene.updateMatrixWorld(true);
-  sun.updateMatrixWorld(true);
-  sun.shadow.camera.updateProjectionMatrix();
-  sun.shadow.needsUpdate = true;
-  gl.shadowMap.needsUpdate = true;
-}
-
-// [diag] temporary helper: count shadow-casting/receiving meshes in the scene
-function snapshotShadowMeshes(scene: Scene): {
-  meshCount: number;
-  castShadowCount: number;
-  receiveShadowCount: number;
-} {
-  let meshCount = 0;
-  let castShadowCount = 0;
-  let receiveShadowCount = 0;
-  scene.traverse((obj) => {
-    if (obj instanceof Mesh) {
-      meshCount += 1;
-      if (obj.castShadow) castShadowCount += 1;
-      if (obj.receiveShadow) receiveShadowCount += 1;
-    }
-  });
-  return { meshCount, castShadowCount, receiveShadowCount };
+  sunTarget.position.set(cameraPosition.x, 0, cameraPosition.z);
+  sun.position.set(
+    cameraPosition.x + LIGHTING_STATE.sunX,
+    LIGHTING_STATE.sunY,
+    cameraPosition.z + LIGHTING_STATE.sunZ,
+  );
 }
 
 export function Lighting(): React.JSX.Element {
@@ -92,68 +73,20 @@ export function Lighting(): React.JSX.Element {
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
   const sunTarget = useRef<Object3D>(null);
-  const lastDiagAtRef = useRef(0);
 
   useEffect(() => {
     if (!sun.current || !sunTarget.current) return;
 
-    configureSunShadow(sun.current, sunTarget.current);
     configureRendererShadows(gl);
+    configureSunShadow(sun.current, sunTarget.current);
+    // Prime the sun + target onto the camera before the first shadow pass so
+    // the initial shadow frustum already covers the visible scene; without
+    // this, the first frame is rendered with the default (origin-centered)
+    // frustum and shadows can appear absent until the player moves.
+    placeSunRelativeToCamera(sun.current, sunTarget.current, camera.position);
+  }, [camera, gl]);
 
-    // Multi-frame shadow warmup: forces the shadow pass over 3 consecutive
-    // frames so newly mounted meshes (loaded asynchronously by Suspense) get
-    // their world matrices and shadow map properly allocated. Without this,
-    // shadows can fail to render after a Physics Suspense remount.
-    let raf1 = 0;
-    let raf2 = 0;
-    forceShadowPass(gl, scene, sun.current);
-    invalidate();
-    raf1 = window.requestAnimationFrame(() => {
-      if (!sun.current) return;
-      forceShadowPass(gl, scene, sun.current);
-      invalidate();
-      raf2 = window.requestAnimationFrame(() => {
-        if (!sun.current) return;
-        forceShadowPass(gl, scene, sun.current);
-        invalidate();
-      });
-    });
-
-    // [diag] one-shot scene snapshot to count shadow casters/receivers
-    const counts = snapshotShadowMeshes(scene);
-    console.log("[shadow:mount]", {
-      shadowMapEnabled: gl.shadowMap.enabled,
-      shadowMapType: gl.shadowMap.type,
-      shadowAutoUpdate: gl.shadowMap.autoUpdate,
-      sunCastShadow: sun.current.castShadow,
-      hasShadowMap: !!sun.current.shadow.map,
-      ...counts,
-    });
-
-    // [diag] temporary — track WebGL context loss/restore to correlate with shadow drops
-    const canvas = gl.domElement;
-    const handleContextLost = (event: Event) => {
-      event.preventDefault();
-      console.log("[ctx:lost]", { timestamp: performance.now().toFixed(0) });
-    };
-    const handleContextRestored = () => {
-      console.log("[ctx:restored]", {
-        timestamp: performance.now().toFixed(0),
-      });
-      if (sun.current) {
-        forceShadowPass(gl, scene, sun.current);
-        invalidate();
-      }
-    };
-    canvas.addEventListener("webglcontextlost", handleContextLost);
-    canvas.addEventListener("webglcontextrestored", handleContextRestored);
-    return () => {
-      window.cancelAnimationFrame(raf1);
-      window.cancelAnimationFrame(raf2);
-      canvas.removeEventListener("webglcontextlost", handleContextLost);
-      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
-    };
-  }, [gl, invalidate, scene]);
+  useShadowMapWarmup({ light: sun, scene, gl, invalidate });
 
   useDebugFolder("Lighting", (folder) => {
     folder.addColor(LIGHTING_STATE, "ambientColor").name("Ambient Color");
@@ -187,43 +120,20 @@ export function Lighting(): React.JSX.Element {
       .name("Sun Z");
   });
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (ambient.current) {
       ambient.current.color.set(LIGHTING_STATE.ambientColor);
       ambient.current.intensity = LIGHTING_STATE.ambientIntensity;
     }
 
-    if (sun.current && sunTarget.current) {
-      sunTarget.current.position.set(camera.position.x, 0, camera.position.z);
-      sunTarget.current.updateMatrixWorld();
-      sun.current.position.set(
-        camera.position.x + LIGHTING_STATE.sunX,
-        LIGHTING_STATE.sunY,
-        camera.position.z + LIGHTING_STATE.sunZ,
-      );
-      sun.current.color.set(LIGHTING_STATE.sunColor);
-      sun.current.intensity = LIGHTING_STATE.sunIntensity;
-      sun.current.updateMatrixWorld();
-      sun.current.shadow.needsUpdate = true;
-    }
+    if (!sun.current || !sunTarget.current) return;
 
-    // [diag] periodic shadow pipeline check (every 2s)
-    const now = clock.getElapsedTime();
-    if (now - lastDiagAtRef.current > 2 && sun.current) {
-      lastDiagAtRef.current = now;
-      console.log("[shadow:tick]", {
-        shadowMapEnabled: gl.shadowMap.enabled,
-        shadowAutoUpdate: gl.shadowMap.autoUpdate,
-        sunCastShadow: sun.current.castShadow,
-        sunIntensity: sun.current.intensity,
-        hasShadowMapTexture: !!sun.current.shadow.map?.texture,
-        sunPos: sun.current.position.toArray().map((n) => Number(n.toFixed(2))),
-        targetPos: sunTarget.current?.position
-          .toArray()
-          .map((n) => Number(n.toFixed(2))),
-        renderCalls: gl.info.render.calls,
-      });
-    }
+    placeSunRelativeToCamera(sun.current, sunTarget.current, camera.position);
+    sunTarget.current.updateMatrixWorld();
+    sun.current.color.set(LIGHTING_STATE.sunColor);
+    sun.current.intensity = LIGHTING_STATE.sunIntensity;
+    sun.current.updateMatrixWorld();
+    sun.current.shadow.needsUpdate = true;
   });
 
   return (

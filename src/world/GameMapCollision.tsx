@@ -272,37 +272,30 @@ function CollisionModelInstance({
   });
   const sceneInstance = useClonedObject(scene);
   useEffect(() => {
-    // Strip the door slab from the la fabrik collision octree so the player
-    // can walk through the doorway. The visual model is rendered separately
-    // by MergedStaticMapModel and is unaffected.
+    // Strip the door slab AND its Solidify-modifier frame from the la fabrik
+    // collision octree so the player can walk through the doorway. The visual
+    // model is rendered separately by `MergedStaticMapModel` and is unaffected.
+    //
+    // - `porte` (+ Blender suffixes `porte.001` / `porte_001`): the door slab
+    //   itself. We exclude unrelated names like `porte stock` (a shelf of
+    //   stocked doors) by requiring an exact match or a numeric suffix only.
+    // - Children of a `Thicken` parent: the doorway frame produced by
+    //   Blender's Solidify modifier. Its world AABBs sit right inside the
+    //   doorway and otherwise prevent the player from entering / exiting.
     if (node.name !== "lafabrik") return;
 
-    // Strip the door slab (and any Blender-suffixed variant like `porte.001`,
-    // `porte_001`) from the la fabrik collision octree so the player can walk
-    // through the doorway. The visual model is rendered separately by
-    // MergedStaticMapModel and is unaffected. We exclude unrelated names like
-    // `porte stock` (a shelf of stocked doors) by requiring an exact match or
-    // a numeric suffix only.
     const isDoorSlab = (name: string): boolean =>
       name === "porte" || /^porte[._]\d+$/i.test(name);
+    const isDoorFrameThickenChild = (child: THREE.Object3D): boolean =>
+      child.parent?.name === "Thicken";
 
-    // [diag] temporary — collect all door-like candidate names to debug stripping
-    const candidates: string[] = [];
-    const removed: THREE.Object3D[] = [];
+    const doorMeshes: THREE.Object3D[] = [];
     sceneInstance.traverse((child) => {
-      if (/porte/i.test(child.name)) {
-        candidates.push(child.name);
-      }
-      if (isDoorSlab(child.name)) {
-        removed.push(child);
+      if (isDoorSlab(child.name) || isDoorFrameThickenChild(child)) {
+        doorMeshes.push(child);
       }
     });
-    console.log("[lafabrik:porte-strip]", {
-      candidates,
-      strippedCount: removed.length,
-      strippedNames: removed.map((c) => c.name),
-    });
-    for (const child of removed) {
+    for (const child of doorMeshes) {
       child.removeFromParent();
     }
   }, [node.name, sceneInstance]);

@@ -44,30 +44,39 @@ through opaque geometry.
 ## Shadow rendering intermittence
 
 Shadows occasionally failed to render on initial load and could disappear
-mid-session even though the `Lighting` configuration ran to completion.
+mid-session even though the `Lighting` configuration ran to completion. The
+fix has two layers:
 
-Root cause: the sun follows the camera (its world matrix is dirty every frame
-via `updateMatrixWorld()` inside `Lighting.useFrame`). With `shadow.autoUpdate`
-alone, three.js can skip the shadow map re-render on a frame where the matrix
-update has happened but the renderer's internal dirty tracking does not pick
-it up, leaving the shadow map stale or unrendered.
+### Per-frame refresh (steady state)
 
-Fix in `src/world/Lighting.tsx`: explicit `sun.shadow.needsUpdate = true` in
-two places, restoring the belt-and-suspenders pattern from `develop`:
+The sun follows the camera, so its world matrix is dirty every frame. With
+`shadow.autoUpdate` alone, three.js can skip the shadow map re-render on a
+frame where the matrix update has happened but the renderer's internal dirty
+tracking does not pick it up. To prevent that, `Lighting.useFrame` sets
+`sun.shadow.needsUpdate = true` after the per-frame matrix updates. Shadow
+config is centralized in `src/data/world/lightingConfig.ts` (`bias=0`,
+`normalBias=0`, `cameraSize=95`).
 
-- After `configureSunShadow(...)` in the mount `useEffect`.
-- At the end of the `useFrame` block, right after `sun.updateMatrixWorld()`.
+### Mount-time shadow map reallocation (`useShadowMapWarmup`)
 
-Mitigations also in place:
+The merged static map and other GLTFs mount imperatively after `Lighting`,
+so the shadow render target ends up linked to a renderer state that pre-dates
+the final scene. Materials compiled at that point bake a "no shadow map"
+permutation into their shader program and silently fail to render shadows
+until a WebGL context-restore cycle (the kind triggered by Chrome DevTools
+in `?debug` runs) reallocates everything.
 
-- Shadow config centralized in `src/data/world/lightingConfig.ts`
-  (`bias=0`, `normalBias=0`, `cameraSize=95`).
-- Late-suspension Suspense boundaries in `World.tsx` to prevent global scene
-  remounts that would re-run shadow setup mid-load.
-- `gl.shadowMap.needsUpdate = true` on `onCreated` and on
-  `webglcontextrestored` in `src/pages/page.tsx`.
+`src/hooks/three/useShadowMapWarmup.ts` replays that cycle programmatically
+without the cost of a full context loss. It runs a `useFrame` watchdog that
+samples the scene mesh count every 6 frames; once the count has been stable
+for ~1 s (or after a 5 s safety cap), it:
 
-If the issue reproduces, capture `[diag]`-style logs from `useOctreeGraphNode`,
-`Lighting`, and `GameMapCollision` to confirm there is no extra configuration
-pass (which would indicate a remaining suspending hook outside the existing
-Suspense boundaries).
+1. Disposes the directional light shadow map and nulls it. three.js
+   reallocates the render target on the next render at the configured
+   `mapSize`.
+2. Marks every material's `needsUpdate = true`, forcing a shader recompile
+   that rebinds every program to the freshly created shadow sampler.
+3. Forces a single shadow pass and invalidates the renderer.
+
+The watchdog runs once per mount and adds a single traversal every 6 frames
+during the warmup window, after which it self-terminates.
