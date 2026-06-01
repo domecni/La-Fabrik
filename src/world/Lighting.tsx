@@ -53,6 +53,18 @@ function configureSunShadow(sun: DirectionalLight, sunTarget: Object3D): void {
   sun.shadow.camera.updateProjectionMatrix();
 }
 
+function forceShadowPass(
+  gl: WebGLRenderer,
+  scene: Scene,
+  sun: DirectionalLight,
+): void {
+  scene.updateMatrixWorld(true);
+  sun.updateMatrixWorld(true);
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.shadow.needsUpdate = true;
+  gl.shadowMap.needsUpdate = true;
+}
+
 // [diag] temporary helper: count shadow-casting/receiving meshes in the scene
 function snapshotShadowMeshes(scene: Scene): {
   meshCount: number;
@@ -76,6 +88,7 @@ export function Lighting(): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
+  const invalidate = useThree((state) => state.invalidate);
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
   const sunTarget = useRef<Object3D>(null);
@@ -86,7 +99,25 @@ export function Lighting(): React.JSX.Element {
 
     configureSunShadow(sun.current, sunTarget.current);
     configureRendererShadows(gl);
-    sun.current.shadow.needsUpdate = true;
+
+    // Multi-frame shadow warmup: forces the shadow pass over 3 consecutive
+    // frames so newly mounted meshes (loaded asynchronously by Suspense) get
+    // their world matrices and shadow map properly allocated. Without this,
+    // shadows can fail to render after a Physics Suspense remount.
+    let raf1 = 0;
+    let raf2 = 0;
+    forceShadowPass(gl, scene, sun.current);
+    invalidate();
+    raf1 = window.requestAnimationFrame(() => {
+      if (!sun.current) return;
+      forceShadowPass(gl, scene, sun.current);
+      invalidate();
+      raf2 = window.requestAnimationFrame(() => {
+        if (!sun.current) return;
+        forceShadowPass(gl, scene, sun.current);
+        invalidate();
+      });
+    });
 
     // [diag] one-shot scene snapshot to count shadow casters/receivers
     const counts = snapshotShadowMeshes(scene);
@@ -110,16 +141,19 @@ export function Lighting(): React.JSX.Element {
         timestamp: performance.now().toFixed(0),
       });
       if (sun.current) {
-        sun.current.shadow.needsUpdate = true;
+        forceShadowPass(gl, scene, sun.current);
+        invalidate();
       }
     };
     canvas.addEventListener("webglcontextlost", handleContextLost);
     canvas.addEventListener("webglcontextrestored", handleContextRestored);
     return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
       canvas.removeEventListener("webglcontextlost", handleContextLost);
       canvas.removeEventListener("webglcontextrestored", handleContextRestored);
     };
-  }, [gl, scene]);
+  }, [gl, invalidate, scene]);
 
   useDebugFolder("Lighting", (folder) => {
     folder.addColor(LIGHTING_STATE, "ambientColor").name("Ambient Color");

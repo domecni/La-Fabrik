@@ -11,6 +11,7 @@ export function useDebugVisualsDebug(): void {
       octreeMaxDepth: state.octreeMaxDepth,
       octreeLeavesOnly: state.octreeLeavesOnly,
       octreeOpacity: state.octreeOpacity,
+      octreeFabrikOnly: state.octreeFabrikOnly,
     };
 
     folder
@@ -53,6 +54,13 @@ export function useDebugVisualsDebug(): void {
       .name("Octree Opacity")
       .onChange((value: number) => {
         useDebugVisualsStore.getState().setOctreeOpacity(value);
+      });
+
+    folder
+      .add(controls, "octreeFabrikOnly")
+      .name("Octree Fabrik Only")
+      .onChange((value: boolean) => {
+        useDebugVisualsStore.getState().setOctreeFabrikOnly(value);
       });
   });
 }

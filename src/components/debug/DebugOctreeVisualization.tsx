@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { Box3, BufferAttribute, BufferGeometry } from "three";
 import type { Octree } from "three-stdlib";
+import {
+  LA_FABRIK_CENTER,
+  isInsideLaFabrikFootprint,
+} from "@/data/world/laFabrikConfig";
 import { useDebugVisualsStore } from "@/managers/stores/useDebugVisualsStore";
 
 interface DebugOctreeVisualizationProps {
@@ -18,7 +22,11 @@ interface CollectOptions {
   minDepth: number;
   maxDepth: number;
   leavesOnly: boolean;
+  fabrikOnly: boolean;
 }
+
+const FABRIK_FILTER_PADDING = 1.5;
+const FABRIK_FILTER_VERTICAL = 8;
 
 const BOX_VERTEX_INDEX_PAIRS: ReadonlyArray<readonly [number, number]> = [
   [0, 1],
@@ -35,6 +43,24 @@ const BOX_VERTEX_INDEX_PAIRS: ReadonlyArray<readonly [number, number]> = [
   [3, 7],
 ];
 
+function boxIntersectsFabrik(box: Box3): boolean {
+  if (box.max.y < LA_FABRIK_CENTER[1] - FABRIK_FILTER_VERTICAL) return false;
+  if (box.min.y > LA_FABRIK_CENTER[1] + FABRIK_FILTER_VERTICAL) return false;
+
+  // Sample box corners + center on XZ plane against the rotated fabrik footprint.
+  const samples: ReadonlyArray<readonly [number, number]> = [
+    [box.min.x, box.min.z],
+    [box.min.x, box.max.z],
+    [box.max.x, box.min.z],
+    [box.max.x, box.max.z],
+    [(box.min.x + box.max.x) * 0.5, (box.min.z + box.max.z) * 0.5],
+  ];
+  for (const [x, z] of samples) {
+    if (isInsideLaFabrikFootprint(x, z, FABRIK_FILTER_PADDING)) return true;
+  }
+  return false;
+}
+
 function collectOctreeBoxes(
   node: Octree,
   options: CollectOptions,
@@ -47,8 +73,10 @@ function collectOctreeBoxes(
   const passesDepth = depth >= options.minDepth;
   const passesLeafFilter = !options.leavesOnly || isLeaf;
   const hasTriangles = node.triangles.length > 0;
+  const passesFabrikFilter =
+    !options.fabrikOnly || boxIntersectsFabrik(node.box);
 
-  if (passesDepth && passesLeafFilter && hasTriangles) {
+  if (passesDepth && passesLeafFilter && hasTriangles && passesFabrikFilter) {
     acc.push({
       box: node.box,
       depth,
@@ -114,6 +142,7 @@ export function DebugOctreeVisualization({
   const maxDepth = useDebugVisualsStore((state) => state.octreeMaxDepth);
   const leavesOnly = useDebugVisualsStore((state) => state.octreeLeavesOnly);
   const opacity = useDebugVisualsStore((state) => state.octreeOpacity);
+  const fabrikOnly = useDebugVisualsStore((state) => state.octreeFabrikOnly);
 
   const geometry = useMemo(() => {
     if (!octree || !showOctree) return null;
@@ -121,10 +150,11 @@ export function DebugOctreeVisualization({
       minDepth,
       maxDepth,
       leavesOnly,
+      fabrikOnly,
     });
     if (boxes.length === 0) return null;
     return buildOctreeLineGeometry(boxes);
-  }, [leavesOnly, maxDepth, minDepth, octree, showOctree]);
+  }, [fabrikOnly, leavesOnly, maxDepth, minDepth, octree, showOctree]);
 
   if (!geometry) return null;
 

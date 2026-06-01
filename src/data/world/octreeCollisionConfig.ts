@@ -23,10 +23,14 @@ export const MAP_OCTREE_COLLISION_BOXES = {
 } as const satisfies Record<string, MapOctreeCollisionBox>;
 
 export const LA_FABRIK_INTERIOR_COLLISION_BOXES = [
-  {
-    center: [-6.9351, 2.278, -0.0001],
-    size: [0.2, 1.94, 3.711],
-  },
+  // NOTE: removed — this thin wall (size [0.2, 1.94, 3.71]) sat at x≈-6.93 and
+  // sealed the doorway despite the geometry having a hole there. The fabrik
+  // mesh octree already provides the surrounding wall collision, so this
+  // proxy was both redundant and bug-causing.
+  // {
+  //   center: [-6.9351, 2.278, -0.0001],
+  //   size: [0.2, 1.94, 3.711],
+  // },
   {
     center: [0.8026, 0.719, -3.639],
     size: [4.346, 1.108, 1.181],

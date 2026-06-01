@@ -13,6 +13,8 @@ interface DebugVisualsStore {
   setOctreeLeavesOnly: (value: boolean) => void;
   octreeOpacity: number;
   setOctreeOpacity: (value: number) => void;
+  octreeFabrikOnly: boolean;
+  setOctreeFabrikOnly: (value: boolean) => void;
 }
 
 export const useDebugVisualsStore = create<DebugVisualsStore>((set) => ({
@@ -28,4 +30,6 @@ export const useDebugVisualsStore = create<DebugVisualsStore>((set) => ({
   setOctreeLeavesOnly: (octreeLeavesOnly) => set({ octreeLeavesOnly }),
   octreeOpacity: 0.35,
   setOctreeOpacity: (octreeOpacity) => set({ octreeOpacity }),
+  octreeFabrikOnly: false,
+  setOctreeFabrikOnly: (octreeFabrikOnly) => set({ octreeFabrikOnly }),
 }));
