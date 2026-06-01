@@ -942,11 +942,9 @@ canvas {
 .scene-loading-overlay__logo {
   position: relative;
   z-index: 1;
-  width: clamp(180px, 28vw, 320px);
-  max-height: min(38vh, 320px);
-  border-radius: 16px;
-  object-fit: cover;
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+  width: clamp(207px, 32.2vw, 368px);
+  max-height: min(43.7vh, 368px);
+  object-fit: contain;
 }
 
 .scene-loading-overlay__footer {
