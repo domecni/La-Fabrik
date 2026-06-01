@@ -31,6 +31,7 @@ import {
 } from "@/data/world/octreeCollisionConfig";
 import { getMapModelScaleMultiplier } from "@/data/world/mapInstancingConfig";
 import { useCharacterDebugStore } from "@/managers/stores/useCharacterDebugStore";
+import { useGameStore } from "@/managers/stores/useGameStore";
 import { WorldBoundsCollision } from "@/world/collision/WorldBoundsCollision";
 import type { MapNode } from "@/types/map/mapScene";
 import type { OctreeReadyHandler, Vector3Tuple } from "@/types/three/three";
@@ -125,21 +126,24 @@ export function GameMapCollision({
   const settledCollisionNodesRef = useRef(new Set<number>());
   const loadedNotifiedRef = useRef(false);
   const [settledCollisionNodeCount, setSettledCollisionNodeCount] = useState(0);
+  const mainState = useGameStore((state) => state.mainState);
   const terrainHeight = useTerrainHeightSampler();
   const collisionNodes = nodes.filter(isCollisionNode);
+  const includeCharacterCollisions = mainState !== "ebike";
+  const characterCollisionCount = includeCharacterCollisions
+    ? CHARACTER_IDS.length
+    : 0;
   const collisionSourceCount =
-    collisionNodes.length + proxyNodes.length + CHARACTER_IDS.length;
+    collisionNodes.length + proxyNodes.length + characterCollisionCount;
   const collisionReady =
     mapReady && settledCollisionNodeCount >= collisionNodes.length;
   const characterCollisionSignature = useCharacterDebugStore((state) =>
-    CHARACTER_IDS.map((id) => {
-      const character = state.characters[id];
-      return [
-        ...character.position,
-        ...character.rotation,
-        ...character.scale,
-      ].join(",");
-    }).join("|"),
+    includeCharacterCollisions
+      ? CHARACTER_IDS.map((id) => {
+          const character = state.characters[id];
+          return [...character.position, ...character.rotation].join(",");
+        }).join("|")
+      : "characters-hidden",
   );
   const collisionRebuildKey = collisionReady
     ? `${collisionNodes.length}:${collisionSourceCount}:${characterCollisionSignature}`
@@ -221,7 +225,7 @@ export function GameMapCollision({
             />
           ))
         : null}
-      {mapReady ? (
+      {mapReady && includeCharacterCollisions ? (
         <CharacterCollisionProxies terrainHeight={terrainHeight} />
       ) : null}
       {mapReady
