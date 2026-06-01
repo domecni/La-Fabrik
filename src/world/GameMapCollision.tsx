@@ -277,11 +277,21 @@ function CollisionModelInstance({
     // by MergedStaticMapModel and is unaffected.
     if (node.name !== "lafabrik") return;
 
+    // [diag] temporary — collect all door-like candidate names to debug stripping
+    const candidates: string[] = [];
     const removed: THREE.Object3D[] = [];
     sceneInstance.traverse((child) => {
+      if (/porte/i.test(child.name)) {
+        candidates.push(child.name);
+      }
       if (child.name === "porte") {
         removed.push(child);
       }
+    });
+    console.log("[lafabrik:porte-strip]", {
+      candidates,
+      strippedCount: removed.length,
+      strippedNames: removed.map((c) => c.name),
     });
     for (const child of removed) {
       child.removeFromParent();

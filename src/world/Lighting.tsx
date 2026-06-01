@@ -98,6 +98,27 @@ export function Lighting(): React.JSX.Element {
       hasShadowMap: !!sun.current.shadow.map,
       ...counts,
     });
+
+    // [diag] temporary — track WebGL context loss/restore to correlate with shadow drops
+    const canvas = gl.domElement;
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.log("[ctx:lost]", { timestamp: performance.now().toFixed(0) });
+    };
+    const handleContextRestored = () => {
+      console.log("[ctx:restored]", {
+        timestamp: performance.now().toFixed(0),
+      });
+      if (sun.current) {
+        sun.current.shadow.needsUpdate = true;
+      }
+    };
+    canvas.addEventListener("webglcontextlost", handleContextLost);
+    canvas.addEventListener("webglcontextrestored", handleContextRestored);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
+      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+    };
   }, [gl, scene]);
 
   useDebugFolder("Lighting", (folder) => {
