@@ -6,8 +6,8 @@ export const LA_FABRIK_HALF_EXTENTS = {
   x: 8.5,
   z: 7.5,
 } as const;
-export const LA_FABRIK_PLAYER_SPAWN: Vector3Tuple = [59.5, 7.8, 64.64];
-export const LA_FABRIK_INITIAL_LOOK_AT: Vector3Tuple = [58, 7.8, 62.5];
+export const LA_FABRIK_PLAYER_SPAWN: Vector3Tuple = [59.5, 6.3, 64.64];
+export const LA_FABRIK_INITIAL_LOOK_AT: Vector3Tuple = [58, 7.3, 62.5];
 export const LA_FABRIK_INTERIOR_LIGHT_POSITION: Vector3Tuple = [59.5, 9, 64.64];
 
 export function isInsideLaFabrikFootprint(

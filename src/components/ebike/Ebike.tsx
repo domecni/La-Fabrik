@@ -8,6 +8,10 @@ import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
 import { useEbikeSounds } from "@/hooks/ebike/useEbikeSounds";
+import {
+  getObjectBottomOffset,
+  useTerrainHeightSampler,
+} from "@/hooks/three/useTerrainHeight";
 import { animateCameraTransformTransition } from "@/world/GameCinematics";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import {
@@ -32,6 +36,18 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     position: position,
   });
   const model = useClonedObject(scene);
+  const terrainHeight = useTerrainHeightSampler();
+  const parkedPosition = useMemo<Vector3Tuple>(() => {
+    const [x, y, z] = position;
+    const height = terrainHeight.getHeight(x, z) ?? y;
+    const bottomOffset = getObjectBottomOffset(model, [
+      EBIKE_WORLD_SCALE,
+      EBIKE_WORLD_SCALE,
+      EBIKE_WORLD_SCALE,
+    ]);
+
+    return [x, height + bottomOffset, z];
+  }, [model, position, terrainHeight]);
   const movementMode = useGameStore((state) => state.player.movementMode);
   const mainState = useGameStore((state) => state.mainState);
   const ebikeStep = useGameStore((state) => state.ebike.currentStep);
@@ -64,19 +80,19 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
     y: number;
     z: number;
   }>({
-    x: position[0],
-    y: position[1],
-    z: position[2],
+    x: parkedPosition[0],
+    y: parkedPosition[1],
+    z: parkedPosition[2],
   });
   const lastGpsUpdatePos = useRef<THREE.Vector3>(
-    new THREE.Vector3(...position),
+    new THREE.Vector3(...parkedPosition),
   );
 
   // Use ref for internal state, and state for debug visualization (to avoid ref access during render)
   const restingPositionRef = useRef<Vector3Tuple>([
-    position[0],
-    position[1],
-    position[2],
+    parkedPosition[0],
+    parkedPosition[1],
+    parkedPosition[2],
   ]);
   const restingRotationRef = useRef<number>(EBIKE_WORLD_ROTATION_Y);
   const forkRef = useRef<THREE.Object3D | null>(null);
@@ -84,23 +100,27 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   // State for debug visualization (synced from refs during useFrame)
   const [showCameraPoints, setShowCameraPoints] = useState(true);
   const [debugRestingPosition, setDebugRestingPosition] =
-    useState<Vector3Tuple>([position[0], position[1], position[2]]);
+    useState<Vector3Tuple>([
+      parkedPosition[0],
+      parkedPosition[1],
+      parkedPosition[2],
+    ]);
 
   useEffect(() => {
     if (movementMode === "ebike") return;
 
-    restingPositionRef.current = position;
+    restingPositionRef.current = parkedPosition;
     restingRotationRef.current = EBIKE_WORLD_ROTATION_Y;
-    lastGpsUpdatePos.current.set(...position);
+    lastGpsUpdatePos.current.set(...parkedPosition);
 
     if (groupRef.current) {
-      groupRef.current.position.set(...position);
+      groupRef.current.position.set(...parkedPosition);
       groupRef.current.rotation.set(0, EBIKE_WORLD_ROTATION_Y, 0);
     }
 
-    window.ebikeParkedPosition = position;
+    window.ebikeParkedPosition = parkedPosition;
     window.ebikeParkedRotation = EBIKE_WORLD_ROTATION_Y;
-  }, [movementMode, position]);
+  }, [movementMode, parkedPosition]);
 
   useEffect(() => {
     if (model) {
@@ -293,7 +313,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
       {!repairGameOwnsEbikeModel ? (
         <group
           ref={groupRef}
-          position={position}
+          position={parkedPosition}
           rotation={[0, EBIKE_WORLD_ROTATION_Y, 0]}
           scale={EBIKE_WORLD_SCALE}
         >
@@ -301,7 +321,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           <InteractableObject
             kind="trigger"
             label={interactionLabel}
-            position={position}
+            position={parkedPosition}
             radius={5}
             onPress={handleInteract}
           >
