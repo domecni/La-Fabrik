@@ -41,29 +41,33 @@ The octree visualization reads the live `Octree` instance from `World`. The
 mesh uses `depthTest: false` and a high `renderOrder`, so cells stay visible
 through opaque geometry.
 
-## Shadow rendering intermittence (open investigation)
+## Shadow rendering intermittence
 
-Shadows occasionally fail to render on initial load even though the
-`Lighting` configuration runs to completion (verified through diagnostic logs).
-The issue is not deterministic across runs with identical config. Suspected
-contributors:
+Shadows occasionally failed to render on initial load and could disappear
+mid-session even though the `Lighting` configuration ran to completion.
 
-- WebGL context restoration timing (`webglcontextrestored` rebinds shadow map
-  state in `src/pages/page.tsx`).
-- First-frame shadow map being rendered before any mesh has its
-  `castShadow`/`receiveShadow` flag set; `autoUpdate=true` should fix it on the
-  next frame, but a single dropped frame is still visible at very first paint.
-- HMR/state interactions in dev mode that do not occur in production builds.
+Root cause: the sun follows the camera (its world matrix is dirty every frame
+via `updateMatrixWorld()` inside `Lighting.useFrame`). With `shadow.autoUpdate`
+alone, three.js can skip the shadow map re-render on a frame where the matrix
+update has happened but the renderer's internal dirty tracking does not pick
+it up, leaving the shadow map stale or unrendered.
 
-Mitigations already applied:
+Fix in `src/world/Lighting.tsx`: explicit `sun.shadow.needsUpdate = true` in
+two places, restoring the belt-and-suspenders pattern from `develop`:
+
+- After `configureSunShadow(...)` in the mount `useEffect`.
+- At the end of the `useFrame` block, right after `sun.updateMatrixWorld()`.
+
+Mitigations also in place:
 
 - Shadow config centralized in `src/data/world/lightingConfig.ts`
-  (`bias=0`, `normalBias=0`, `cameraSize=95`, matching the historically working
-  values from `develop`).
+  (`bias=0`, `normalBias=0`, `cameraSize=95`).
 - Late-suspension Suspense boundaries in `World.tsx` to prevent global scene
   remounts that would re-run shadow setup mid-load.
+- `gl.shadowMap.needsUpdate = true` on `onCreated` and on
+  `webglcontextrestored` in `src/pages/page.tsx`.
 
-If the issue reproduces in production, capture a screenshot plus the
-`[diag]`-style logs from `useOctreeGraphNode`, `Lighting`, and `GameMapCollision`
-to confirm whether the third configuration pass is happening (which would
-indicate a remaining suspending hook outside the existing Suspense boundaries).
+If the issue reproduces, capture `[diag]`-style logs from `useOctreeGraphNode`,
+`Lighting`, and `GameMapCollision` to confirm there is no extra configuration
+pass (which would indicate a remaining suspending hook outside the existing
+Suspense boundaries).
