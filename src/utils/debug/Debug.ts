@@ -9,6 +9,7 @@ const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
 
 interface StoredDebugControls {
   cameraMode: CameraMode;
+  handTrackingSource: HandTrackingSource;
   sceneMode: SceneMode;
 }
 
@@ -25,6 +26,7 @@ const DEBUG_FOLDER_ORDER = [
   "Hand Tracking",
   "Map",
   "Personnages",
+  "Debug",
 ] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -39,6 +41,10 @@ function isSceneMode(value: unknown): value is SceneMode {
   return value === "game" || value === "physics";
 }
 
+function isHandTrackingSource(value: unknown): value is HandTrackingSource {
+  return value === "browser" || value === "backend";
+}
+
 function getStoredDebugControls(): Partial<StoredDebugControls> {
   try {
     const rawValue = window.localStorage.getItem(DEBUG_CONTROLS_STORAGE_KEY);
@@ -50,6 +56,9 @@ function getStoredDebugControls(): Partial<StoredDebugControls> {
     return {
       ...(isCameraMode(parsedValue.cameraMode)
         ? { cameraMode: parsedValue.cameraMode }
+        : {}),
+      ...(isHandTrackingSource(parsedValue.handTrackingSource)
+        ? { handTrackingSource: parsedValue.handTrackingSource }
         : {}),
       ...(isSceneMode(parsedValue.sceneMode)
         ? { sceneMode: parsedValue.sceneMode }
@@ -94,7 +103,7 @@ export class Debug {
     this.controls = {
       cameraMode: storedControls.cameraMode ?? "player",
       fogEnabled: FOG_CONFIG.enabled,
-      handTrackingSource: "browser",
+      handTrackingSource: storedControls.handTrackingSource ?? "browser",
       showDebugOverlay: true,
       showHandTrackingSvg: false,
       showInteractionSpheres: false,
@@ -159,7 +168,7 @@ export class Debug {
         .name("Source")
         .onChange((value: HandTrackingSource) => {
           this.controls.handTrackingSource = value;
-          this.emit();
+          this.saveAndEmit();
         });
     }
   }
@@ -246,7 +255,7 @@ export class Debug {
 
   setHandTrackingSource(value: HandTrackingSource): void {
     this.controls.handTrackingSource = value;
-    this.emit();
+    this.saveAndEmit();
   }
 
   getFogEnabled(): boolean {
@@ -285,6 +294,7 @@ export class Debug {
         DEBUG_CONTROLS_STORAGE_KEY,
         JSON.stringify({
           cameraMode: this.controls.cameraMode,
+          handTrackingSource: this.controls.handTrackingSource,
           sceneMode: this.controls.sceneMode,
         }),
       );

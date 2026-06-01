@@ -19,7 +19,7 @@ export const CLOUD_DEFAULTS = {
   maxRotation: Math.PI * 2,
   minSpeedMultiplier: 0.4,
   maxSpeedMultiplier: 1,
-  castShadow: false,
+  castShadow: true,
   receiveShadow: false,
 };
 

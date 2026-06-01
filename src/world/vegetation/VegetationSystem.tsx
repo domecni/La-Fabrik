@@ -16,6 +16,7 @@ import {
   VEGETATION_TYPES,
   type VegetationType,
 } from "@/data/world/vegetationConfig";
+import { isInsideLaFabrikFootprint } from "@/data/world/laFabrikConfig";
 import { createWorldInstanceChunks } from "@/utils/world/chunkInstances";
 
 interface VegetationSystemProps {
@@ -60,6 +61,15 @@ function createVegetationChunks(
   });
 }
 
+function removeLaFabrikVegetation(
+  instances: VegetationInstance[],
+): VegetationInstance[] {
+  return instances.filter((instance) => {
+    const [x, , z] = instance.position;
+    return !isInsideLaFabrikFootprint(x, z, 1.2);
+  });
+}
+
 export function VegetationSystem({
   onlyMapName = null,
   streaming = true,
@@ -90,7 +100,10 @@ export function VegetationSystem({
       const entry = data.get(config.mapName);
       if (!entry || entry.instances.length === 0) return [];
 
-      return createVegetationChunks(type, entry.instances);
+      const instances = removeLaFabrikVegetation(entry.instances);
+      if (instances.length === 0) return [];
+
+      return createVegetationChunks(type, instances);
     });
   }, [data, groups, models, onlyMapName]);
 

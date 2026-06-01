@@ -30,3 +30,12 @@ export const SUN_Y_STEP = 1;
 export const SUN_Z_MIN = -100;
 export const SUN_Z_MAX = 100;
 export const SUN_Z_STEP = 1;
+
+export const SHADOW_CONFIG = {
+  mapSize: 2048,
+  cameraSize: 95,
+  cameraNear: 0.5,
+  cameraFar: 300,
+  bias: 0,
+  normalBias: 0,
+} as const;

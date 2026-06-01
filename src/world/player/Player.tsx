@@ -7,10 +7,12 @@ import { PlayerController } from "@/world/player/PlayerController";
 
 interface PlayerProps {
   octree: Octree | null;
+  initialLookAt?: Vector3Tuple | undefined;
   spawnPosition: Vector3Tuple;
 }
 
 export function Player({
+  initialLookAt,
   spawnPosition,
   octree,
 }: PlayerProps): React.JSX.Element {
@@ -18,12 +20,17 @@ export function Player({
 
   useLayoutEffect(() => {
     camera.position.set(...spawnPosition);
-  }, [camera, spawnPosition]);
+    if (initialLookAt) camera.lookAt(...initialLookAt);
+  }, [camera, initialLookAt, spawnPosition]);
 
   return (
     <>
       <PlayerCamera />
-      <PlayerController octree={octree} spawnPosition={spawnPosition} />
+      <PlayerController
+        initialLookAt={initialLookAt}
+        octree={octree}
+        spawnPosition={spawnPosition}
+      />
     </>
   );
 }

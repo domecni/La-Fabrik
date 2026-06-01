@@ -942,11 +942,11 @@ canvas {
 .scene-loading-overlay__logo {
   position: relative;
   z-index: 1;
+  display: block;
   width: clamp(180px, 28vw, 320px);
   max-height: min(38vh, 320px);
-  border-radius: 16px;
-  object-fit: cover;
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+  height: auto;
+  object-fit: contain;
 }
 
 .scene-loading-overlay__footer {
@@ -1235,6 +1235,114 @@ canvas {
 
 .subtitles__speaker--electricienne {
   color: #f9a8d4;
+}
+
+/* Dialogue talkie */
+.talkie-dialogue-overlay {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 16;
+  width: clamp(190px, 18vw, 300px);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.talkie-dialogue-overlay__model-frame {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.55));
+}
+
+.talkie-dialogue-overlay--active .talkie-dialogue-overlay__model-frame {
+  animation: talkie-radio-shake 1s ease-in-out infinite;
+}
+
+.talkie-dialogue-overlay__model-frame canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.talkie-dialogue-overlay__signals {
+  position: absolute;
+  top: 52%;
+  z-index: 2;
+  width: 38%;
+  height: 52%;
+  overflow: visible;
+  opacity: 0.8;
+  animation: talkie-signal-pulse 1s ease-in-out infinite;
+}
+
+.talkie-dialogue-overlay__signals--left {
+  right: 62%;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+.talkie-dialogue-overlay__signals--right {
+  left: 62%;
+  transform: translateY(-50%);
+}
+
+.talkie-dialogue-overlay__signals path {
+  fill: none;
+  stroke: rgba(235, 244, 255, 0.9);
+  stroke-linecap: round;
+  stroke-width: 5;
+  filter: drop-shadow(0 0 7px rgba(125, 211, 252, 0.72));
+}
+
+.talkie-dialogue-overlay__signals path:nth-child(2) {
+  animation-delay: 90ms;
+  opacity: 0.75;
+}
+
+.talkie-dialogue-overlay__signals path:nth-child(3) {
+  animation-delay: 180ms;
+  opacity: 0.55;
+}
+
+@keyframes talkie-radio-shake {
+  0%,
+  11%,
+  23%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  3%,
+  15%,
+  27% {
+    transform: translate3d(-2px, 1px, 0) rotate(-1.7deg);
+  }
+
+  6%,
+  18%,
+  30% {
+    transform: translate3d(2px, -1px, 0) rotate(1.7deg);
+  }
+
+  9%,
+  21%,
+  33% {
+    transform: translate3d(-1px, 0, 0) rotate(-0.8deg);
+  }
+}
+
+@keyframes talkie-signal-pulse {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+
+  18%,
+  38% {
+    opacity: 0.95;
+  }
+
+  60% {
+    opacity: 0.45;
+  }
 }
 
 /* In-game settings menu */

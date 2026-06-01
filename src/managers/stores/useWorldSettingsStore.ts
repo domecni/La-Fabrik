@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { CLOUD_DEFAULTS, type CloudState } from "@/data/world/cloudConfig";
 import { FOG_CONFIG, type FogState } from "@/data/world/fogConfig";
 import { WIND_DEFAULTS, type WindState } from "@/data/world/windConfig";
@@ -46,73 +47,89 @@ const DEFAULT_STATE: WorldSettingsState = {
   graphics: { ...GRAPHICS_DEFAULTS },
 };
 
-export const useWorldSettingsStore = create<WorldSettingsStore>()((set) => ({
-  ...DEFAULT_STATE,
+const WORLD_SETTINGS_STORAGE_KEY = "la-fabrik-world-settings";
 
-  setClouds: (cloudsUpdate) =>
-    set((state) => ({
-      clouds: { ...state.clouds, ...cloudsUpdate },
-    })),
+export const useWorldSettingsStore = create<WorldSettingsStore>()(
+  persist(
+    (set) => ({
+      ...DEFAULT_STATE,
 
-  setFog: (fogUpdate) =>
-    set((state) => ({
-      fog: { ...state.fog, ...fogUpdate },
-    })),
+      setClouds: (cloudsUpdate) =>
+        set((state) => ({
+          clouds: { ...state.clouds, ...cloudsUpdate },
+        })),
 
-  setWind: (windUpdate) =>
-    set((state) => ({
-      wind: { ...state.wind, ...windUpdate },
-    })),
+      setFog: (fogUpdate) =>
+        set((state) => ({
+          fog: { ...state.fog, ...fogUpdate },
+        })),
 
-  setWindSpeed: (speed) =>
-    set((state) => ({
-      wind: { ...state.wind, speed },
-    })),
+      setWind: (windUpdate) =>
+        set((state) => ({
+          wind: { ...state.wind, ...windUpdate },
+        })),
 
-  setWindDirection: (direction) =>
-    set((state) => ({
-      wind: { ...state.wind, direction },
-    })),
+      setWindSpeed: (speed) =>
+        set((state) => ({
+          wind: { ...state.wind, speed },
+        })),
 
-  setWindStrength: (strength) =>
-    set((state) => ({
-      wind: { ...state.wind, strength },
-    })),
+      setWindDirection: (direction) =>
+        set((state) => ({
+          wind: { ...state.wind, direction },
+        })),
 
-  setGraphics: (graphicsUpdate) =>
-    set((state) => ({
-      graphics: { ...state.graphics, ...graphicsUpdate },
-    })),
+      setWindStrength: (strength) =>
+        set((state) => ({
+          wind: { ...state.wind, strength },
+        })),
 
-  setGraphicsPreset: (preset) =>
-    set((state) => ({
-      graphics: { ...state.graphics, preset },
-    })),
+      setGraphics: (graphicsUpdate) =>
+        set((state) => ({
+          graphics: { ...state.graphics, ...graphicsUpdate },
+        })),
 
-  setDynamicGrass: (dynamicGrass) =>
-    set((state) => ({
-      graphics: { ...state.graphics, dynamicGrass },
-    })),
+      setGraphicsPreset: (preset) =>
+        set((state) => ({
+          graphics: { ...state.graphics, preset },
+        })),
 
-  setDynamicTrees: (dynamicTrees) =>
-    set((state) => ({
-      graphics: { ...state.graphics, dynamicTrees },
-    })),
+      setDynamicGrass: (dynamicGrass) =>
+        set((state) => ({
+          graphics: { ...state.graphics, dynamicGrass },
+        })),
 
-  setDynamicClouds: (dynamicClouds) =>
-    set((state) => ({
-      graphics: { ...state.graphics, dynamicClouds },
-    })),
+      setDynamicTrees: (dynamicTrees) =>
+        set((state) => ({
+          graphics: { ...state.graphics, dynamicTrees },
+        })),
 
-  setShadowsEnabled: (shadowsEnabled) =>
-    set((state) => ({
-      graphics: { ...state.graphics, shadowsEnabled },
-    })),
+      setDynamicClouds: (dynamicClouds) =>
+        set((state) => ({
+          graphics: { ...state.graphics, dynamicClouds },
+        })),
 
-  setGrassDensity: (grassDensity) =>
-    set((state) => ({
-      graphics: { ...state.graphics, grassDensity },
-    })),
+      setShadowsEnabled: (shadowsEnabled) =>
+        set((state) => ({
+          graphics: { ...state.graphics, shadowsEnabled },
+        })),
 
-  resetToDefaults: () => set(DEFAULT_STATE),
-}));
+      setGrassDensity: (grassDensity) =>
+        set((state) => ({
+          graphics: { ...state.graphics, grassDensity },
+        })),
+
+      resetToDefaults: () => set(DEFAULT_STATE),
+    }),
+    {
+      name: WORLD_SETTINGS_STORAGE_KEY,
+      storage: createJSONStorage(() => window.localStorage),
+      partialize: (state) => ({
+        clouds: state.clouds,
+        fog: state.fog,
+        graphics: state.graphics,
+        wind: state.wind,
+      }),
+    },
+  ),
+);

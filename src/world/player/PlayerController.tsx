@@ -75,6 +75,7 @@ const PLAYER_FLOOR_NORMAL_MIN = 0.15;
 const PLAYER_GROUND_SNAP_DISTANCE = 0.22;
 
 interface PlayerControllerProps {
+  initialLookAt?: Vector3Tuple | undefined;
   octree: Octree | null;
   spawnPosition: Vector3Tuple;
 }
@@ -89,6 +90,7 @@ const _collisionCorrection = new THREE.Vector3();
 function resetPlayerCapsule(
   capsule: Capsule,
   spawnPosition: Vector3Tuple,
+  initialLookAt: Vector3Tuple | undefined,
   camera: THREE.Camera,
   velocity: THREE.Vector3,
 ): void {
@@ -100,6 +102,7 @@ function resetPlayerCapsule(
   capsule.end.set(...spawnPosition);
   velocity.set(0, 0, 0);
   camera.position.copy(capsule.end);
+  if (initialLookAt) camera.lookAt(...initialLookAt);
 }
 
 function createSpawnCapsule(spawnPosition: Vector3Tuple): Capsule {
@@ -145,6 +148,7 @@ function getCapsuleFootY(capsule: Capsule): number {
 }
 
 export function PlayerController({
+  initialLookAt,
   octree,
   spawnPosition,
 }: PlayerControllerProps): null {
@@ -234,6 +238,7 @@ export function PlayerController({
     resetPlayerCapsule(
       capsule.current,
       spawnPosition,
+      initialLookAt,
       camera,
       velocity.current,
     );
@@ -241,7 +246,7 @@ export function PlayerController({
     onFloor.current = false;
     wantsJump.current = false;
     initializedRef.current = true;
-  }, [camera, spawnPosition]);
+  }, [camera, initialLookAt, spawnPosition]);
 
   useEffect(() => {
     movementLockedRef.current = movementLocked;
@@ -339,6 +344,7 @@ export function PlayerController({
         resetPlayerCapsule(
           capsule.current,
           spawnPosition,
+          initialLookAt,
           camera,
           velocity.current,
         );

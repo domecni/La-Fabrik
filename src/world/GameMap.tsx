@@ -27,6 +27,7 @@ import { useMapLodModelPath } from "@/hooks/world/useMapLodModelPath";
 import { GameMapCollision } from "@/world/GameMapCollision";
 import { GeneratedMapNodeInstance } from "@/world/map-generated/GeneratedMapNodeInstance";
 import { isGeneratedMapModelName } from "@/data/world/generatedMapModelConfig";
+import { hasMapOctreeCollisionBox } from "@/data/world/octreeCollisionConfig";
 import { getMapSingleModelScaleMultiplier } from "@/data/world/mapInstancingConfig";
 import { MapInstancingSystem } from "@/world/map-instancing/MapInstancingSystem";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
@@ -115,6 +116,9 @@ export function GameMap({
   const [collisionMapNodes, setCollisionMapNodes] = useState<LoadedMapNode[]>(
     [],
   );
+  const [proxyCollisionMapNodes, setProxyCollisionMapNodes] = useState<
+    MapNode[]
+  >([]);
   const [terrainNode, setTerrainNode] = useState<MapNode | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [settledMapNodeCount, setSettledMapNodeCount] = useState(0);
@@ -134,6 +138,7 @@ export function GameMap({
     (currentStep: string) => {
       setRenderMapNodes([]);
       setCollisionMapNodes([]);
+      setProxyCollisionMapNodes([]);
       setTerrainNode(null);
       setMapLoaded(true);
       settledMapNodesRef.current.clear();
@@ -191,6 +196,10 @@ export function GameMap({
             const modelUrl = sceneData.models.get(node.name);
             return { node, modelUrl: modelUrl ?? null };
           });
+        const loadedProxyCollisionNodes = sceneData.mapNodes.filter(
+          (node) =>
+            node.type === "Object3D" && hasMapOctreeCollisionBox(node.name),
+        );
         const loadedTerrainNode = getTerrainMapNode(sceneData.mapNodes);
         const repairMissionAnchors = getRepairMissionMapAnchors(
           sceneData.mapNodes,
@@ -211,6 +220,7 @@ export function GameMap({
 
         setRenderMapNodes(loadedMapNodes);
         setCollisionMapNodes(loadedCollisionNodes);
+        setProxyCollisionMapNodes(loadedProxyCollisionNodes);
         setTerrainNode(loadedTerrainNode);
         setRepairMissionAnchors(repairMissionAnchors);
         setMapLoaded(true);
@@ -285,6 +295,7 @@ export function GameMap({
         buildOctree={buildOctree}
         mapReady={mapReady}
         nodes={collisionMapNodes}
+        proxyNodes={proxyCollisionMapNodes}
         onLoaded={onLoaded}
         onLoadingStateChange={onLoadingStateChange}
         onOctreeReady={onOctreeReady}

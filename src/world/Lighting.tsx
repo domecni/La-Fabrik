@@ -1,10 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import type { AmbientLight, DirectionalLight, Object3D } from "three";
+import {
+  PCFShadowMap,
+  type AmbientLight,
+  type DirectionalLight,
+  type Object3D,
+  type WebGLRenderer,
+} from "three";
 import {
   AMBIENT_INTENSITY_MAX,
   AMBIENT_INTENSITY_MIN,
   AMBIENT_INTENSITY_STEP,
+  SHADOW_CONFIG,
   SUN_INTENSITY_MAX,
   SUN_INTENSITY_MIN,
   SUN_INTENSITY_STEP,
@@ -18,16 +25,51 @@ import {
   SUN_Z_MIN,
   SUN_Z_STEP,
 } from "@/data/world/lightingConfig";
+import { LA_FABRIK_INTERIOR_LIGHT_POSITION } from "@/data/world/laFabrikConfig";
 import { useDebugFolder } from "@/hooks/debug/useDebugFolder";
+import { useShadowMapWarmup } from "@/hooks/three/useShadowMapWarmup";
 import { LIGHTING_STATE } from "@/world/lightingState";
 
-const SHADOW_MAP_SIZE = 2048;
-const SHADOW_CAMERA_SIZE = 95;
-const SHADOW_CAMERA_NEAR = 0.5;
-const SHADOW_CAMERA_FAR = 300;
+function configureRendererShadows(gl: WebGLRenderer): void {
+  gl.shadowMap.enabled = true;
+  gl.shadowMap.type = PCFShadowMap;
+  gl.shadowMap.autoUpdate = true;
+}
+
+function configureSunShadow(sun: DirectionalLight, sunTarget: Object3D): void {
+  sun.target = sunTarget;
+  sun.shadow.autoUpdate = true;
+  sun.shadow.bias = SHADOW_CONFIG.bias;
+  sun.shadow.normalBias = SHADOW_CONFIG.normalBias;
+  sun.shadow.mapSize.width = SHADOW_CONFIG.mapSize;
+  sun.shadow.mapSize.height = SHADOW_CONFIG.mapSize;
+  sun.shadow.camera.left = -SHADOW_CONFIG.cameraSize;
+  sun.shadow.camera.right = SHADOW_CONFIG.cameraSize;
+  sun.shadow.camera.top = SHADOW_CONFIG.cameraSize;
+  sun.shadow.camera.bottom = -SHADOW_CONFIG.cameraSize;
+  sun.shadow.camera.near = SHADOW_CONFIG.cameraNear;
+  sun.shadow.camera.far = SHADOW_CONFIG.cameraFar;
+  sun.shadow.camera.updateProjectionMatrix();
+}
+
+function placeSunRelativeToCamera(
+  sun: DirectionalLight,
+  sunTarget: Object3D,
+  cameraPosition: { x: number; z: number },
+): void {
+  sunTarget.position.set(cameraPosition.x, 0, cameraPosition.z);
+  sun.position.set(
+    cameraPosition.x + LIGHTING_STATE.sunX,
+    LIGHTING_STATE.sunY,
+    cameraPosition.z + LIGHTING_STATE.sunZ,
+  );
+}
 
 export function Lighting(): React.JSX.Element {
   const camera = useThree((state) => state.camera);
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const invalidate = useThree((state) => state.invalidate);
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
   const sunTarget = useRef<Object3D>(null);
@@ -35,19 +77,16 @@ export function Lighting(): React.JSX.Element {
   useEffect(() => {
     if (!sun.current || !sunTarget.current) return;
 
-    sun.current.target = sunTarget.current;
-    sun.current.shadow.autoUpdate = true;
-    sun.current.shadow.needsUpdate = true;
-    sun.current.shadow.mapSize.width = SHADOW_MAP_SIZE;
-    sun.current.shadow.mapSize.height = SHADOW_MAP_SIZE;
-    sun.current.shadow.camera.left = -SHADOW_CAMERA_SIZE;
-    sun.current.shadow.camera.right = SHADOW_CAMERA_SIZE;
-    sun.current.shadow.camera.top = SHADOW_CAMERA_SIZE;
-    sun.current.shadow.camera.bottom = -SHADOW_CAMERA_SIZE;
-    sun.current.shadow.camera.near = SHADOW_CAMERA_NEAR;
-    sun.current.shadow.camera.far = SHADOW_CAMERA_FAR;
-    sun.current.shadow.camera.updateProjectionMatrix();
-  }, []);
+    configureRendererShadows(gl);
+    configureSunShadow(sun.current, sunTarget.current);
+    // Prime the sun + target onto the camera before the first shadow pass so
+    // the initial shadow frustum already covers the visible scene; without
+    // this, the first frame is rendered with the default (origin-centered)
+    // frustum and shadows can appear absent until the player moves.
+    placeSunRelativeToCamera(sun.current, sunTarget.current, camera.position);
+  }, [camera, gl]);
+
+  useShadowMapWarmup({ light: sun, scene, gl, invalidate });
 
   useDebugFolder("Lighting", (folder) => {
     folder.addColor(LIGHTING_STATE, "ambientColor").name("Ambient Color");
@@ -87,19 +126,14 @@ export function Lighting(): React.JSX.Element {
       ambient.current.intensity = LIGHTING_STATE.ambientIntensity;
     }
 
-    if (sun.current && sunTarget.current) {
-      sunTarget.current.position.set(camera.position.x, 0, camera.position.z);
-      sunTarget.current.updateMatrixWorld();
-      sun.current.position.set(
-        camera.position.x + LIGHTING_STATE.sunX,
-        LIGHTING_STATE.sunY,
-        camera.position.z + LIGHTING_STATE.sunZ,
-      );
-      sun.current.color.set(LIGHTING_STATE.sunColor);
-      sun.current.intensity = LIGHTING_STATE.sunIntensity;
-      sun.current.updateMatrixWorld();
-      sun.current.shadow.needsUpdate = true;
-    }
+    if (!sun.current || !sunTarget.current) return;
+
+    placeSunRelativeToCamera(sun.current, sunTarget.current, camera.position);
+    sunTarget.current.updateMatrixWorld();
+    sun.current.color.set(LIGHTING_STATE.sunColor);
+    sun.current.intensity = LIGHTING_STATE.sunIntensity;
+    sun.current.updateMatrixWorld();
+    sun.current.shadow.needsUpdate = true;
   });
 
   return (
@@ -121,6 +155,13 @@ export function Lighting(): React.JSX.Element {
         castShadow
       />
       <object3D ref={sunTarget} />
+      <pointLight
+        position={LA_FABRIK_INTERIOR_LIGHT_POSITION}
+        color="#dbeafe"
+        intensity={1.2}
+        distance={14}
+        decay={1.6}
+      />
     </>
   );
 }

@@ -9,6 +9,11 @@ import {
   GRASS_CONFIG,
 } from "@/data/world/grassConfig";
 import {
+  LA_FABRIK_CENTER,
+  LA_FABRIK_HALF_EXTENTS,
+  LA_FABRIK_ROTATION_Y,
+} from "@/data/world/laFabrikConfig";
+import {
   grassFragmentShader,
   grassVertexShader,
 } from "@/world/grass/grassShaders";
@@ -169,6 +174,17 @@ function createGrassMaterial(
       uMaxBladeHeight: { value: GRASS_CONFIG.maxBladeHeight },
       uRandomHeightAmount: { value: GRASS_CONFIG.randomHeightAmount },
       uSurfaceOffset: { value: GRASS_CONFIG.surfaceOffset },
+      uLaFabrikCenter: {
+        value: new THREE.Vector2(LA_FABRIK_CENTER[0], LA_FABRIK_CENTER[2]),
+      },
+      uLaFabrikHalfExtents: {
+        value: new THREE.Vector2(
+          LA_FABRIK_HALF_EXTENTS.x,
+          LA_FABRIK_HALF_EXTENTS.z,
+        ),
+      },
+      uLaFabrikRotation: { value: LA_FABRIK_ROTATION_Y },
+      uLaFabrikNoGrassFeather: { value: 1.4 },
     },
   });
 }

@@ -6,19 +6,20 @@ export interface CameraTransform {
 }
 
 export const EBIKE_CAMERA_TRANSFORM: CameraTransform = {
-  position: [-3.5, 6, 0],
+  position: [-2.6, 4.5, 0],
   rotation: [-10, -90, 0],
 };
 
 export const EBIKE_DROP_PLAYER_TRANSFORM: CameraTransform = {
-  position: [0, 1.5, -3],
+  position: [0, 1.3, -2.25],
   rotation: [0, 0, 0],
 };
 
-export const EBIKE_WORLD_POSITION: Vector3Tuple = [61.5, 10, 62.4];
-export const EBIKE_WORLD_ROTATION_Y = 2.4107;
+export const EBIKE_WORLD_POSITION: Vector3Tuple = [65, 0.8, 72];
+export const EBIKE_WORLD_ROTATION_Y = -2.5;
+export const EBIKE_WORLD_SCALE = 0.35;
 
-export const EBIKE_INTRO_RIDE_DURATION_MS = 5000;
+export const EBIKE_INTRO_BREAKDOWN_DISTANCE = 15;
 export const EBIKE_BREAKDOWN_DIALOGUE_DELAY_MS = 250;
 
 export const EBIKE_MAX_SPEED = 3;

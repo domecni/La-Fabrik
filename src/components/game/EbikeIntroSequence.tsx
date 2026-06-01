@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { MissionNotification } from "@/components/ui/MissionNotification";
 import {
   EBIKE_BREAKDOWN_DIALOGUE_DELAY_MS,
   EBIKE_BREAKDOWN_DIALOGUE_ID,
-  EBIKE_INTRO_RIDE_DURATION_MS,
+  EBIKE_INTRO_BREAKDOWN_DISTANCE,
   EBIKE_SOUNDS,
 } from "@/data/ebike/ebikeConfig";
+import { INTRO_MISSION_NOTIFICATION_IMAGE_PATH } from "@/data/gameplay/missionNotifications";
 import { AudioManager } from "@/managers/AudioManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
@@ -18,6 +20,9 @@ export function EbikeIntroSequence(): React.JSX.Element | null {
   const completeIntro = useGameStore((state) => state.completeIntro);
   const [breakdownDialogueDone, setBreakdownDialogueDone] = useState(false);
   const hasStartedBreakdown = useRef(false);
+  const rideDistance = useRef(0);
+  const lastRidePosition = useRef<THREE.Vector3 | null>(null);
+  const currentRidePosition = useRef(new THREE.Vector3());
 
   useEffect(() => {
     if (introStep !== "await-ebike-mount" || movementMode !== "ebike") return;
@@ -26,16 +31,45 @@ export function EbikeIntroSequence(): React.JSX.Element | null {
   }, [introStep, movementMode, setIntroStep]);
 
   useEffect(() => {
-    if (introStep !== "ebike-intro-ride") return undefined;
+    if (introStep !== "ebike-intro-ride") return;
 
-    const timeoutId = window.setTimeout(() => {
-      setIntroStep("ebike-breakdown");
-    }, EBIKE_INTRO_RIDE_DURATION_MS);
+    rideDistance.current = 0;
+    lastRidePosition.current = null;
+  }, [introStep]);
 
-    return () => {
-      window.clearTimeout(timeoutId);
+  useEffect(() => {
+    if (introStep !== "ebike-intro-ride" || movementMode !== "ebike") {
+      return undefined;
+    }
+
+    let animationFrameId = 0;
+    const tick = () => {
+      const parkedPosition = window.ebikeParkedPosition;
+      if (parkedPosition) {
+        currentRidePosition.current.set(...parkedPosition);
+        if (!lastRidePosition.current) {
+          lastRidePosition.current = currentRidePosition.current.clone();
+        } else {
+          rideDistance.current += currentRidePosition.current.distanceTo(
+            lastRidePosition.current,
+          );
+          lastRidePosition.current.copy(currentRidePosition.current);
+        }
+
+        if (rideDistance.current >= EBIKE_INTRO_BREAKDOWN_DISTANCE) {
+          setIntroStep("ebike-breakdown");
+          return;
+        }
+      }
+
+      animationFrameId = window.requestAnimationFrame(tick);
     };
-  }, [introStep, setIntroStep]);
+
+    animationFrameId = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [introStep, movementMode, setIntroStep]);
 
   useEffect(() => {
     if (introStep !== "ebike-breakdown" || hasStartedBreakdown.current) {
@@ -100,14 +134,27 @@ export function EbikeIntroSequence(): React.JSX.Element | null {
     }
   }, [introStep]);
 
-  if (introStep !== "await-ebike-mount" && introStep !== "ebike-intro-ride") {
+  if (
+    introStep !== "reveal" &&
+    introStep !== "await-ebike-mount" &&
+    introStep !== "ebike-intro-ride" &&
+    introStep !== "ebike-breakdown"
+  ) {
     return null;
+  }
+
+  if (introStep === "ebike-breakdown") {
+    return <MissionNotification mission="ebike" />;
   }
 
   return (
     <MissionNotification
-      mission="ebike"
-      visible={introStep === "await-ebike-mount"}
+      imagePath={INTRO_MISSION_NOTIFICATION_IMAGE_PATH}
+      visible={
+        introStep === "reveal" ||
+        introStep === "await-ebike-mount" ||
+        introStep === "ebike-intro-ride"
+      }
     />
   );
 }

@@ -20,7 +20,7 @@ export function SiteMobileBlocker(): React.JSX.Element {
       }}
     >
       <img
-        src="/assets/logo/logo.jpg"
+        src="/assets/logo.png"
         alt="Logo Altera"
         style={{ width: 120, height: "auto" }}
       />

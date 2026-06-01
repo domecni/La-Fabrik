@@ -74,22 +74,32 @@ It tracks:
 - `gameMapLoaded`: map data and visible map nodes settled
 - `gameStageLoaded`: Rapier gameplay stage mounted
 - `showGameStage`: true when the map is ready enough to mount gameplay content
-- `shadowsReady`: renderer, shadow lights, and scene matrices have been forced once after the scene is mounted
-- `gameplayReady`: true when map, stage, octree, and the shadow warmup are all ready
+- `gameplayReady`: true when map, stage, and octree are all ready
 
-The base game-scene readiness condition before the shadow warmup is:
+The game-scene readiness condition is:
 
 ```ts
 showGameStage && gameStageLoaded && octree !== null;
 ```
 
-After that condition is met, `SceneShadowWarmup` runs one final loading step:
+Shadows are configured once when `Lighting` mounts (renderer `shadowMap.enabled`, sun
+`shadow.autoUpdate = true`, bias and frustum from `SHADOW_CONFIG` in
+`src/data/world/lightingConfig.ts`). The shadow map then refreshes every frame and
+follows the player camera through the sun's `target`. The earlier `SceneShadowWarmup`
+step has been removed — the visible loading overlay no longer waits for a forced
+shadow refresh because `autoUpdate` covers steady-state rendering.
 
-```txt
-Activation des ombres -> Ombres prêtes -> Gameplay prêt
-```
+### Avoiding global scene remounts
 
-This keeps the loading overlay visible until the renderer shadow map, shadow-casting light, and mounted scene graph have all been explicitly refreshed.
+Heavy stage components (`GameStageContent`, `Player`, dialogues) load assets via
+`useGLTF`/`useTexture` without preload (e.g. `EbikeSpeedometer` calls `useTexture`
+when the bike mounts). To prevent any late suspension from bubbling up to the
+root `<Suspense>` boundary in `src/pages/page.tsx` and unmounting the entire
+world (which would trigger a redundant octree rebuild and shadow re-config), the
+game stage block and the spawn-player block are wrapped in their own
+`<Suspense fallback={null}>` boundaries inside `src/world/World.tsx`. Any new
+sibling that suspends late should be added inside one of these boundaries or get
+its own.
 
 The debug physics scene is ready when:
 

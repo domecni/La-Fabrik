@@ -5,6 +5,7 @@ import { HandTrackingVisualizer } from "@/components/ui/HandTrackingVisualizer";
 import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { RepairMovementLockIndicator } from "@/components/ui/RepairMovementLockIndicator";
 import { Subtitles } from "@/components/ui/Subtitles";
+import { TalkieDialogueOverlay } from "@/components/ui/TalkieDialogueOverlay";
 
 export function GameUI(): React.JSX.Element {
   return (
@@ -15,6 +16,7 @@ export function GameUI(): React.JSX.Element {
       <InteractPrompt />
       <HandTrackingVisualizer />
       <Subtitles />
+      <TalkieDialogueOverlay />
       <GameSettingsMenu />
     </>
   );

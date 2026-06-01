@@ -11,13 +11,10 @@ interface UseWorldSceneLoadingOptions {
 interface UseWorldSceneLoadingResult {
   octree: Octree | null;
   gameplayReady: boolean;
-  shouldWarmUpShadows: boolean;
   showGameStage: boolean;
   handleGameStageLoaded: () => void;
   handleGameMapLoaded: () => void;
   handleOctreeReady: (octree: Octree) => void;
-  handleShadowWarmupReady: () => void;
-  handleShadowWarmupStarted: () => void;
 }
 
 export function useWorldSceneLoading({
@@ -27,19 +24,13 @@ export function useWorldSceneLoading({
   const [octree, setOctree] = useState<Octree | null>(null);
   const [gameMapLoaded, setGameMapLoaded] = useState(false);
   const [gameStageLoaded, setGameStageLoaded] = useState(false);
-  const [shadowsReady, setShadowsReady] = useState(false);
   const showGameStage = sceneMode === "game" && gameMapLoaded;
-  const gameSceneReadyForShadows =
-    showGameStage && gameStageLoaded && octree !== null;
-  const shadowWarmupReady = sceneMode === "game" && gameSceneReadyForShadows;
-  const shouldWarmUpShadows = shadowWarmupReady && !shadowsReady;
-  const gameplayReady = gameSceneReadyForShadows && shadowsReady;
+  const gameplayReady = showGameStage && gameStageLoaded && octree !== null;
   const sceneReady =
     (sceneMode === "game" && gameplayReady) ||
     (sceneMode === "physics" && octree !== null);
 
   const handleGameMapLoaded = useCallback(() => {
-    setShadowsReady(false);
     setGameMapLoaded(true);
   }, []);
 
@@ -54,7 +45,6 @@ export function useWorldSceneLoading({
 
   const handleOctreeReady = useCallback(
     (nextOctree: Octree) => {
-      setShadowsReady(false);
       setOctree(nextOctree);
       onLoadingStateChange?.({
         currentStep: "Collision prête",
@@ -64,23 +54,6 @@ export function useWorldSceneLoading({
     },
     [onLoadingStateChange],
   );
-
-  const handleShadowWarmupStarted = useCallback(() => {
-    onLoadingStateChange?.({
-      currentStep: "Activation des ombres",
-      progress: 0.97,
-      status: "loading",
-    });
-  }, [onLoadingStateChange]);
-
-  const handleShadowWarmupReady = useCallback(() => {
-    setShadowsReady(true);
-    onLoadingStateChange?.({
-      currentStep: "Ombres prêtes",
-      progress: 0.99,
-      status: "loading",
-    });
-  }, [onLoadingStateChange]);
 
   useEffect(() => {
     onLoadingStateChange?.({
@@ -115,12 +88,9 @@ export function useWorldSceneLoading({
   return {
     octree,
     gameplayReady,
-    shouldWarmUpShadows,
     showGameStage,
     handleGameStageLoaded,
     handleGameMapLoaded,
     handleOctreeReady,
-    handleShadowWarmupReady,
-    handleShadowWarmupStarted,
   };
 }

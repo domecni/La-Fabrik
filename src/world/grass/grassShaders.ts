@@ -43,6 +43,10 @@ export const grassVertexShader = /* glsl */ `
   uniform float uMaxBladeHeight;
   uniform float uRandomHeightAmount;
   uniform float uSurfaceOffset;
+  uniform vec2 uLaFabrikCenter;
+  uniform vec2 uLaFabrikHalfExtents;
+  uniform float uLaFabrikRotation;
+  uniform float uLaFabrikNoGrassFeather;
 
   float random(vec2 st) {
     return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -131,6 +135,18 @@ export const grassVertexShader = /* glsl */ `
       smoothstep(uBoundingBoxMin.z, uBoundingBoxMin.z + 2.0, worldPos.z) *
       smoothstep(uBoundingBoxMax.z, uBoundingBoxMax.z - 2.0, worldPos.z);
     heightModifier *= edgeFade * mix(0.45, 1.0, clumpMask);
+
+    vec2 laFabrikDelta = worldPos.xz - uLaFabrikCenter;
+    float laFabrikCos = cos(-uLaFabrikRotation);
+    float laFabrikSin = sin(-uLaFabrikRotation);
+    vec2 laFabrikLocal = vec2(
+      laFabrikDelta.x * laFabrikCos - laFabrikDelta.y * laFabrikSin,
+      laFabrikDelta.x * laFabrikSin + laFabrikDelta.y * laFabrikCos
+    );
+    vec2 laFabrikDistance = abs(laFabrikLocal) - uLaFabrikHalfExtents;
+    float laFabrikOutsideDistance = max(laFabrikDistance.x, laFabrikDistance.y);
+    float laFabrikGrassMask = smoothstep(0.0, uLaFabrikNoGrassFeather, laFabrikOutsideDistance);
+    heightModifier *= laFabrikGrassMask;
 
     float sideFactor = (color.r == 0.1) ? 1.0 : (color.b == 0.1) ? -1.0 : 0.0;
     float tipFactor = color.g;

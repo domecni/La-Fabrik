@@ -1,5 +1,3 @@
-import { CHUNK_CONFIG } from "@/data/world/chunkStreamingConfig";
-
 export const GRAPHICS_PRESET_KEYS = ["low", "medium", "high", "ultra"] as const;
 
 export type GraphicsPreset = (typeof GRAPHICS_PRESET_KEYS)[number];
@@ -32,8 +30,8 @@ export const GRAPHICS_PRESETS = {
   },
   high: {
     label: "High",
-    chunkLoadRadius: CHUNK_CONFIG.loadRadius,
-    chunkUnloadRadius: CHUNK_CONFIG.unloadRadius,
+    chunkLoadRadius: 35,
+    chunkUnloadRadius: 45,
     fogEnabled: false,
     forceLodModels: false,
     lodHighDetailDistance: 10,

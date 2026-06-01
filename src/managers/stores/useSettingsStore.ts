@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { AudioManager } from "@/managers/AudioManager";
 import type { AudioCategory } from "@/managers/AudioManager";
 import type { SubtitleLanguage } from "@/types/settings/settings";
@@ -33,6 +34,8 @@ const DEFAULT_SETTINGS: SettingsState = {
   subtitleLanguage: "fr",
 };
 
+const SETTINGS_STORAGE_KEY = "la-fabrik-settings";
+
 function clampVolume(volume: number): number {
   return Math.max(0, Math.min(1, volume));
 }
@@ -46,36 +49,50 @@ function setAudioCategoryVolume(
   return nextVolume;
 }
 
-function applyDefaultAudioSettings(): void {
-  AudioManager.getInstance().setCategoryVolume(
-    "music",
-    DEFAULT_SETTINGS.musicVolume,
-  );
-  AudioManager.getInstance().setCategoryVolume(
-    "sfx",
-    DEFAULT_SETTINGS.sfxVolume,
-  );
+function applyAudioSettings(
+  settings: Pick<SettingsState, "musicVolume" | "sfxVolume" | "dialogueVolume">,
+): void {
+  AudioManager.getInstance().setCategoryVolume("music", settings.musicVolume);
+  AudioManager.getInstance().setCategoryVolume("sfx", settings.sfxVolume);
   AudioManager.getInstance().setCategoryVolume(
     "dialogue",
-    DEFAULT_SETTINGS.dialogueVolume,
+    settings.dialogueVolume,
   );
 }
 
-applyDefaultAudioSettings();
+applyAudioSettings(DEFAULT_SETTINGS);
 
-export const useSettingsStore = create<SettingsStore>()((set) => ({
-  ...DEFAULT_SETTINGS,
-  setSettingsMenuOpen: (isSettingsMenuOpen) => set({ isSettingsMenuOpen }),
-  setMusicVolume: (volume) =>
-    set({ musicVolume: setAudioCategoryVolume("music", volume) }),
-  setSfxVolume: (volume) =>
-    set({ sfxVolume: setAudioCategoryVolume("sfx", volume) }),
-  setDialogueVolume: (volume) =>
-    set({ dialogueVolume: setAudioCategoryVolume("dialogue", volume) }),
-  setSubtitlesEnabled: (subtitlesEnabled) => set({ subtitlesEnabled }),
-  setSubtitleLanguage: (subtitleLanguage) => set({ subtitleLanguage }),
-  resetSettings: () => {
-    applyDefaultAudioSettings();
-    set(DEFAULT_SETTINGS);
-  },
-}));
+export const useSettingsStore = create<SettingsStore>()(
+  persist(
+    (set) => ({
+      ...DEFAULT_SETTINGS,
+      setSettingsMenuOpen: (isSettingsMenuOpen) => set({ isSettingsMenuOpen }),
+      setMusicVolume: (volume) =>
+        set({ musicVolume: setAudioCategoryVolume("music", volume) }),
+      setSfxVolume: (volume) =>
+        set({ sfxVolume: setAudioCategoryVolume("sfx", volume) }),
+      setDialogueVolume: (volume) =>
+        set({ dialogueVolume: setAudioCategoryVolume("dialogue", volume) }),
+      setSubtitlesEnabled: (subtitlesEnabled) => set({ subtitlesEnabled }),
+      setSubtitleLanguage: (subtitleLanguage) => set({ subtitleLanguage }),
+      resetSettings: () => {
+        applyAudioSettings(DEFAULT_SETTINGS);
+        set(DEFAULT_SETTINGS);
+      },
+    }),
+    {
+      name: SETTINGS_STORAGE_KEY,
+      storage: createJSONStorage(() => window.localStorage),
+      partialize: (state) => ({
+        dialogueVolume: state.dialogueVolume,
+        musicVolume: state.musicVolume,
+        sfxVolume: state.sfxVolume,
+        subtitleLanguage: state.subtitleLanguage,
+        subtitlesEnabled: state.subtitlesEnabled,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) applyAudioSettings(state);
+      },
+    },
+  ),
+);

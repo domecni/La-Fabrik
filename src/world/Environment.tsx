@@ -15,24 +15,11 @@ import { SkyModel } from "@/components/three/world/SkyModel";
 import { CloudSystem } from "@/world/clouds/CloudSystem";
 import { FogSystem } from "@/world/fog/FogSystem";
 import { GrassSystem } from "@/world/grass/GrassSystem";
-import { SceneShadowWarmup } from "@/world/SceneShadowWarmup";
 import { VegetationSystem } from "@/world/vegetation/VegetationSystem";
 import { WaterSystem } from "@/world/water/WaterSystem";
 import { WorldPlane } from "@/world/WorldPlane";
 
-interface ShadowWarmupConfig {
-  active: boolean;
-  onReady: () => void;
-  onStarted: () => void;
-}
-
-interface EnvironmentProps {
-  shadowWarmup?: ShadowWarmupConfig;
-}
-
-export function Environment({
-  shadowWarmup,
-}: EnvironmentProps): React.JSX.Element {
+export function Environment(): React.JSX.Element {
   const sceneMode = useSceneMode();
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
@@ -47,13 +34,6 @@ export function Environment({
   return (
     <>
       <FogSystem />
-      {shadowWarmup ? (
-        <SceneShadowWarmup
-          active={shadowWarmup.active}
-          onReady={shadowWarmup.onReady}
-          onStarted={shadowWarmup.onStarted}
-        />
-      ) : null}
       {showSky ? (
         <SkyModel
           fallbackColor={GAME_SCENE_FALLBACK_BACKGROUND_COLOR}

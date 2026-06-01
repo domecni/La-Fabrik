@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
-import type { Object3D } from "three";
+import { type Object3D } from "three";
 import { Octree } from "three-stdlib";
 import type { OctreeReadyHandler } from "@/types/three/three";
 
@@ -27,6 +27,7 @@ export function useOctreeGraphNode(
 
     const octree = new Octree();
     octree.fromGraphNode(graphNode);
+
     onOctreeReady(octree);
   }, [enabled, graphNodeRef, onOctreeReady, rebuildKey]);
 }

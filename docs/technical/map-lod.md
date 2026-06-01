@@ -25,7 +25,7 @@ Current behavior:
 | -------- | ------------------: | --- | ------------------------------------- |
 | `low`    |                 10m | On  | Always use `*-LOD` models             |
 | `medium` |                 20m | On  | Always use `*-LOD` models             |
-| `high`   | Current default 50m | Off | Regular model up to 10m, then `*-LOD` |
+| `high`   |                 35m | Off | Regular model up to 10m, then `*-LOD` |
 | `ultra`  |                 50m | Off | Regular model up to 20m, then `*-LOD` |
 
 The unload distance stays slightly larger than the load distance to avoid rapid mount/unmount flickering when the player stands near a boundary.

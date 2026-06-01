@@ -158,9 +158,11 @@ Current runtime values:
 
 ```txt
 chunkSize: 35
-loadRadius: 45
-unloadRadius: 45
-updateInterval: 350ms
+low load/unload radius: 10m / 18m
+medium load/unload radius: 20m / 30m
+high load/unload radius: 35m / 45m
+ultra load/unload radius: 50m / 65m
+updateInterval: 250ms
 fog near: 30
 fog far: 45
 ```

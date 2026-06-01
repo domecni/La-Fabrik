@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-const BACKGROUND_IMAGE = "/assets/bg-site.png";
+const BACKGROUND_IMAGE = "/assets/bg-site.webp";
 
 export const SITE_CONFIG = {
   backgroundImage: BACKGROUND_IMAGE,
