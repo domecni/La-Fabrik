@@ -1257,8 +1257,11 @@ canvas {
 .talkie-dialogue-overlay__model-frame {
   position: absolute;
   inset: 0;
-  animation: talkie-radio-shake 1s ease-in-out infinite;
   filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.55));
+}
+
+.talkie-dialogue-overlay--active .talkie-dialogue-overlay__model-frame {
+  animation: talkie-radio-shake 1s ease-in-out infinite;
 }
 
 .talkie-dialogue-overlay__model-frame canvas {

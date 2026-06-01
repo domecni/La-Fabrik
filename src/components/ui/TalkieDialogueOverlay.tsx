@@ -14,7 +14,16 @@ const TALKIE_REVEAL_STEPS = new Set([
   "completed",
 ]);
 
-function TalkieModel(): React.JSX.Element {
+const TALKIE_REST_Y = -0.55;
+const TALKIE_ACTIVE_Y = -0.18;
+const TALKIE_FLOAT_Y_AMPLITUDE = 0.025;
+const TALKIE_FLOAT_ROTATION_AMPLITUDE = THREE.MathUtils.degToRad(1.6);
+
+interface TalkieModelProps {
+  active: boolean;
+}
+
+function TalkieModel({ active }: TalkieModelProps): React.JSX.Element {
   const { scene } = useGLTF(TALKIE_MODEL_PATH);
   const model = useMemo(() => scene.clone(true), [scene]);
   const groupRef = useRef<THREE.Group>(null);
@@ -33,15 +42,26 @@ function TalkieModel(): React.JSX.Element {
     if (!groupRef.current) return;
 
     const t = clock.getElapsedTime();
-    groupRef.current.rotation.z = Math.sin(t * 22) * 0.025;
-    groupRef.current.position.y = Math.sin(t * 6) * 0.012;
+    const floatY = Math.sin(t * 1.4) * TALKIE_FLOAT_Y_AMPLITUDE;
+    const targetY = (active ? TALKIE_ACTIVE_Y : TALKIE_REST_Y) + floatY;
+    groupRef.current.position.y = THREE.MathUtils.lerp(
+      groupRef.current.position.y,
+      targetY,
+      0.14,
+    );
+
+    if (active) {
+      groupRef.current.rotation.z = Math.sin(t * 22) * 0.025;
+    } else {
+      groupRef.current.rotation.z =
+        Math.sin(t * 0.8) * TALKIE_FLOAT_ROTATION_AMPLITUDE;
+    }
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={[0, TALKIE_REST_Y, 0]}>
       <primitive
         object={model}
-        position={[0, -0.18, 0]}
         rotation={[0.18, Math.PI, -0.08]}
         scale={1.45}
       />
@@ -73,11 +93,12 @@ export function TalkieDialogueOverlay(): React.JSX.Element | null {
 
   if (!isAfterReveal) return null;
 
+  const overlayClassName = isNarratorDialogue
+    ? "talkie-dialogue-overlay talkie-dialogue-overlay--active talkie-dialogue-overlay--raised"
+    : "talkie-dialogue-overlay";
+
   return (
-    <aside
-      className={`talkie-dialogue-overlay${isNarratorDialogue ? " talkie-dialogue-overlay--raised" : ""}`}
-      aria-hidden="true"
-    >
+    <aside className={overlayClassName} aria-hidden="true">
       {isNarratorDialogue ? <TalkieSignalLines /> : null}
       <div className="talkie-dialogue-overlay__model-frame">
         <Canvas
@@ -89,7 +110,7 @@ export function TalkieDialogueOverlay(): React.JSX.Element | null {
           <ambientLight intensity={2.5} />
           <directionalLight position={[2, 3, 4]} intensity={2.8} />
           <Suspense fallback={null}>
-            <TalkieModel />
+            <TalkieModel active={isNarratorDialogue} />
           </Suspense>
         </Canvas>
       </div>
