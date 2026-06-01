@@ -1,11 +1,8 @@
 import { useEffect, useRef } from "react";
-import type { MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   PCFShadowMap,
-  Vector3,
   type AmbientLight,
-  type Camera,
   type DirectionalLight,
   type Object3D,
   type WebGLRenderer,
@@ -35,21 +32,17 @@ const SHADOW_MAP_SIZE = 2048;
 const SHADOW_CAMERA_SIZE = 95;
 const SHADOW_CAMERA_NEAR = 0.5;
 const SHADOW_CAMERA_FAR = 300;
-const SHADOW_REFRESH_INTERVAL_MS = 180;
-const SHADOW_REFRESH_DISTANCE = 0.75;
-const SHADOW_REFRESH_DISTANCE_SQUARED =
-  SHADOW_REFRESH_DISTANCE * SHADOW_REFRESH_DISTANCE;
 
-function configureManualRendererShadows(gl: WebGLRenderer): void {
+function configureRendererShadows(gl: WebGLRenderer): void {
   gl.shadowMap.enabled = true;
   gl.shadowMap.type = PCFShadowMap;
-  gl.shadowMap.autoUpdate = false;
+  gl.shadowMap.autoUpdate = true;
   gl.shadowMap.needsUpdate = true;
 }
 
 function configureSunShadow(sun: DirectionalLight, sunTarget: Object3D): void {
   sun.target = sunTarget;
-  sun.shadow.autoUpdate = false;
+  sun.shadow.autoUpdate = true;
   sun.shadow.needsUpdate = true;
   sun.shadow.mapSize.width = SHADOW_MAP_SIZE;
   sun.shadow.mapSize.height = SHADOW_MAP_SIZE;
@@ -62,56 +55,18 @@ function configureSunShadow(sun: DirectionalLight, sunTarget: Object3D): void {
   sun.shadow.camera.updateProjectionMatrix();
 }
 
-function requestSunShadowRefresh({
-  camera,
-  elapsedMs,
-  gl,
-  lastCameraPosition,
-  lastRefreshMs,
-  shadowHasInitialPosition,
-  sun,
-}: {
-  camera: Camera;
-  elapsedMs: number;
-  gl: WebGLRenderer;
-  lastCameraPosition: Vector3;
-  lastRefreshMs: MutableRefObject<number>;
-  shadowHasInitialPosition: MutableRefObject<boolean>;
-  sun: DirectionalLight;
-}): void {
-  if (elapsedMs - lastRefreshMs.current < SHADOW_REFRESH_INTERVAL_MS) {
-    return;
-  }
-
-  const cameraMovedEnough =
-    !shadowHasInitialPosition.current ||
-    lastCameraPosition.distanceToSquared(camera.position) >=
-      SHADOW_REFRESH_DISTANCE_SQUARED;
-
-  if (!cameraMovedEnough) return;
-
-  configureManualRendererShadows(gl);
-  sun.shadow.needsUpdate = true;
-  lastCameraPosition.copy(camera.position);
-  lastRefreshMs.current = elapsedMs;
-  shadowHasInitialPosition.current = true;
-}
-
 export function Lighting(): React.JSX.Element {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
   const ambient = useRef<AmbientLight>(null);
   const sun = useRef<DirectionalLight>(null);
   const sunTarget = useRef<Object3D>(null);
-  const lastShadowRefreshMs = useRef(-SHADOW_REFRESH_INTERVAL_MS);
-  const lastShadowCameraPosition = useRef(new Vector3());
-  const shadowHasInitialPosition = useRef(false);
 
   useEffect(() => {
     if (!sun.current || !sunTarget.current) return;
 
     configureSunShadow(sun.current, sunTarget.current);
-    configureManualRendererShadows(gl);
+    configureRendererShadows(gl);
   }, [gl]);
 
   useDebugFolder("Lighting", (folder) => {
@@ -146,7 +101,7 @@ export function Lighting(): React.JSX.Element {
       .name("Sun Z");
   });
 
-  useFrame(({ clock }) => {
+  useFrame(() => {
     if (ambient.current) {
       ambient.current.color.set(LIGHTING_STATE.ambientColor);
       ambient.current.intensity = LIGHTING_STATE.ambientIntensity;
@@ -163,15 +118,7 @@ export function Lighting(): React.JSX.Element {
       sun.current.color.set(LIGHTING_STATE.sunColor);
       sun.current.intensity = LIGHTING_STATE.sunIntensity;
       sun.current.updateMatrixWorld();
-      requestSunShadowRefresh({
-        camera,
-        elapsedMs: clock.elapsedTime * 1000,
-        gl,
-        lastCameraPosition: lastShadowCameraPosition.current,
-        lastRefreshMs: lastShadowRefreshMs,
-        shadowHasInitialPosition,
-        sun: sun.current,
-      });
+      sun.current.shadow.needsUpdate = true;
     }
   });
 
