@@ -277,6 +277,15 @@ function CollisionModelInstance({
     // by MergedStaticMapModel and is unaffected.
     if (node.name !== "lafabrik") return;
 
+    // Strip the door slab (and any Blender-suffixed variant like `porte.001`,
+    // `porte_001`) from the la fabrik collision octree so the player can walk
+    // through the doorway. The visual model is rendered separately by
+    // MergedStaticMapModel and is unaffected. We exclude unrelated names like
+    // `porte stock` (a shelf of stocked doors) by requiring an exact match or
+    // a numeric suffix only.
+    const isDoorSlab = (name: string): boolean =>
+      name === "porte" || /^porte[._]\d+$/i.test(name);
+
     // [diag] temporary — collect all door-like candidate names to debug stripping
     const candidates: string[] = [];
     const removed: THREE.Object3D[] = [];
@@ -284,7 +293,7 @@ function CollisionModelInstance({
       if (/porte/i.test(child.name)) {
         candidates.push(child.name);
       }
-      if (child.name === "porte") {
+      if (isDoorSlab(child.name)) {
         removed.push(child);
       }
     });
