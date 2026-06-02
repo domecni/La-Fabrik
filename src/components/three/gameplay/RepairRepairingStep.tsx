@@ -4,6 +4,7 @@ import type {
   RepairCasePartAnchors,
   RepairCasePlaceholder,
 } from "@/components/three/gameplay/RepairCaseModel";
+import type { ExplodedNodeAnchors } from "@/components/three/models/ExplodableModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
@@ -42,6 +43,7 @@ let hasWarnedMissingPlaceholders = false;
 
 interface RepairRepairingStepProps {
   anchors?: RepairCasePartAnchors;
+  brokenAnchors?: ExplodedNodeAnchors;
   brokenParts: readonly RepairScannedBrokenPart[];
   config: RepairMissionConfig;
   placeholders: readonly RepairCasePlaceholder[];
@@ -68,6 +70,7 @@ interface RepairPartPlacementFeedbackProps {
 
 export function RepairRepairingStep({
   anchors = {},
+  brokenAnchors = {},
   brokenParts,
   config,
   placeholders,
@@ -272,14 +275,18 @@ export function RepairRepairingStep({
       })}
 
       {brokenPartsToDeposit.map((part, index) => {
-        const startOffset =
+        const fallbackOffset =
           BROKEN_PART_START_OFFSETS[index % BROKEN_PART_START_OFFSETS.length] ??
           BROKEN_PART_START_OFFSETS[0]!;
-        const startPosition: Vector3Tuple = [
-          REPAIR_CASE_FOCUS_POSITION[0] + startOffset[0],
-          REPAIR_CASE_FOCUS_POSITION[1] + startOffset[1],
-          REPAIR_CASE_FOCUS_POSITION[2] + startOffset[2],
+        const fallbackPosition: Vector3Tuple = [
+          REPAIR_CASE_FOCUS_POSITION[0] + fallbackOffset[0],
+          REPAIR_CASE_FOCUS_POSITION[1] + fallbackOffset[1],
+          REPAIR_CASE_FOCUS_POSITION[2] + fallbackOffset[2],
         ];
+        const anchorPosition = part.targetNodeName
+          ? brokenAnchors[part.targetNodeName]
+          : undefined;
+        const startPosition: Vector3Tuple = anchorPosition ?? fallbackPosition;
         const targetPositions = getBrokenPartTargetPositions(
           part,
           placeholderTargets,
@@ -529,5 +536,6 @@ function getBrokenPartsToDeposit(
     label: part.label,
     modelPath: part.modelPath ?? config.modelPath,
     ...(part.caseSlotName ? { caseSlotName: part.caseSlotName } : {}),
+    ...(part.targetNodeName ? { targetNodeName: part.targetNodeName } : {}),
   }));
 }

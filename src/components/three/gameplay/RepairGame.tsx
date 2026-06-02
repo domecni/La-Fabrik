@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { ExplodableModel } from "@/components/three/models/ExplodableModel";
+import type { ExplodedNodeAnchors } from "@/components/three/models/ExplodableModel";
 import type {
   RepairCasePartAnchors,
   RepairCasePlaceholder,
@@ -67,12 +68,14 @@ export function RepairGame({
     readonly RepairCasePlaceholder[]
   >([]);
   const [caseAnchors, setCaseAnchors] = useState<RepairCasePartAnchors>({});
+  const [brokenAnchors, setBrokenAnchors] = useState<ExplodedNodeAnchors>({});
   const [scannedBrokenParts, setScannedBrokenParts] = useState<
     readonly RepairScannedBrokenPart[]
   >([]);
   const parsedScale = toVector3Scale(scale);
   const snappedPosition = useTerrainSnappedPosition(position);
   const readyForFragmentation = step === "inspected";
+  const brokenNodeNames = useMemo(() => getBrokenNodeNames(config), [config]);
 
   useRepairFragmentationInput({
     enabled: mainState === mission && readyForFragmentation,
@@ -86,6 +89,7 @@ export function RepairGame({
     const timeoutId = window.setTimeout(() => {
       setCasePlaceholders([]);
       setCaseAnchors({});
+      setBrokenAnchors({});
       setScannedBrokenParts([]);
     }, 0);
 
@@ -141,13 +145,24 @@ export function RepairGame({
           />
         ) : null}
         {step === "repairing" ? (
-          <RepairRepairingStep
-            anchors={caseAnchors}
-            brokenParts={scannedBrokenParts}
-            config={config}
-            placeholders={casePlaceholders}
-            onRepair={() => setMissionStep(mission, "reassembling")}
-          />
+          <>
+            <ExplodableModel
+              modelPath={config.modelPath}
+              scale={config.modelScale ?? 1}
+              split
+              hideNodeNames={brokenNodeNames}
+              nodeAnchorNames={brokenNodeNames}
+              onNodeAnchorsChange={setBrokenAnchors}
+            />
+            <RepairRepairingStep
+              anchors={caseAnchors}
+              brokenAnchors={brokenAnchors}
+              brokenParts={scannedBrokenParts}
+              config={config}
+              placeholders={casePlaceholders}
+              onRepair={() => setMissionStep(mission, "reassembling")}
+            />
+          </>
         ) : null}
         {step === "reassembling" ? (
           <RepairReassemblyStep
@@ -194,4 +209,16 @@ function getRepairMissionModelPaths(config: RepairMissionConfig): string[] {
       ...config.replacementParts.flatMap((part) => part.modelPath ?? []),
     ]),
   ];
+}
+
+function getBrokenNodeNames(config: RepairMissionConfig): readonly string[] {
+  const names = new Set<string>();
+  config.brokenParts.forEach((part) => {
+    if (part.targetNodeName) names.add(part.targetNodeName);
+    else if (part.nodeName) names.add(part.nodeName);
+  });
+  config.replacementParts.forEach((part) => {
+    if (part.targetNodeName) names.add(part.targetNodeName);
+  });
+  return Array.from(names);
 }
