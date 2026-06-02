@@ -13,7 +13,6 @@ export const MAP_LOD_MODEL_PATHS = {
   lafabrik: "/models/lafabrik-LOD/model.gltf",
   maison1: "/models/maison1-LOD/model.gltf",
   panneauaffichage: "/models/panneauaffichage-LOD/model.gltf",
-  talkie: "/models/talkie-LOD/model.gltf",
   arbre: "/models/arbre-LOD/model.glb",
   buisson: "/models/buisson-LOD/model.glb",
   sapin: "/models/sapin-LOD/model.glb",

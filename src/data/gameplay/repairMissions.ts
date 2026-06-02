@@ -42,11 +42,6 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         modelPath: "/models/refroidisseur/model.gltf",
       },
       {
-        id: "ebike-radio-distractor",
-        label: "Radio module",
-        modelPath: "/models/talkie/model.glb",
-      },
-      {
         id: "ebike-glove-distractor",
         label: "Insulation glove",
         modelPath: "/models/gant_l/model.gltf",
