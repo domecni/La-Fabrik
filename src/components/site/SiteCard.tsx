@@ -22,8 +22,6 @@ export function SiteCard({
     return "#b8b8b8";
   };
 
-  const borderColor = selected ? "#a8d5a2" : "rgba(255, 255, 255, 0.55)";
-
   const textColor = disabled ? "rgba(77, 77, 77, 0.72)" : "#4d4d4d";
 
   return (
@@ -41,7 +39,9 @@ export function SiteCard({
         height: isSituation
           ? "clamp(48px, 6vw, 60px)"
           : "clamp(140px, 18vw, 180px)",
-        border: `3px solid ${borderColor}`,
+        border: "3px solid rgba(255, 255, 255, 0.55)",
+        outline: selected ? "3px solid #a8d5a2" : "none",
+        outlineOffset: 0,
         background: getBackground(),
         cursor: disabled ? "not-allowed" : "pointer",
         display: "flex",
