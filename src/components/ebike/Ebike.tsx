@@ -353,7 +353,7 @@ export function Ebike({
   ];
   const interactionLabel =
     mainState === "ebike"
-      ? "Réparer l'e-bike"
+      ? "Lancer le repair game"
       : movementMode === "walk"
         ? "Monter sur le bike"
         : "Descendre du bike";
