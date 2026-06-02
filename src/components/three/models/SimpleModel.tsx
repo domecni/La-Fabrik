@@ -17,10 +17,29 @@ function applyShadowSettings(
   });
 }
 
+function applyOpacity(object: THREE.Object3D, opacity: number): void {
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+
+    const materials = Array.isArray(child.material)
+      ? child.material
+      : [child.material];
+
+    materials.forEach((material) => {
+      if (!(material instanceof THREE.Material)) return;
+      material.transparent = opacity < 1;
+      material.opacity = opacity;
+      material.depthWrite = opacity >= 1;
+      material.needsUpdate = true;
+    });
+  });
+}
+
 interface SimpleModelConfig extends ModelTransformProps {
   modelPath: string;
   castShadow?: boolean;
   receiveShadow?: boolean;
+  opacity?: number;
 }
 
 interface SimpleModelProps extends SimpleModelConfig {
@@ -34,6 +53,7 @@ export function SimpleModel({
   scale = 1,
   castShadow = true,
   receiveShadow = true,
+  opacity = 1,
   children,
 }: SimpleModelProps): React.JSX.Element {
   const { scene } = useLoggedGLTF(modelPath, {
@@ -47,6 +67,10 @@ export function SimpleModel({
   useEffect(() => {
     applyShadowSettings(model, castShadow, receiveShadow);
   }, [castShadow, model, receiveShadow]);
+
+  useEffect(() => {
+    applyOpacity(model, opacity);
+  }, [model, opacity]);
 
   const parsedScale =
     typeof scale === "number" ? ([scale, scale, scale] as Vector3Tuple) : scale;

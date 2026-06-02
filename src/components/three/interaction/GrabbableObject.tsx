@@ -34,6 +34,8 @@ interface GrabbableObjectProps {
   colliders?: ColliderShape;
   label?: string;
   handControlled?: boolean;
+  disabled?: boolean;
+  onGrabChange?: (held: boolean) => void;
   onPositionChange?: (position: THREE.Vector3) => void;
   onSnap?: (position: THREE.Vector3) => void;
   snapDuration?: number;
@@ -131,6 +133,8 @@ export function GrabbableObject({
   colliders = GRAB_DEFAULT_COLLIDERS,
   label = GRAB_DEFAULT_LABEL,
   handControlled = false,
+  disabled = false,
+  onGrabChange,
   onPositionChange,
   onSnap,
   snapDuration = 0.25,
@@ -151,6 +155,19 @@ export function GrabbableObject({
       snapTween.current?.kill();
     };
   }, []);
+
+  useEffect(() => {
+    if (!disabled) return;
+    if (isHolding.current) {
+      isHolding.current = false;
+      onGrabChange?.(false);
+    }
+    if (isHandHolding.current) {
+      isHandHolding.current = false;
+      InteractionManager.getInstance().setHandHolding(false);
+      onGrabChange?.(false);
+    }
+  }, [disabled, onGrabChange]);
 
   function snapToNearestTarget(): void {
     const body = rbRef.current;
@@ -242,13 +259,15 @@ export function GrabbableObject({
   useFrame(() => {
     if (!rbRef.current) return;
 
-    const fistHand = handControlled
-      ? hands.find((hand) => hand.isFist)
-      : undefined;
-
     const t = rbRef.current.translation();
     _currentPos.set(t.x, t.y, t.z);
     onPositionChange?.(_currentPos);
+
+    if (disabled) return;
+
+    const fistHand = handControlled
+      ? hands.find((hand) => hand.isFist)
+      : undefined;
 
     if (fistHand) {
       const handCenter = getHandCenterPoint(fistHand);
@@ -267,15 +286,20 @@ export function GrabbableObject({
           ? getHandHit(groupRef.current, camera, _cameraPos, handCenter)
           : null;
 
-        isHandHolding.current = Boolean(hit);
-        InteractionManager.getInstance().setHandHolding(isHandHolding.current);
+        const hadHit = Boolean(hit);
+        if (hadHit) {
+          isHandHolding.current = true;
+          InteractionManager.getInstance().setHandHolding(true);
+          onGrabChange?.(true);
+        }
       }
     } else {
       if (isHandHolding.current) {
         snapToNearestTarget();
+        isHandHolding.current = false;
+        InteractionManager.getInstance().setHandHolding(false);
+        onGrabChange?.(false);
       }
-      isHandHolding.current = false;
-      InteractionManager.getInstance().setHandHolding(false);
     }
 
     if (!isHolding.current && !isHandHolding.current) return;
@@ -311,35 +335,41 @@ export function GrabbableObject({
         position={position}
       >
         <group ref={groupRef}>
-          <InteractableObject
-            kind="grab"
-            label={label}
-            position={position}
-            bodyRef={rbRef}
-            onPress={() => {
-              isHolding.current = true;
-            }}
-            onRelease={() => {
-              isHolding.current = false;
-              snapToNearestTarget();
-              if (
-                !rbRef.current ||
-                grabDebugParams.throwBoost === GRAB_THROW_BOOST_DEFAULT
-              )
-                return;
-              const v = rbRef.current.linvel();
-              rbRef.current.setLinvel(
-                {
-                  x: v.x * grabDebugParams.throwBoost,
-                  y: v.y * grabDebugParams.throwBoost,
-                  z: v.z * grabDebugParams.throwBoost,
-                },
-                true,
-              );
-            }}
-          >
-            {children}
-          </InteractableObject>
+          {disabled ? (
+            children
+          ) : (
+            <InteractableObject
+              kind="grab"
+              label={label}
+              position={position}
+              bodyRef={rbRef}
+              onPress={() => {
+                isHolding.current = true;
+                onGrabChange?.(true);
+              }}
+              onRelease={() => {
+                isHolding.current = false;
+                onGrabChange?.(false);
+                snapToNearestTarget();
+                if (
+                  !rbRef.current ||
+                  grabDebugParams.throwBoost === GRAB_THROW_BOOST_DEFAULT
+                )
+                  return;
+                const v = rbRef.current.linvel();
+                rbRef.current.setLinvel(
+                  {
+                    x: v.x * grabDebugParams.throwBoost,
+                    y: v.y * grabDebugParams.throwBoost,
+                    z: v.z * grabDebugParams.throwBoost,
+                  },
+                  true,
+                );
+              }}
+            >
+              {children}
+            </InteractableObject>
+          )}
         </group>
       </RigidBody>
     </group>

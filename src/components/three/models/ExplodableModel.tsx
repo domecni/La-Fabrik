@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Component, useEffect, useMemo } from "react";
+import { Component, useEffect, useMemo, useRef } from "react";
+import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
@@ -8,6 +9,10 @@ import type { ExplodedPart } from "@/utils/three/ExplodedModel";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 import { toVector3Scale } from "@/utils/three/scale";
+
+export type ExplodedNodeAnchors = Readonly<Record<string, Vector3Tuple>>;
+
+const _anchorWorld = new THREE.Vector3();
 
 interface ModelErrorBoundaryProps {
   children: ReactNode;
@@ -67,6 +72,9 @@ interface ExplodableModelInnerProps extends ModelTransformProps {
   split: boolean;
   splitDistance?: number;
   onPartsReady?: (parts: readonly ExplodedPart[]) => void;
+  hideNodeNames?: readonly string[];
+  nodeAnchorNames?: readonly string[];
+  onNodeAnchorsChange?: (anchors: ExplodedNodeAnchors) => void;
 }
 
 export function ExplodableModel(
@@ -93,6 +101,9 @@ function ExplodableModelInner({
   scale = 1,
   splitDistance = 1.2,
   onPartsReady,
+  hideNodeNames,
+  nodeAnchorNames,
+  onNodeAnchorsChange,
 }: ExplodableModelInnerProps): React.JSX.Element {
   const { scene } = useLoggedGLTF(modelPath, {
     scope: "ExplodableModel",
@@ -106,6 +117,24 @@ function ExplodableModelInner({
     [model, splitDistance],
   );
   const parsedScale = toVector3Scale(scale);
+  const anchorSignatureRef = useRef("");
+
+  useEffect(() => {
+    if (!hideNodeNames || hideNodeNames.length === 0) return;
+    const hidden: THREE.Object3D[] = [];
+    model.traverse((child) => {
+      if (hideNodeNames.includes(child.name)) {
+        hidden.push(child);
+        child.visible = false;
+      }
+    });
+
+    return () => {
+      hidden.forEach((object) => {
+        object.visible = true;
+      });
+    };
+  }, [hideNodeNames, model]);
 
   useEffect(() => {
     explodedModel.setSplit(split);
@@ -117,6 +146,35 @@ function ExplodableModelInner({
 
   useFrame((_, delta) => {
     explodedModel.update(delta);
+
+    if (
+      !onNodeAnchorsChange ||
+      !nodeAnchorNames ||
+      nodeAnchorNames.length === 0
+    ) {
+      return;
+    }
+
+    const anchors: Record<string, Vector3Tuple> = {};
+    nodeAnchorNames.forEach((name) => {
+      const node = model.getObjectByName(name);
+      if (!node) return;
+      node.getWorldPosition(_anchorWorld);
+      anchors[name] = [_anchorWorld.x, _anchorWorld.y, _anchorWorld.z];
+    });
+
+    const signature = nodeAnchorNames
+      .map((name) => {
+        const a = anchors[name];
+        return a
+          ? `${name}:${a[0].toFixed(3)},${a[1].toFixed(3)},${a[2].toFixed(3)}`
+          : `${name}:?`;
+      })
+      .join("|");
+
+    if (signature === anchorSignatureRef.current) return;
+    anchorSignatureRef.current = signature;
+    onNodeAnchorsChange(anchors);
   });
 
   return (

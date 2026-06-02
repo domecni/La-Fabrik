@@ -10,17 +10,23 @@ It is now also available to the production repair flow when a mission reaches a 
 
 ## Runtime Flow
 
-1. The browser captures webcam frames in `src/hooks/handTracking/useRemoteHandTracking.ts`.
-2. Frames are sent to the local Python backend over WebSocket.
-3. The backend runs MediaPipe hand landmark detection.
-4. The backend returns hand data including landmarks, handedness, score, center point, and `isFist`.
-5. React stores the latest snapshot in the hand tracking provider.
-6. `GrabbableObject` reads that snapshot each frame and uses fist state plus raycasting to grab objects.
-7. `HandTrackingGlove` reads the same snapshot and places the rigged `gant_l` and `gant_r` models on the detected hands when hand tracking is active.
+The frontend can run hand tracking with two interchangeable sources, selected from the debug source controller:
+
+- **Browser JS** (`src/hooks/handTracking/useBrowserHandTracking.ts`) runs MediaPipe `hand_landmarker.task` directly in the browser via `@mediapipe/tasks-vision`. Default for debug.
+- **Backend** (`src/hooks/handTracking/useRemoteHandTracking.ts`) sends webcam frames as JPEG over WebSocket to a local Python process that runs MediaPipe and returns landmarks.
+
+Both sources funnel into the same `HandTrackingContext` so all consumers see one shared snapshot:
+
+1. The active source captures or receives landmarks.
+2. The hook applies an EMA smoothing pass on the landmarks before publishing the snapshot.
+3. `HandTrackingProvider` exposes that snapshot through React context.
+4. `GrabbableObject` reads the snapshot each frame and uses the fist state plus raycasting to grab objects.
+5. `HandTrackingGlove` reads the same snapshot and places a rigged glove on each detected hand.
+6. `HandTrackingVisualizer` paints an SVG wireframe overlay on top of the canvas.
 
 ## Activation Rules
 
-Hand tracking is intentionally gated so the webcam and backend are not used all the time.
+Hand tracking is gated so the webcam and runtime are only spun up when actually needed.
 
 The debug activation conditions are:
 
@@ -28,16 +34,26 @@ The debug activation conditions are:
 - scene mode is `physics`
 - the player is near an interaction, is holding an object, or is hand-holding an object
 
-This keeps hand tracking active while the player is inside an interaction zone, even if the camera is not aimed directly at the object.
-
 The production repair activation conditions are:
 
 - active `mainState` is `ebike`, `pylon`, or `farm`
 - the active mission step is `inspected`, `repairing`, `reassembling`, or `done`
 
-This keeps the webcam off during `waiting`, `fragmented`, and `scanning`, then enables hand input only when the repair flow is expected to use hands.
+This keeps the webcam off during `waiting`, `fragmented`, and `scanning`.
 
-In the current production repair flow, `inspected` uses a two-fists hold gesture to advance to `fragmented`. The hold must last one second and is independent from local object interaction distance once the mission is in the correct state. Keyboard input for the same transition is handled separately by the repair case trigger, so pressing `E` requires the case to be focused through the shared interaction system.
+### Linger
+
+Once activation turns off (player walks back out of a trigger zone, or a mission step transitions away), the runtime stays alive for `HAND_TRACKING_LINGER_MS` (2000 ms) before being torn down. This gives MediaPipe enough time to finish initializing the webcam and load the model on a fresh entry — without the linger, a quick walk-through of a trigger zone never produces a detected hand.
+
+## Provider Stability
+
+`HandTrackingProvider` always renders the same JSX root (`HandTrackingRuntime`) and exposes `enabled` as a prop. Returning two different element types (`<HandTrackingContext value=IDLE>` vs `<ActiveHandTrackingProvider>`) used to be the historical shape and was the root cause of WebGL context loss: every `enabled` toggle forced React to remount the entire subtree, including the `<Canvas>`, which destroyed the WebGL renderer.
+
+The two source hooks are therefore mounted in permanence with an `enabled` flag that they early-return on. No webcam or MediaPipe resources are created while `enabled` is false.
+
+## StrictMode Resilience
+
+In development, `<StrictMode>` mounts → unmounts → remounts each effect to surface non-idempotent code. The two source hooks delay their actual `start()` call by `HAND_TRACKING_RUNTIME_START_DELAY_MS` (80 ms) and clear the timer on cleanup, so a StrictMode double-mount or a rapid `nearby` flicker never reaches `getUserMedia` twice.
 
 ## Backend
 
@@ -52,7 +68,27 @@ The Python process uses MediaPipe and the local model file:
 backend/hand_landmarker.task
 ```
 
-The backend sends normalized hand coordinates and landmarks. The frontend treats the values as screen-space inputs, then maps them into world space with the active Three.js camera.
+The frontend sends JPEG frames at `HAND_TRACKING_FRAME_WIDTH × HAND_TRACKING_FRAME_HEIGHT` (320×240) to keep WebSocket bandwidth low. The backend sends normalized hand coordinates and landmarks.
+
+## Browser MediaPipe
+
+The browser path uses `hand_landmarker.task` (float16) downloaded from Google's MediaPipe model storage. The requested webcam resolution is **640×480** (`HAND_TRACKING_BROWSER_CAMERA_WIDTH/HEIGHT`), independent from the backend's 320×240. The float16 model is more sensitive than the backend Python model and needs the higher-resolution frame to detect hands reliably.
+
+The MediaPipe delegate is currently `"GPU"`. CPU works too but is significantly slower; on a loaded scene the inference drops to ~5fps and the user feels noticeable lag during grab. MediaPipe creates its own WebGL context separate from Three.js, so there is no direct contention.
+
+A singleton instance of `HandLandmarker` is cached in `src/lib/handTracking/browserHandTracking.ts`. `releaseBrowserHandLandmarker()` is called on cleanup and on WebGL context lost.
+
+## Smoothing
+
+MediaPipe at ~10 fps produces noticeable landmark jitter that, when fed raw into the scene, makes both the glove rig and any grabbed object tremble.
+
+A simple exponential moving average is applied to every landmark before the snapshot is published:
+
+```ts
+smoothed.x = previous.x * (1 - factor) + next.x * factor;
+```
+
+The factor is `HAND_TRACKING_LANDMARK_SMOOTHING` (0.4). Hands are matched across frames by `handedness` so left/right don't bleed into each other.
 
 ## Frontend Data Shape
 
@@ -106,24 +142,36 @@ This is less expressive than true depth-aware hand movement, but it is more stab
 The current debug UI includes:
 
 - `HandTrackingDebugPanel` inside `DebugOverlayLayout` for status, usage, loaded glove model, server state, hand count, and fist state
-- `HandTrackingVisualizer` for the SVG landmark wireframe fallback
-- `HandTrackingGlove` for the left-hand `gant_l` and right-hand `gant_r` models in the R3F scene
+- `HandTrackingVisualizer` for the SVG landmark overlay
+- `HandTrackingFallback` for the last-resort hand silhouette overlay
+- `HandTrackingGlove` for the per-hand rigged glove models in the R3F scene
 - `r3f-perf` for render performance
 - `lil-gui` for scene, camera, lighting, interaction, and grab controls
 
-The hand tracking debug panel is a compact HTML grid outside the canvas. `Model loaded` displays the successfully loaded glove models. The SVG hand wireframe is only a fallback while models are loading or if a glove model fails to load.
+The SVG visualizer uses a "blueish hand" style: white connection lines between landmarks, cyan circles with a dark blue outline. The outline gets thicker when the hand is detected as a fist, so the user gets a visual confirmation of the grab gesture without having to look at the debug panel.
+
+The fallback overlay (`HandTrackingFallback`) draws a simple open-hand or fist silhouette positioned on the detected wrist landmark. It only renders for a hand whose matching glove is in the `"error"` state in `useHandTrackingGloveStatus`. This guarantees the user always sees something on their hand even when the 3D glove model fails to load.
 
 ## Glove Models
 
-The current glove MVP uses `public/models/gant_l/model.gltf` and `public/models/gant_r/model.gltf`, which contain GLTF skins and armatures. Each model is positioned, oriented, and scaled from palm landmarks, then each finger bone chain is rotated toward the matching MediaPipe landmark chain.
+`HandTrackingGlove` loads `public/models/gant_l/model.gltf` for both hands. The right hand applies `scale.x = -1` at the group level to mirror the mesh, so the thumb ends up on the correct side. Both hands therefore share the same rig and the same material.
 
-The glove models are intentionally smaller than the raw SVG overlay so they do not dominate the camera view.
+The historical `public/models/gant_r/model.gltf` is kept as legacy but is not loaded by the frontend — its GLB embeds three skeletons (`Hand_l`, `Hand_l_pad`, `Hand_r`) plus a `galet` mesh, which made the finger rig unreliable.
+
+The `gant_l` material is set to `alphaMode: OPAQUE` with `doubleSided: true`. The opaque mode prevents transparency sorting issues that made folded fingers disappear behind the palm; the double-sided flag covers the back faces revealed by the mirror scale on the right hand.
+
+Two additional glove variants exist on disk:
+
+- `public/models/gant_l_pad/model.gltf`
+- `public/models/gant_r_pad/model.gltf`
+
+They are intended for future swap-by-state usage but are **not yet rigged**. They cannot be animated by MediaPipe landmarks in their current form — re-exporting them from Blender with the same armature structure as `gant_l` is a prerequisite.
 
 ## Known Limitations
 
 - Production usage is currently limited to repair mission steps that explicitly need hands.
 - MediaPipe depth is relative and currently not used for stable object depth control.
 - The virtual hit zone is an approximation based on multiple raycasts, not a real 3D collider.
-- There is no smoothing layer for hand position or depth yet.
-- The SVG hand visualization is a fallback, not the primary display when glove models load correctly.
+- The right glove is a mirrored copy of `gant_l` rather than its own mesh; in the future a dedicated right-hand model would give a better visual.
+- The `_pad` glove variants are not rigged yet, so swap-by-state (normal ↔ pad) is not wired in.
 - Finger bone animation is an approximate landmark-to-bone mapping; it still needs calibration for per-model twist, offsets, and smoothing.

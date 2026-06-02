@@ -1,5 +1,6 @@
 import {
   RepairCaseModel,
+  type RepairCasePartAnchors,
   type RepairCasePlaceholder,
 } from "@/components/three/gameplay/RepairCaseModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
@@ -19,6 +20,7 @@ interface RepairMissionCaseProps {
   onPlaceholdersChange?:
     | ((placeholders: readonly RepairCasePlaceholder[]) => void)
     | undefined;
+  onAnchorsChange?: ((anchors: RepairCasePartAnchors) => void) | undefined;
   onExitComplete?: (() => void) | undefined;
   open?: boolean;
   zoomed?: boolean;
@@ -30,6 +32,7 @@ export function RepairMissionCase({
   config,
   exiting = false,
   onPlaceholdersChange,
+  onAnchorsChange,
   onExitComplete,
   open = false,
   zoomed = false,
@@ -57,6 +60,7 @@ export function RepairMissionCase({
             exiting={exiting}
             onExitComplete={onExitComplete}
             onPlaceholdersChange={onPlaceholdersChange}
+            onAnchorsChange={onAnchorsChange}
             open={open}
             floating={!zoomed}
             position={modelPosition}
@@ -70,6 +74,7 @@ export function RepairMissionCase({
           exiting={exiting}
           onExitComplete={onExitComplete}
           onPlaceholdersChange={onPlaceholdersChange}
+          onAnchorsChange={onAnchorsChange}
           open={open}
           floating={!zoomed}
           position={modelPosition}

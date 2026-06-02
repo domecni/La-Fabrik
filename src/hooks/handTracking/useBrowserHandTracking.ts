@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  HAND_TRACKING_FRAME_HEIGHT,
-  HAND_TRACKING_FRAME_WIDTH,
+  HAND_TRACKING_BROWSER_CAMERA_HEIGHT,
+  HAND_TRACKING_BROWSER_CAMERA_WIDTH,
+  HAND_TRACKING_LANDMARK_SMOOTHING,
   HAND_TRACKING_RUNTIME_START_DELAY_MS,
   HAND_TRACKING_TARGET_FPS,
 } from "@/data/handTrackingConfig";
@@ -10,11 +11,15 @@ import {
   getBrowserHandLandmarker,
   releaseBrowserHandLandmarker,
 } from "@/lib/handTracking/browserHandTracking";
+import { smoothHands } from "@/lib/handTracking/handSmoothing";
 import {
   INITIAL_HAND_TRACKING_SNAPSHOT,
   getCameraStreamWithTimeout,
 } from "@/lib/handTracking/handTrackingSession";
-import type { HandTrackingSnapshot } from "@/types/handTracking/handTracking";
+import type {
+  HandTrackingHand,
+  HandTrackingSnapshot,
+} from "@/types/handTracking/handTracking";
 import { logger } from "@/utils/core/Logger";
 
 interface UseBrowserHandTrackingOptions {
@@ -30,6 +35,7 @@ export function useBrowserHandTracking({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const previousHandsRef = useRef<HandTrackingHand[]>([]);
 
   useEffect(() => {
     if (!enabled) {
@@ -51,6 +57,7 @@ export function useBrowserHandTracking({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       videoRef.current = null;
+      previousHandsRef.current = [];
       releaseBrowserHandLandmarker();
     };
 
@@ -66,8 +73,8 @@ export function useBrowserHandTracking({
       try {
         const stream = await getCameraStreamWithTimeout({
           video: {
-            width: HAND_TRACKING_FRAME_WIDTH,
-            height: HAND_TRACKING_FRAME_HEIGHT,
+            width: HAND_TRACKING_BROWSER_CAMERA_WIDTH,
+            height: HAND_TRACKING_BROWSER_CAMERA_HEIGHT,
             facingMode: "user",
           },
           audio: false,
@@ -124,7 +131,13 @@ export function useBrowserHandTracking({
               video,
               performance.now(),
             );
-            const hands = convertBrowserHandResult(result);
+            const rawHands = convertBrowserHandResult(result);
+            const hands = smoothHands(
+              previousHandsRef.current,
+              rawHands,
+              HAND_TRACKING_LANDMARK_SMOOTHING,
+            );
+            previousHandsRef.current = hands;
 
             setSnapshot((current) => ({
               ...current,

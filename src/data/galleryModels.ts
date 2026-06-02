@@ -135,7 +135,7 @@ export const galleryModels: GalleryModel[] = [
   },
   { id: "potager", name: "Potager", path: "/models/potager/potager.gltf" },
   { id: "puce", name: "Puce", path: "/models/puce/model.gltf" },
-  { id: "pylone", name: "Pylône", path: "/models/pylone/model.gltf" },
+  { id: "pylone", name: "Pylône", path: "/models/pylone/model.glb" },
   {
     id: "refroidisseur",
     name: "Refroidisseur",

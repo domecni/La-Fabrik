@@ -12,6 +12,28 @@ import {
 } from "@/pathfinding/WaypointAStar";
 import type { Waypoint } from "@/pathfinding/types";
 import type { Vector3Tuple } from "@/types/three/three";
+
+const VERT_SHADER = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+// Circular Fresnel mask: fully visible inside innerRadius, fades out to outerRadius
+const FRAG_SHADER = /* glsl */ `
+  uniform sampler2D map;
+  uniform float innerRadius;
+  uniform float outerRadius;
+  varying vec2 vUv;
+  void main() {
+    vec4 color = texture2D(map, vUv);
+    float dist = length(vUv - vec2(0.5));
+    float mask = 1.0 - smoothstep(innerRadius, outerRadius, dist);
+    gl_FragColor = vec4(color.rgb, color.a * mask);
+  }
+`;
 function computeImageSource(
   img: HTMLImageElement | HTMLCanvasElement,
   baseBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
@@ -126,18 +148,56 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Canvas should only be created once
   }, []);
 
-  // Resize the canvas whenever canvasSize changes
-  // Note: Modifying canvas dimensions is intentional and necessary for rendering
-  useEffect(() => {
-    // Use Object.assign to resize canvas - this is a necessary mutation for canvas rendering
-    Object.assign(offscreenCanvas, { width: canvasSize, height: canvasSize });
-    if (textureRef.current) {
-      textureRef.current.needsUpdate = true;
-    }
-  }, [canvasSize, offscreenCanvas]);
-
-  const textureRef = useRef<THREE.CanvasTexture | null>(null);
   const animTimeRef = useRef<number>(0);
+
+  // Imperative CanvasTexture — must be declared before the resize effect below
+  const texture = useMemo(() => {
+    const tex = new THREE.CanvasTexture(offscreenCanvas);
+    tex.format = THREE.RGBAFormat;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    return tex;
+  }, [offscreenCanvas]);
+
+  // ShaderMaterial with circular Fresnel mask (created once)
+  const shaderMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          map: { value: null },
+          innerRadius: { value: 0.45 },
+          outerRadius: { value: 0.5 },
+        },
+        vertexShader: VERT_SHADER,
+        fragmentShader: FRAG_SHADER,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      }),
+    [],
+  );
+
+  // Sync texture into uniform when it changes (canvas resize)
+  useEffect(() => {
+    shaderMat.uniforms.map.value = texture;
+  }, [shaderMat, texture]);
+
+  // Cleanup on unmount
+  useEffect(
+    () => () => {
+      shaderMat.dispose();
+      texture.dispose();
+    },
+    [shaderMat, texture],
+  );
+
+  // Resize the canvas whenever canvasSize changes (texture declared above)
+  useEffect(() => {
+    Object.assign(offscreenCanvas, { width: canvasSize, height: canvasSize });
+    texture.needsUpdate = true;
+  }, [canvasSize, offscreenCanvas, texture]);
 
   // Load waypoints (localStorage with /roadNetwork.json fallback)
   useEffect(() => {
@@ -492,42 +552,20 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
   useEffect(() => {
     let animId: number;
     const tick = () => {
-      animTimeRef.current += 0.004; // Slow, premium sweep speed
+      animTimeRef.current += 0.004;
       if (animTimeRef.current > 1) animTimeRef.current = 0;
-
       draw();
-
-      // Update texture after draw
-      if (textureRef.current) {
-        textureRef.current.needsUpdate = true;
-      }
-
+      texture.needsUpdate = true;
       animId = requestAnimationFrame(tick);
     };
     animId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animId);
-  }, [draw]);
+  }, [draw, texture]);
 
   return (
     <mesh position={position} renderOrder={renderOrder}>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial
-        toneMapped={false}
-        transparent={true}
-        opacity={1}
-        depthTest={false}
-        depthWrite={false}
-        side={THREE.DoubleSide}
-      >
-        <canvasTexture
-          ref={textureRef}
-          attach="map"
-          image={offscreenCanvas}
-          format={THREE.RGBAFormat}
-          minFilter={THREE.LinearFilter}
-          magFilter={THREE.LinearFilter}
-        />
-      </meshBasicMaterial>
+      <primitive object={shaderMat} attach="material" />
     </mesh>
   );
 };

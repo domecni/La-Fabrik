@@ -97,6 +97,9 @@ function getScannedBrokenParts(
       ...(match.config.caseSlotName
         ? { caseSlotName: match.config.caseSlotName }
         : {}),
+      ...(match.config.targetNodeName
+        ? { targetNodeName: match.config.targetNodeName }
+        : {}),
     };
   });
 }

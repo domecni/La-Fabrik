@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { EbikeGPSMap } from "@/components/ebike/EbikeGPSMap";
-import { EbikeSpeedometer } from "@/components/ebike/EbikeSpeedometer";
+import { EbikeSpeedmeter } from "@/components/ebike/EbikeSpeedmeter";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
@@ -24,6 +24,12 @@ import type { Vector3Tuple } from "@/types/three/three";
 import "@/types/ebike/ebikeWindow";
 
 const EBIKE_MODEL_PATH = "/models/ebike/model.gltf";
+
+// Reusable vectors — allocated once to avoid per-frame GC pressure
+const _phareWorldPos = new THREE.Vector3();
+const _bikeForward = new THREE.Vector3();
+const _aimDir = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
 
 interface EbikeProps {
   position: Vector3Tuple;
@@ -53,6 +59,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   const ebikeStep = useGameStore((state) => state.ebike.currentStep);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
   const camera = useThree((state) => state.camera);
+  const threeScene = useThree((state) => state.scene);
   const updateEbikeSounds = useEbikeSounds();
   const repairGameOwnsEbikeModel =
     mainState === "ebike" &&
@@ -96,6 +103,19 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   ]);
   const restingRotationRef = useRef<number>(EBIKE_WORLD_ROTATION_Y);
   const forkRef = useRef<THREE.Object3D | null>(null);
+  const phareRef = useRef<THREE.Object3D | null>(null);
+  const headlightRef = useRef<THREE.SpotLight | null>(null);
+  // SpotLight target — must live in the scene to define the cone direction.
+  const headlightTarget = useMemo(() => new THREE.Object3D(), []);
+  // Original quaternion of the Fourche node — rotation is applied on top of this.
+  const forkInitialQuatRef = useRef(new THREE.Quaternion());
+  // Smoothed steer angle for the fork (avoids direct Euler manipulation).
+  const forkAngleRef = useRef(0);
+  // Ref copy of movementMode — useFrame closures can capture stale React state.
+  const movementModeRef = useRef(movementMode);
+  // Becomes true the first time the player mounts. After that, dismounting
+  // must NOT reset position back to the original spawn point.
+  const hasRiddenRef = useRef(false);
 
   // State for debug visualization (synced from refs during useFrame)
   const [showCameraPoints, setShowCameraPoints] = useState(true);
@@ -106,9 +126,42 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
       parkedPosition[2],
     ]);
 
+  // Keep movementModeRef in sync — useFrame closures capture React state at
+  // render time and can become stale between renders.
   useEffect(() => {
-    if (movementMode === "ebike") return;
+    movementModeRef.current = movementMode;
+  }, [movementMode]);
 
+  // SpotLight target must be in the scene to define the cone direction.
+  useEffect(() => {
+    threeScene.add(headlightTarget);
+    return () => { threeScene.remove(headlightTarget); };
+  }, [threeScene, headlightTarget]);
+
+  // Link the target to the SpotLight once it mounts.
+  useEffect(() => {
+    if (headlightRef.current) {
+      headlightRef.current.target = headlightTarget;
+    }
+  }, [headlightTarget]);
+
+  useEffect(() => {
+    if (movementMode === "ebike") {
+      // Player just mounted — mark as ridden so we never reset position again.
+      hasRiddenRef.current = true;
+      return;
+    }
+
+    if (hasRiddenRef.current) {
+      // Player dismounted: keep the position the bike was left at.
+      // Just make sure the window vars are up to date for the next mount.
+      window.ebikeParkedPosition = restingPositionRef.current;
+      window.ebikeParkedRotation = restingRotationRef.current;
+      return;
+    }
+
+    // Bike has never been ridden yet — safe to (re)place it at the spawn point.
+    // This also fires when parkedPosition recalculates (e.g. terrain loads late).
     restingPositionRef.current = parkedPosition;
     restingRotationRef.current = EBIKE_WORLD_ROTATION_Y;
     lastGpsUpdatePos.current.set(...parkedPosition);
@@ -123,11 +176,24 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   }, [movementMode, parkedPosition]);
 
   useEffect(() => {
-    if (model) {
-      const fork = model.getObjectByName("fourche");
-      if (fork) {
-        forkRef.current = fork;
-      }
+    if (!model) return;
+
+    let forkNode: THREE.Object3D | null = null;
+    model.traverse((child) => {
+      if (child.name.toLowerCase() === "fourche") forkNode = child;
+      if (child.name === "Phare") phareRef.current = child;
+    });
+
+    if (forkNode) {
+      forkRef.current = forkNode;
+      // Snapshot the rest-pose quaternion — steering is applied on top of this.
+      forkInitialQuatRef.current.copy((forkNode as THREE.Object3D).quaternion);
+      forkAngleRef.current = 0;
+      console.log("[Ebike] Fork found:", (forkNode as THREE.Object3D).name);
+    } else {
+      const names: string[] = [];
+      model.traverse((c) => { if (c.name) names.push(c.name); });
+      console.warn("[Ebike] Fork not found. All nodes:", names);
     }
   }, [model]);
 
@@ -154,11 +220,48 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
   }, []);
 
   useFrame((_, delta) => {
+    // ── SpotLight headlight — tune the constants below ────────────────────────
+    // ── SpotLight headlight — tune these four constants ───────────────────────
+    const LIGHT_OFFSET_X   =  -0.7;   // position : left(-) / right(+)
+    const LIGHT_OFFSET_Y   =  1.5;   // position : down(-) / up(+)
+    const LIGHT_OFFSET_Z   =  0;   // position : backward(-) / forward(+)
+    const LIGHT_AIM_DEG    = 90;  // aim rotation around Y : 0=forward, -90=left, +90=right
+    const LIGHT_TARGET_DIST = 20;  // metres devant la position de la lumière
+    // ─────────────────────────────────────────────────────────────────────────
+    if (headlightRef.current && phareRef.current && groupRef.current) {
+      phareRef.current.getWorldPosition(_phareWorldPos);
+      groupRef.current.getWorldDirection(_bikeForward);
+
+      // Position offset in bike-local space (no GC — reusing module-level vectors)
+      const right = _bikeForward.clone().cross(_up).normalize();
+      _phareWorldPos
+        .addScaledVector(right, LIGHT_OFFSET_X)
+        .addScaledVector(_up, LIGHT_OFFSET_Y)
+        .addScaledVector(_bikeForward, LIGHT_OFFSET_Z);
+
+      headlightRef.current.position.copy(_phareWorldPos);
+
+      // Aim direction: rotate forward around Y by LIGHT_AIM_DEG
+      _aimDir
+        .copy(_bikeForward)
+        .applyAxisAngle(_up, THREE.MathUtils.degToRad(LIGHT_AIM_DEG));
+
+      headlightTarget.position
+        .copy(_phareWorldPos)
+        .addScaledVector(_aimDir, LIGHT_TARGET_DIST);
+      headlightTarget.updateMatrixWorld();
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     if (groupRef.current) {
-      if (movementMode === "ebike") {
+      // Use the ref — not the React state — to avoid stale closure bugs in
+      // R3F's frame loop (the state value may not update until the next render).
+      if (movementModeRef.current === "ebike") {
+        // Sound plays whenever the bike is actually moving (speedFactor > 5 %),
+        // not only while the input key is held.
         updateEbikeSounds({
           mounted: true,
-          driving: window.ebikeDriveInputActive === true,
+          driving: (window.ebikeSpeedFactor ?? 0) > 0.05,
           breakdown: window.ebikeBreakdownActive === true,
         });
 
@@ -169,15 +272,30 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
         ];
         restingRotationRef.current = groupRef.current.rotation.y;
 
-        // Smoothly rotate the front fork ("fourche") up to 15 degrees in its own Z axis
+        // ── Fork steering via quaternion ──────────────────────────────────────
+        // We rotate around the fork's LOCAL Y axis (steering tube) by composing
+        // a fresh quaternion on top of the rest-pose snapshot taken at load time.
+        // This is axis-agnostic: correct regardless of how Blender exported the node.
+        // Tune FORK_ANGLE (radians) or negate it if the visual direction is wrong.
+        const FORK_ANGLE = 0.12; // 10°
         const steerFactor = window.ebikeSteerFactor ?? 0;
+
         if (forkRef.current) {
-          // 15 degrees is 0.26 radians
-          const targetForkRotation = steerFactor * 0.26;
-          forkRef.current.rotation.z = THREE.MathUtils.lerp(
-            forkRef.current.rotation.z,
-            targetForkRotation,
+          // Smooth the angle separately so we can apply it cleanly each frame.
+          forkAngleRef.current = THREE.MathUtils.lerp(
+            forkAngleRef.current,
+            steerFactor * FORK_ANGLE,
             12 * delta,
+          );
+          // Build steer quat around LOCAL Y of the fork node.
+          const steerQuat = new THREE.Quaternion().setFromAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            forkAngleRef.current,
+          );
+          // Apply on top of rest-pose: Q_final = Q_rest × Q_steer
+          forkRef.current.quaternion.multiplyQuaternions(
+            forkInitialQuatRef.current,
+            steerQuat,
           );
         }
 
@@ -197,9 +315,10 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
         groupRef.current.position.set(...restingPositionRef.current);
         groupRef.current.rotation.set(0, restingRotationRef.current, 0);
 
-        // Reset fork rotation when parked
+        // Reset fork to rest-pose when parked
         if (forkRef.current) {
-          forkRef.current.rotation.z = 0;
+          forkRef.current.quaternion.copy(forkInitialQuatRef.current);
+          forkAngleRef.current = 0;
         }
       }
       window.ebikeParkedPosition = restingPositionRef.current;
@@ -329,6 +448,9 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
           scale={EBIKE_WORLD_SCALE}
         >
           <primitive object={model} />
+          {/* radius 20 → ~7 unités monde (scale 0.35).
+              Sphère omnidirectionnelle pour que le raycast fonctionne
+              quelle que soit l'orientation de la caméra (montée ou à pied). */}
           <InteractableObject
             kind="trigger"
             label={interactionLabel}
@@ -337,16 +459,25 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
             onPress={handleInteract}
           >
             <mesh>
-              <boxGeometry args={[8, 9, 2]} />
-              <meshBasicMaterial colorWrite={false} depthWrite={false} />
+              <sphereGeometry args={[8, 15, 12]} />
+              <meshBasicMaterial colorWrite={false} color={"red"} depthWrite={false} />
             </mesh>
           </InteractableObject>
 
-          {/* Dynamic 3D GPS Dashboard Screen */}
-          <group position={[0, 7, 0]} rotation={[0, 90, 0]}>
+          {/* GPS + Speedmeter – same group so they are perfectly co-localised.
+              GPS: full circle (Fresnel mask), renderOrder 10 000
+              Speedmeter: upper-half arc overlay, renderOrder 10 001
+              rotation: Math.PI/2 radians = 90° (NOT the number 90 which = ~116.6°) */}
+          <group position={[2, 6, 0]} rotation={[0, -80, 0]}>
+            <EbikeSpeedmeter width={3} height={1.5} position={[0, 0.4, 0]} gaugeInnerR={0.33} gaugeOuterR={0.445}
+              gaugeWidth={2.5}
+              gaugeHeight={2.1}
+              gaugeOffsetX={0}
+              gaugeOffsetY={-0.19}
+            />
             <EbikeGPSMap
-              width={0.8}
-              height={0.8}
+              width={1.3}
+              height={1}
               startPos={gpsStartPos}
               destPos={destPos}
               mapImageUrl="/assets/world/gps/map_background.png"
@@ -359,15 +490,26 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
               zoom={4}
             />
           </group>
-          <group position={[0, 6.35, 0]} rotation={[0, 90, 0]}>
-            <EbikeSpeedometer />
-          </group>
         </group>
       ) : null}
 
+      {/* SpotLight headlight — cone aimed forward, position & target via useFrame */}
+      {!repairGameOwnsEbikeModel && (
+        <spotLight
+          ref={headlightRef}
+          intensity={100}
+          color="#ffca60"
+          angle={Math.PI / 5}   // 22.5° demi-angle — cone étroit comme une torche
+          penumbra={0.5}        // bord doux (0 = dur, 1 = très doux)
+          distance={50}
+          decay={2.5}
+          castShadow={false}
+        />
+      )}
+
       {showCameraPoints && !repairGameOwnsEbikeModel && (
         <>
-          <mesh position={camPointPos}>
+          {/* <mesh position={camPointPos}>
             <sphereGeometry args={[0.3, 16, 16]} />
             <meshStandardMaterial
               color="yellow"
@@ -382,7 +524,7 @@ export function Ebike({ position }: EbikeProps): React.JSX.Element {
               emissive="cyan"
               emissiveIntensity={0.5}
             />
-          </mesh>
+          </mesh> */}
         </>
       )}
     </>

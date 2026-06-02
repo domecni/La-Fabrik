@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import type { RepairCasePlaceholder } from "@/components/three/gameplay/RepairCaseModel";
+import type {
+  RepairCasePartAnchors,
+  RepairCasePlaceholder,
+} from "@/components/three/gameplay/RepairCaseModel";
+import type { ExplodedNodeAnchors } from "@/components/three/models/ExplodableModel";
 import { RepairObjectModel } from "@/components/three/gameplay/RepairObjectModel";
 import { RepairPromptVideo } from "@/components/three/gameplay/RepairPromptVideo";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
@@ -38,6 +42,8 @@ const STORED_BROKEN_PART_COLOR = "#38bdf8";
 let hasWarnedMissingPlaceholders = false;
 
 interface RepairRepairingStepProps {
+  anchors?: RepairCasePartAnchors;
+  brokenAnchors?: ExplodedNodeAnchors;
   brokenParts: readonly RepairScannedBrokenPart[];
   config: RepairMissionConfig;
   placeholders: readonly RepairCasePlaceholder[];
@@ -63,6 +69,8 @@ interface RepairPartPlacementFeedbackProps {
 }
 
 export function RepairRepairingStep({
+  anchors = {},
+  brokenAnchors = {},
   brokenParts,
   config,
   placeholders,
@@ -76,12 +84,15 @@ export function RepairRepairingStep({
   const [depositedBrokenPartIds, setDepositedBrokenPartIds] = useState<
     Record<string, boolean>
   >({});
+  const [heldPartByLockGroup, setHeldPartByLockGroup] = useState<
+    Record<string, string>
+  >({});
   const [showBlockedInstallFeedback, setShowBlockedInstallFeedback] =
     useState(false);
   const replacementParts = getReplacementParts(config);
   const brokenPartsToDeposit = getBrokenPartsToDeposit(config, brokenParts);
-  const requiredReplacementPart = replacementParts.find(
-    (part) => part.id === config.requiredReplacementPartId,
+  const requiredReplacementPart = replacementParts.find((part) =>
+    config.requiredReplacementPartIds.includes(part.id),
   );
   const requiredReplacementLabel =
     requiredReplacementPart?.label ?? config.label;
@@ -89,15 +100,16 @@ export function RepairRepairingStep({
   const placeholderPositions = placeholderTargets.map(
     (target) => target.position,
   );
-  const hasCorrectPartPlaced = Boolean(
-    placedPartIds[config.requiredReplacementPartId],
+  const hasCorrectPartPlaced = config.requiredReplacementPartIds.some(
+    (id) => placedPartIds[id],
   );
   const hasDepositedBrokenParts = brokenPartsToDeposit.every(
     (part) => depositedBrokenPartIds[part.id],
   );
   const hasWrongPartPlaced = replacementParts.some(
     (part) =>
-      part.id !== config.requiredReplacementPartId && placedPartIds[part.id],
+      !config.requiredReplacementPartIds.includes(part.id) &&
+      placedPartIds[part.id],
   );
   const isReadyToInstall = hasCorrectPartPlaced && hasDepositedBrokenParts;
   const installColor = isReadyToInstall
@@ -177,6 +189,24 @@ export function RepairRepairingStep({
     });
   }
 
+  function handleReplacementGrabChange(
+    part: RepairMissionPartConfig,
+    held: boolean,
+  ): void {
+    if (!part.caseLockGroup) return;
+    const group = part.caseLockGroup;
+    setHeldPartByLockGroup((current) => {
+      if (held) {
+        if (current[group] === part.id) return current;
+        return { ...current, [group]: part.id };
+      }
+      if (current[group] !== part.id) return current;
+      const next = { ...current };
+      delete next[group];
+      return next;
+    });
+  }
+
   return (
     <group ref={groupRef}>
       <RepairInstallTarget
@@ -192,15 +222,23 @@ export function RepairRepairingStep({
       <RepairPlaceholderMarkers positions={placeholderPositions} />
 
       {replacementParts.map((part, index) => {
+        const anchorPosition = part.caseAnchor
+          ? anchors[part.caseAnchor]
+          : undefined;
         const placeholderPosition =
+          anchorPosition ??
           placeholderPositions[index % placeholderPositions.length] ??
           placeholderPositions[0]!;
         const isPlaced = Boolean(placedPartIds[part.id]);
         const feedbackState = getReplacementFeedbackState(
           part.id,
-          config.requiredReplacementPartId,
+          config.requiredReplacementPartIds,
           isPlaced,
         );
+        const lockedByOther =
+          part.caseLockGroup !== undefined &&
+          heldPartByLockGroup[part.caseLockGroup] !== undefined &&
+          heldPartByLockGroup[part.caseLockGroup] !== part.id;
 
         return (
           <GrabbableObject
@@ -208,7 +246,11 @@ export function RepairRepairingStep({
             position={placeholderPosition}
             colliders="ball"
             handControlled
+            disabled={lockedByOther}
             label={`Prendre ${part.label}`}
+            onGrabChange={(held) => {
+              handleReplacementGrabChange(part, held);
+            }}
             onPositionChange={(position) => {
               handleReplacementPosition(part.id, position);
             }}
@@ -224,6 +266,7 @@ export function RepairRepairingStep({
                 label={part.label}
                 modelPath={part.modelPath ?? config.modelPath}
                 scale={0.36}
+                ghosted={lockedByOther}
               />
               <RepairPartPlacementFeedback state={feedbackState} />
             </group>
@@ -232,14 +275,18 @@ export function RepairRepairingStep({
       })}
 
       {brokenPartsToDeposit.map((part, index) => {
-        const startOffset =
+        const fallbackOffset =
           BROKEN_PART_START_OFFSETS[index % BROKEN_PART_START_OFFSETS.length] ??
           BROKEN_PART_START_OFFSETS[0]!;
-        const startPosition: Vector3Tuple = [
-          REPAIR_CASE_FOCUS_POSITION[0] + startOffset[0],
-          REPAIR_CASE_FOCUS_POSITION[1] + startOffset[1],
-          REPAIR_CASE_FOCUS_POSITION[2] + startOffset[2],
+        const fallbackPosition: Vector3Tuple = [
+          REPAIR_CASE_FOCUS_POSITION[0] + fallbackOffset[0],
+          REPAIR_CASE_FOCUS_POSITION[1] + fallbackOffset[1],
+          REPAIR_CASE_FOCUS_POSITION[2] + fallbackOffset[2],
         ];
+        const anchorPosition = part.targetNodeName
+          ? brokenAnchors[part.targetNodeName]
+          : undefined;
+        const startPosition: Vector3Tuple = anchorPosition ?? fallbackPosition;
         const targetPositions = getBrokenPartTargetPositions(
           part,
           placeholderTargets,
@@ -387,12 +434,12 @@ function getPlacementFeedbackColor(
 
 function getReplacementFeedbackState(
   partId: string,
-  requiredPartId: string,
+  requiredPartIds: readonly string[],
   isPlaced: boolean,
 ): RepairPartPlacementFeedbackProps["state"] {
   if (!isPlaced) return null;
 
-  return partId === requiredPartId ? "valid" : "invalid";
+  return requiredPartIds.includes(partId) ? "valid" : "invalid";
 }
 
 function getPlaceholderTargets(
@@ -466,9 +513,12 @@ function getReplacementParts(
 ): readonly RepairMissionPartConfig[] {
   if (config.replacementParts.length > 0) return config.replacementParts;
 
+  const fallbackId =
+    config.requiredReplacementPartIds[0] ?? `${config.id}-replacement`;
+
   return [
     {
-      id: config.requiredReplacementPartId,
+      id: fallbackId,
       label: config.label,
       modelPath: config.modelPath,
     },
@@ -486,5 +536,6 @@ function getBrokenPartsToDeposit(
     label: part.label,
     modelPath: part.modelPath ?? config.modelPath,
     ...(part.caseSlotName ? { caseSlotName: part.caseSlotName } : {}),
+    ...(part.targetNodeName ? { targetNodeName: part.targetNodeName } : {}),
   }));
 }

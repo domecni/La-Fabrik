@@ -516,14 +516,29 @@ export function PlayerController({
       );
       window.ebikeSteerFactor = steerFactor;
 
+      // ── Ebike camera tuning ──────────────────────────────────────────────────
+      // All motion effects in one place — set to 0 to fully disable each one.
+      /** Lateral camera drift when steering (0 = no sway) */
+      const CAM_SWAY_SIDE = -0.5;
+      /** Vertical camera drop when steering (0 = no recoil) */
+      const CAM_SWAY_VERTICAL = 0;
+      /** Position lerp factor. 1 = instant snap, lower = more lag/trail */
+      const CAM_POS_LERP = 1;
+      /** FOV boost at full speed in degrees (0 = constant FOV) */
+      const CAM_FOV_BOOST = 0.15; // speed × 0.15, capped at 3° → subtle speed sensation
+      /** How fast FOV lerps toward target (lower = slower breathing) */
+      const CAM_FOV_LERP = 4;
+      /** Visual body lean in radians at max steer (20° = 0.349 rad) */
+      const BIKE_LEAN = THREE.MathUtils.degToRad(10);
+      // ─────────────────────────────────────────────────────────────────────────
+
       const speed = velocity.current.length();
-      const targetFov = 60 + Math.min(speed * 0.35, 9);
       const perspectiveCam = camera as THREE.PerspectiveCamera;
       // eslint-disable-next-line react-hooks/immutability -- Three.js camera.fov must be mutated directly for dynamic FOV changes during frame updates
       perspectiveCam.fov = THREE.MathUtils.lerp(
         perspectiveCam.fov,
-        targetFov,
-        6 * dt,
+        60 + Math.min(speed * CAM_FOV_BOOST, 3),
+        CAM_FOV_LERP * dt,
       );
       perspectiveCam.updateProjectionMatrix();
 
@@ -532,9 +547,8 @@ export function PlayerController({
       );
       cameraOffset.applyAxisAngle(_up, ebikeAngle.current);
 
-      const swingX = -Math.abs(steerFactor) * 1.5;
-      const swingZ = steerFactor > 0 ? steerFactor * 2.5 : steerFactor * 1.0;
-
+      const swingX = -Math.abs(steerFactor) * CAM_SWAY_VERTICAL;
+      const swingZ = steerFactor * CAM_SWAY_SIDE;
       const cameraSwing = new THREE.Vector3(swingX, 0, swingZ);
       cameraSwing.applyAxisAngle(_up, ebikeAngle.current);
       cameraOffset.add(cameraSwing);
@@ -543,7 +557,7 @@ export function PlayerController({
         .copy(capsule.current.end)
         .add(cameraOffset);
 
-      camera.position.lerp(targetCamPos, 12 * dt);
+      camera.position.lerp(targetCamPos, CAM_POS_LERP);
 
       const pitchRad = THREE.MathUtils.degToRad(
         EBIKE_CAMERA_TRANSFORM.rotation[0],
@@ -563,8 +577,12 @@ export function PlayerController({
           capsule.current.end.y - PLAYER_EYE_HEIGHT,
           capsule.current.end.z,
         );
-        const leanAngle = steerFactor * 0.26;
-        ebikeVisual.rotation.set(0, ebikeAngle.current, leanAngle, "YXZ");
+        ebikeVisual.rotation.set(
+          steerFactor * -BIKE_LEAN,
+          ebikeAngle.current,
+          0,
+          "YXZ",
+        );
       }
     } else {
       camera.position.copy(capsule.current.end);

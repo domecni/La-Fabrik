@@ -26,6 +26,12 @@ const HAND_CONNECTIONS: Array<[number, number]> = [
   [0, 17],
 ];
 
+const LANDMARK_FILL = "#67e8f9"; // cyan-300, opaque interior
+const LANDMARK_STROKE = "#0c4a6e"; // sky-900, dark blue outline
+const LANDMARK_STROKE_FIST = "#1e3a8a"; // blue-900, thicker accent when fist
+const CONNECTION_STROKE = "#ffffff"; // white bones
+const INDEX_TIP_LANDMARK = 8;
+
 export function HandTrackingVisualizer(): React.JSX.Element | null {
   const { hands, status } = useHandTrackingSnapshot();
   const showHandTrackingSvg = useDebugStore((debug) =>
@@ -50,7 +56,9 @@ export function HandTrackingVisualizer(): React.JSX.Element | null {
         const landmarks = hand.landmarks;
         if (landmarks.length === 0) return null;
 
-        const color = hand.isFist ? "#facc15" : "#38bdf8";
+        const landmarkStroke = hand.isFist
+          ? LANDMARK_STROKE_FIST
+          : LANDMARK_STROKE;
 
         return (
           <g key={`${hand.handedness}-${handIndex}`}>
@@ -66,8 +74,8 @@ export function HandTrackingVisualizer(): React.JSX.Element | null {
                   y1={`${fromPoint.y * 100}%`}
                   x2={`${(1 - toPoint.x) * 100}%`}
                   y2={`${toPoint.y * 100}%`}
-                  stroke={color}
-                  strokeWidth="2"
+                  stroke={CONNECTION_STROKE}
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                 />
               );
@@ -78,8 +86,10 @@ export function HandTrackingVisualizer(): React.JSX.Element | null {
                 key={landmarkIndex}
                 cx={`${(1 - landmark.x) * 100}%`}
                 cy={`${landmark.y * 100}%`}
-                r={landmarkIndex === 8 ? 5 : 3}
-                fill={landmarkIndex === 8 ? "#ffffff" : color}
+                r={landmarkIndex === INDEX_TIP_LANDMARK ? 6 : 4}
+                fill={LANDMARK_FILL}
+                stroke={landmarkStroke}
+                strokeWidth={hand.isFist ? 2.5 : 2}
               />
             ))}
           </g>

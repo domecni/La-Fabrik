@@ -15,11 +15,15 @@ import {
   REPAIR_CASE_OPEN_ROTATION_OFFSET_DEGREES,
   REPAIR_CASE_CLOSE_SOUND_PATH,
   REPAIR_CASE_OPEN_SOUND_PATH,
+  REPAIR_CASE_PART_ANCHOR_FALLBACK_QUATERNION,
+  REPAIR_CASE_PART_ANCHOR_FALLBACKS,
+  REPAIR_CASE_PART_ANCHOR_NAMES,
   REPAIR_CASE_PLACEHOLDER_NAME_PREFIX,
   REPAIR_CASE_POP_DURATION,
   REPAIR_CASE_POP_Y_OFFSET,
   REPAIR_CASE_ROTATION_AMPLITUDE_DEGREES,
   REPAIR_CASE_ROTATION_RESET_SPEED,
+  type RepairCasePartAnchorName,
 } from "@/data/gameplay/repairCaseConfig";
 import { useClonedObject } from "@/hooks/three/useClonedObject";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
@@ -32,6 +36,10 @@ export interface RepairCasePlaceholder {
   position: Vector3Tuple;
 }
 
+export type RepairCasePartAnchors = Partial<
+  Record<RepairCasePartAnchorName, Vector3Tuple>
+>;
+
 interface RepairCaseModelProps extends ModelTransformProps {
   modelPath: string;
   open: boolean;
@@ -40,6 +48,7 @@ interface RepairCaseModelProps extends ModelTransformProps {
   onPlaceholdersChange?:
     | ((placeholders: readonly RepairCasePlaceholder[]) => void)
     | undefined;
+  onAnchorsChange?: ((anchors: RepairCasePartAnchors) => void) | undefined;
   onExitComplete?: (() => void) | undefined;
 }
 
@@ -59,6 +68,7 @@ export function RepairCaseModel({
   exiting = false,
   floating = true,
   onPlaceholdersChange,
+  onAnchorsChange,
   onExitComplete,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
@@ -81,6 +91,7 @@ export function RepairCaseModel({
   const pop = useRef({ scale: 0.001, yOffset: REPAIR_CASE_POP_Y_OFFSET });
   const onExitCompleteRef = useRef(onExitComplete);
   const onPlaceholdersChangeRef = useRef(onPlaceholdersChange);
+  const onAnchorsChangeRef = useRef(onAnchorsChange);
   const initialOpen = useRef(open);
   const previousOpen = useRef(open);
   const openedRotationZ = useRef(0);
@@ -89,6 +100,12 @@ export function RepairCaseModel({
   const placeholderSignature = useRef("__initial__");
   const placeholderPosition = useRef(new THREE.Vector3());
   const placeholderLocalPosition = useRef(new THREE.Vector3());
+  const anchorNodes = useRef<Map<RepairCasePartAnchorName, THREE.Object3D>>(
+    new Map(),
+  );
+  const anchorSignature = useRef("__initial__");
+  const anchorWorldPosition = useRef(new THREE.Vector3());
+  const anchorLocalPosition = useRef(new THREE.Vector3());
 
   useEffect(() => {
     onExitCompleteRef.current = onExitComplete;
@@ -97,6 +114,10 @@ export function RepairCaseModel({
   useEffect(() => {
     onPlaceholdersChangeRef.current = onPlaceholdersChange;
   }, [onPlaceholdersChange]);
+
+  useEffect(() => {
+    onAnchorsChangeRef.current = onAnchorsChange;
+  }, [onAnchorsChange]);
 
   useEffect(() => {
     const popAnimation = pop.current;
@@ -151,6 +172,37 @@ export function RepairCaseModel({
       ) {
         placeholderNodes.current.push(child);
       }
+    });
+
+    // Resolve part anchor nodes (cabledroit, cablegauche, pucehaut, pucebas,
+    // refroidisseur). Existing GLTF nodes are reused and their meshes are
+    // hidden so the standalone model injected at the same position becomes
+    // the only visible representation. Missing nodes are created on the fly
+    // at the configured fallback case-local position.
+    anchorNodes.current = new Map();
+    REPAIR_CASE_PART_ANCHOR_NAMES.forEach((anchorName) => {
+      let node = model.getObjectByName(anchorName);
+      if (node) {
+        node.traverse((descendant) => {
+          if ((descendant as THREE.Mesh).isMesh) {
+            descendant.visible = false;
+          }
+        });
+      } else {
+        const placeholder = new THREE.Object3D();
+        placeholder.name = anchorName;
+        const fallback = REPAIR_CASE_PART_ANCHOR_FALLBACKS[anchorName];
+        placeholder.position.set(fallback[0], fallback[1], fallback[2]);
+        placeholder.quaternion.set(
+          REPAIR_CASE_PART_ANCHOR_FALLBACK_QUATERNION[0],
+          REPAIR_CASE_PART_ANCHOR_FALLBACK_QUATERNION[1],
+          REPAIR_CASE_PART_ANCHOR_FALLBACK_QUATERNION[2],
+          REPAIR_CASE_PART_ANCHOR_FALLBACK_QUATERNION[3],
+        );
+        model.add(placeholder);
+        node = placeholder;
+      }
+      anchorNodes.current.set(anchorName, node);
     });
 
     if (lid) {
@@ -247,6 +299,31 @@ export function RepairCaseModel({
       if (nextSignature !== placeholderSignature.current) {
         placeholderSignature.current = nextSignature;
         onPlaceholdersChangeRef.current?.(placeholders);
+      }
+    }
+
+    if (anchorNodes.current.size > 0) {
+      const anchors: RepairCasePartAnchors = {};
+      const signatureParts: string[] = [];
+      anchorNodes.current.forEach((node, anchorName) => {
+        node.getWorldPosition(anchorWorldPosition.current);
+        anchorLocalPosition.current.copy(anchorWorldPosition.current);
+        group.parent?.worldToLocal(anchorLocalPosition.current);
+        const tuple: Vector3Tuple = [
+          anchorLocalPosition.current.x,
+          anchorLocalPosition.current.y,
+          anchorLocalPosition.current.z,
+        ];
+        anchors[anchorName] = tuple;
+        signatureParts.push(
+          `${anchorName}:${tuple.map((value) => value.toFixed(3)).join(",")}`,
+        );
+      });
+      signatureParts.sort();
+      const nextAnchorSignature = signatureParts.join("|");
+      if (nextAnchorSignature !== anchorSignature.current) {
+        anchorSignature.current = nextAnchorSignature;
+        onAnchorsChangeRef.current?.(anchors);
       }
     }
 

@@ -3,6 +3,7 @@ import type {
   Vector3Scale,
   Vector3Tuple,
 } from "@/types/three/three";
+import type { RepairCasePartAnchorName } from "@/data/gameplay/repairCaseConfig";
 
 export const REPAIR_MISSION_IDS = ["ebike", "pylon", "farm"] as const;
 
@@ -24,7 +25,28 @@ export interface RepairMissionPartConfig {
   id: string;
   label: string;
   nodeName?: string;
+  /**
+   * Name of a node inside the broken model where this part should snap on
+   * install. Used by replacement parts that target a slot in the broken
+   * model itself (e.g. pylon cable installs at the world-position of the
+   * pylon's `cable2` node), and by broken parts that should spawn at their
+   * original location on the broken model rather than a static offset.
+   */
+  targetNodeName?: string;
   caseSlotName?: string;
+  /**
+   * Anchor name in the packderelance case where this replacement part is
+   * visually injected. When set, the part spawns at the world-position of
+   * that anchor instead of a generic placeholder slot.
+   */
+  caseAnchor?: RepairCasePartAnchorName;
+  /**
+   * Group identifier for mutually exclusive replacement parts (e.g. pylon
+   * cables: only one cable can be held/installed at a time). When one part
+   * of the group is held, others in the same group are visually ghosted
+   * and non-interactive.
+   */
+  caseLockGroup?: string;
   modelPath?: string;
 }
 
@@ -33,6 +55,7 @@ export interface RepairScannedBrokenPart {
   label: string;
   modelPath: string;
   caseSlotName?: string;
+  targetNodeName?: string;
 }
 
 export interface RepairMissionConfig {
@@ -46,7 +69,13 @@ export interface RepairMissionConfig {
   brokenUiPath: string;
   case: RepairMissionCaseConfig;
   reassemblySeconds?: number;
-  requiredReplacementPartId: string;
+  /**
+   * Replacement part IDs accepted as the correct install. Multiple values
+   * are used when several alternatives are valid (e.g. pylon accepts either
+   * cable model). Install validation succeeds when any one of these parts
+   * is snapped into a placeholder slot.
+   */
+  requiredReplacementPartIds: readonly string[];
   scanPartSeconds?: number;
   brokenParts: readonly RepairMissionPartConfig[];
   replacementParts: readonly RepairMissionPartConfig[];

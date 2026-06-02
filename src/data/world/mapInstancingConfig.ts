@@ -9,7 +9,7 @@ export const MAP_INSTANCING_ASSETS = {
   },
   pylone: {
     mapName: "pylone",
-    modelPath: "/models/pylone/model.gltf",
+    modelPath: "/models/pylone/model.glb",
     scaleMultiplier: 1,
     castShadow: true,
     receiveShadow: true,
