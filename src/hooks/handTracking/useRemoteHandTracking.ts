@@ -4,6 +4,7 @@ import {
   HAND_TRACKING_FRAME_WIDTH,
   HAND_TRACKING_JPEG_QUALITY,
   HAND_TRACKING_RESPONSE_TIMEOUT_MS,
+  HAND_TRACKING_RUNTIME_START_DELAY_MS,
   HAND_TRACKING_TARGET_FPS,
 } from "@/data/handTrackingConfig";
 import { getHandTrackingWsUrl } from "@/utils/handTracking/handTrackingEndpoint";
@@ -330,10 +331,17 @@ export function useRemoteHandTracking({
       }
     };
 
-    void start();
+    // Delay the actual start so that a StrictMode mount/unmount/mount
+    // cycle, or a rapid `enabled` toggle at a trigger border, does not
+    // open the camera + WebSocket twice in a few milliseconds.
+    const startTimer = window.setTimeout(() => {
+      if (cancelled) return;
+      void start();
+    }, HAND_TRACKING_RUNTIME_START_DELAY_MS);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(startTimer);
       cleanup();
     };
   }, [enabled, websocketUrl]);
