@@ -14,6 +14,9 @@ export const MAP_LOD_MODEL_PATHS = {
   maison1: "/models/maison1-LOD/model.gltf",
   panneauaffichage: "/models/panneauaffichage-LOD/model.gltf",
   talkie: "/models/talkie-LOD/model.gltf",
+  arbre: "/models/arbre-LOD/model.glb",
+  buisson: "/models/buisson-LOD/model.glb",
+  sapin: "/models/sapin-LOD/model.glb",
 } as const satisfies Record<string, string>;
 
 export function getMapLodModelPath(modelName: string): string | null {
