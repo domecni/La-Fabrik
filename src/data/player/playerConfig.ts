@@ -20,4 +20,8 @@ export const PLAYER_SPAWN_POSITION_GAME: Vector3Tuple = [
   LA_FABRIK_PLAYER_SPAWN[1],
   LA_FABRIK_PLAYER_SPAWN[2] - 1,
 ];
-export const PLAYER_SPAWN_POSITION_PHYSICS: Vector3Tuple = [0, 3, 0];
+export const PLAYER_SPAWN_POSITION_PHYSICS: Vector3Tuple = [
+  0,
+  PLAYER_EYE_HEIGHT,
+  0,
+];

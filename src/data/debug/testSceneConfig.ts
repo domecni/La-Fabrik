@@ -1,13 +1,15 @@
 import type { Vector3Tuple } from "@/types/three/three";
 import type { RepairMissionId } from "@/types/gameplay/repairMission";
 
+const DEG_TO_RAD = Math.PI / 180;
+
 export const TEST_SCENE_FLOOR_POSITION: Vector3Tuple = [0, -0.5, 0];
 export const TEST_SCENE_FLOOR_SIZE: Vector3Tuple = [200, 1, 200];
 export const TEST_SCENE_FLOOR_COLLIDER_HALF_EXTENTS: Vector3Tuple = [
   100, 0.5, 100,
 ];
 
-export const TEST_SCENE_GRABBABLE_POSITION: Vector3Tuple = [0, 1, -3];
+export const TEST_SCENE_GRABBABLE_POSITION: Vector3Tuple = [0, 0.25, -3];
 export const TEST_SCENE_GRABBABLE_BOX_SIZE: Vector3Tuple = [0.5, 0.5, 0.5];
 export const TEST_SCENE_GRABBABLE_COLOR = "#e07b39";
 export const TEST_SCENE_GRABBABLE_ROUGHNESS = 0.6;
@@ -23,6 +25,12 @@ export const TEST_SCENE_TRIGGER_METALNESS = 0.5;
 
 export const TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS = 1.65;
 export const TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS = 0.045;
+export const TEST_SCENE_GPS_PREVIEW_POSITION: Vector3Tuple = [0, 5, -4.8];
+export const TEST_SCENE_GPS_PREVIEW_ROTATION: Vector3Tuple = [
+  -33 * DEG_TO_RAD,
+  0,
+  0,
+];
 
 export const GAME_REPAIR_ZONES = [
   {

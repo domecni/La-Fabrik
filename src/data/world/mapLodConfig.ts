@@ -24,7 +24,6 @@ export function getMapLodModelPath(modelName: string): string | null {
   );
 }
 
-
 export const MAP_LOD_SCALE_MULTIPLIERS = {
   sapin: 0.35,
   buisson: 0.7,

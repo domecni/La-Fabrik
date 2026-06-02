@@ -17,6 +17,8 @@ import {
   TEST_SCENE_GRABBABLE_METALNESS,
   TEST_SCENE_GRABBABLE_POSITION,
   TEST_SCENE_GRABBABLE_ROUGHNESS,
+  TEST_SCENE_GPS_PREVIEW_POSITION,
+  TEST_SCENE_GPS_PREVIEW_ROTATION,
   GAME_REPAIR_ZONES,
   TEST_SCENE_REPAIR_ZONE_MARKER_RADIUS,
   TEST_SCENE_REPAIR_ZONE_MARKER_TUBE_RADIUS,
@@ -110,24 +112,17 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log(
-            `[TestMap] ${parsed.length} waypoints chargés depuis localStorage.`,
-          );
           // Schedule state update to avoid synchronous setState in effect
           queueMicrotask(() => {
             if (!cancelled) setWaypoints(parsed);
           });
           return;
         }
-      } catch (e) {
-        console.error("Failed to parse local storage waypoints", e);
+      } catch {
+        // Ignore parse errors — fall through to fetch fallback
       }
     }
 
-    // 2. Try public/roadNetwork.json
-    console.log(
-      "[TestMap] Tentative de chargement depuis /roadNetwork.json...",
-    );
     fetch("/roadNetwork.json")
       .then((res) => {
         if (res.ok) return res.json();
@@ -136,14 +131,11 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
       .then((data) => {
         if (cancelled) return;
         if (Array.isArray(data)) {
-          console.log(
-            `[TestMap] ${data.length} waypoints chargés depuis /roadNetwork.json.`,
-          );
           setWaypoints(data);
         }
       })
-      .catch((err) => {
-        console.log("[TestMap] Aucun point d'A* trouvé par défaut.", err);
+      .catch(() => {
+        // No A* waypoints available — silent fallback
       });
 
     return () => {
@@ -253,7 +245,10 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
       </Physics>
 
       {/* Dynamic Futuristic 3D GPS Dashboard Preview */}
-      <group position={[0, 2.8, -4.8]} rotation={[0, 0, 0]}>
+      <group
+        position={TEST_SCENE_GPS_PREVIEW_POSITION}
+        rotation={TEST_SCENE_GPS_PREVIEW_ROTATION}
+      >
         {/* Futuristic glowing screen frame (commented out to show true 3D transparency!) */}
         {/*
         <mesh>
