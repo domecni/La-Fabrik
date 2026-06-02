@@ -19,8 +19,13 @@ export function PylonLightingEffect(): null {
   const mainState = useGameStore((state) => state.mainState);
   const step = useGameStore((state) => state.pylon.currentStep);
 
-  // True from "approaching" until narrator-outro (lighting resets before the outro audio)
-  const isActive = mainState === "pylon" && step !== "locked" && step !== "narrator-outro";
+  // True from "approaching" until done — lighting starts reverting as soon as
+  // the repair is complete (powerup sfx plays at "done", outro dialogue at "narrator-outro").
+  const isActive =
+    mainState === "pylon" &&
+    step !== "locked" &&
+    step !== "done" &&
+    step !== "narrator-outro";
 
   // Working THREE.Color instances — lerped every frame
   const ambientRef = useRef(new THREE.Color(LIGHTING_STATE.ambientColor));

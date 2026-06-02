@@ -161,7 +161,10 @@ function completePylonState(state: GameState): GameStateUpdate {
     },
     farm: {
       ...state.farm,
-      currentStep: "waiting",
+      // Farm starts at "locked" so FarmNarrativeFlow can auto-transition
+      // to "electricienne_history" and play the intro audio before the
+      // repair game begins.
+      currentStep: "locked",
     },
   };
 }

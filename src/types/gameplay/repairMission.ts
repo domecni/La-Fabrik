@@ -93,13 +93,20 @@ export type MissionStep =
   | "repairing"
   | "reassembling"
   | "done"
-  | "narrator-outro";
+  | "narrator-outro"
+  | "electricienne_history";
 
 export const PYLON_NARRATIVE_STEPS = [
   "approaching",
   "arrived",
   "npc-return",
   "narrator-outro",
+] as const;
+
+/** Farm-specific steps that bypass the repair-game flow. */
+export const FARM_NARRATIVE_STEPS = [
+  "locked",
+  "electricienne_history",
 ] as const;
 
 export const REPAIR_GAME_STEPS = [
@@ -114,6 +121,10 @@ export const REPAIR_GAME_STEPS = [
 
 export function isPylonNarrativeStep(step: MissionStep): boolean {
   return (PYLON_NARRATIVE_STEPS as readonly MissionStep[]).includes(step);
+}
+
+export function isFarmNarrativeStep(step: MissionStep): boolean {
+  return (FARM_NARRATIVE_STEPS as readonly MissionStep[]).includes(step);
 }
 
 export function isRepairGameStep(step: MissionStep): boolean {

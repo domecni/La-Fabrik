@@ -1,6 +1,7 @@
 import { Ebike } from "@/components/ebike/Ebike";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
+import { FarmNarrativeFlow } from "@/components/gameplay/farm/FarmNarrativeFlow";
 import { PylonDownedPylon } from "@/components/gameplay/pylon/PylonDownedPylon";
 import { PylonLightingEffect } from "@/components/gameplay/pylon/PylonLightingEffect";
 import { PylonNarrativeFlow } from "@/components/gameplay/pylon/PylonNarrativeFlow";
@@ -17,7 +18,10 @@ import {
 } from "@/data/gameplay/gameStageAnchors";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useRepairMissionAnchorStore } from "@/managers/stores/useRepairMissionAnchorStore";
-import { isPylonNarrativeStep } from "@/types/gameplay/repairMission";
+import {
+  isFarmNarrativeStep,
+  isPylonNarrativeStep,
+} from "@/types/gameplay/repairMission";
 import type { RepairMissionTriggerConfig } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 import { getRepairMissionPosition } from "@/utils/gameplay/repairMissionPosition";
@@ -93,8 +97,12 @@ export function GameStageContent(): React.JSX.Element {
   const pylonStep = useGameStore((state) => state.pylon.currentStep);
   const anchors = useRepairMissionAnchorStore((state) => state.anchors);
 
+  const farmStep = useGameStore((state) => state.farm.currentStep);
+
   const pylonInNarrative =
     mainState === "pylon" && isPylonNarrativeStep(pylonStep);
+  const farmInNarrative =
+    mainState === "farm" && isFarmNarrativeStep(farmStep);
 
   return (
     <>
@@ -109,10 +117,12 @@ export function GameStageContent(): React.JSX.Element {
         </>
       ) : null}
       {mainState === "pylon" ? <PylonNarrativeFlow /> : null}
+      {mainState === "farm" ? <FarmNarrativeFlow /> : null}
       {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission }) => {
         const position = getRepairMissionPosition(mission, anchors);
         if (!position) return null;
         if (mission === "pylon" && pylonInNarrative) return null;
+        if (mission === "farm" && farmInNarrative) return null;
         return (
           <RepairGame key={mission} mission={mission} position={position} />
         );
