@@ -5,8 +5,8 @@ import {
   MAIN_GAME_STATES,
 } from "@/data/game/gameStateConfig";
 import {
+  getMissionStepsFor,
   isMissionStep,
-  MISSION_STEPS,
 } from "@/data/gameplay/repairMissionState";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { MainGameState } from "@/types/game";
@@ -53,7 +53,9 @@ export function GameStateDebugPanel(): React.JSX.Element {
       ? GAME_STEPS
       : mainState === "outro"
         ? ["waiting", "started"]
-        : MISSION_STEPS;
+        : mainState === "ebike" || mainState === "pylon" || mainState === "farm"
+          ? getMissionStepsFor(mainState)
+          : [];
 
   function setSubState(nextSubState: string): void {
     if (mainState === "intro") {

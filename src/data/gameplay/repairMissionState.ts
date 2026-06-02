@@ -24,6 +24,20 @@ export const MISSION_STEPS = [
 ] as const satisfies readonly MissionStep[];
 const MISSION_STEP_VALUES: ReadonlySet<string> = new Set(MISSION_STEPS);
 
+const PYLON_ONLY_MISSION_STEPS = new Set<MissionStep>([
+  "approaching",
+  "arrived",
+  "npc-return",
+  "narrator-outro",
+]);
+
+export function getMissionStepsFor(
+  mission: RepairMissionId,
+): readonly MissionStep[] {
+  if (mission === "pylon") return MISSION_STEPS;
+  return MISSION_STEPS.filter((step) => !PYLON_ONLY_MISSION_STEPS.has(step));
+}
+
 export function isRepairMissionId(value: string): value is RepairMissionId {
   return REPAIR_MISSION_ID_VALUES.has(value);
 }
