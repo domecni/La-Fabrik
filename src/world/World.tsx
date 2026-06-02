@@ -6,6 +6,7 @@ import {
 } from "@/data/player/playerConfig";
 import { LA_FABRIK_INITIAL_LOOK_AT } from "@/data/world/laFabrikConfig";
 import { useCameraMode } from "@/hooks/debug/useCameraMode";
+import { useDebugStore } from "@/hooks/debug/useDebugStore";
 import { useEnvironmentDebug } from "@/hooks/debug/useEnvironmentDebug";
 import { useMapPerformanceDebug } from "@/hooks/debug/useMapPerformanceDebug";
 import { useCharacterDebug } from "@/hooks/debug/useCharacterDebug";
@@ -32,7 +33,6 @@ import { CharacterSystem } from "@/world/characters/CharacterSystem";
 import { Player } from "@/world/player/Player";
 import { TestMap } from "@/world/debug/TestMap";
 import type { SceneLoadingChangeHandler } from "@/types/world/sceneLoading";
-import type { HandTrackingGloveHandedness } from "@/hooks/handTracking/useHandTrackingGloveStatus";
 import type { HandTrackingHand } from "@/types/handTracking/handTracking";
 
 interface WorldProps {
@@ -41,7 +41,7 @@ interface WorldProps {
 
 function hasTrackedHand(
   hands: HandTrackingHand[],
-  handedness: HandTrackingGloveHandedness,
+  handedness: "left" | "right",
 ): boolean {
   return hands.some((hand) => hand.handedness.toLowerCase() === handedness);
 }
@@ -60,6 +60,9 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
     (state) => state.showPlayerModel,
   );
   const showDebugOctree = useDebugVisualsStore((state) => state.showOctree);
+  const showHandTrackingModel = useDebugStore((debug) =>
+    debug.getShowHandTrackingModel(),
+  );
   const { hands, status, usageStatus } = useHandTrackingSnapshot();
   const {
     octree,
@@ -74,7 +77,10 @@ export function World({ onLoadingStateChange }: WorldProps): React.JSX.Element {
       ? PLAYER_SPAWN_POSITION_GAME
       : PLAYER_SPAWN_POSITION_PHYSICS;
   const showHandTrackingGloves =
-    status === "connected" && usageStatus !== "inactive" && hands.length > 0;
+    showHandTrackingModel &&
+    status === "connected" &&
+    usageStatus !== "inactive" &&
+    hands.length > 0;
   const showLeftHandTrackingGlove =
     showHandTrackingGloves && hasTrackedHand(hands, "left");
   const showRightHandTrackingGlove =

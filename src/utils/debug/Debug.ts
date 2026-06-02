@@ -85,7 +85,7 @@ export class Debug {
     fogEnabled: boolean;
     handTrackingSource: HandTrackingSource;
     showDebugOverlay: boolean;
-    showHandTrackingSvg: boolean;
+    showHandTrackingModel: boolean;
     showInteractionSpheres: boolean;
     showPerf: boolean;
     sceneMode: SceneMode;
@@ -108,7 +108,7 @@ export class Debug {
       fogEnabled: FOG_CONFIG.enabled,
       handTrackingSource: storedControls.handTrackingSource ?? "browser",
       showDebugOverlay: true,
-      showHandTrackingSvg: false,
+      showHandTrackingModel: false,
       showInteractionSpheres: false,
       showPerf: true,
       sceneMode: storedControls.sceneMode ?? "game",
@@ -156,10 +156,10 @@ export class Debug {
       const handTrackingFolder = this.createFolder("Hand Tracking");
 
       handTrackingFolder
-        ?.add(this.controls, "showHandTrackingSvg")
-        .name("Show SVG")
+        ?.add(this.controls, "showHandTrackingModel")
+        .name("Show Model")
         .onChange((value: boolean) => {
-          this.controls.showHandTrackingSvg = value;
+          this.controls.showHandTrackingModel = value;
           this.emit();
         });
 
@@ -281,12 +281,12 @@ export class Debug {
     return this.controls.showInteractionSpheres;
   }
 
-  getShowHandTrackingSvg(): boolean {
-    return this.controls.showHandTrackingSvg;
+  getShowHandTrackingModel(): boolean {
+    return this.controls.showHandTrackingModel;
   }
 
-  setShowHandTrackingSvg(value: boolean): void {
-    this.controls.showHandTrackingSvg = value;
+  setShowHandTrackingModel(value: boolean): void {
+    this.controls.showHandTrackingModel = value;
     this.emit();
   }
 
