@@ -1,5 +1,6 @@
 import { Ebike } from "@/components/ebike/Ebike";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
+import { RepairFocusBubble } from "@/components/three/gameplay/RepairFocusBubble";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import { PylonDownedPylon } from "@/components/gameplay/pylon/PylonDownedPylon";
 import { PylonNarrativeFlow } from "@/components/gameplay/pylon/PylonNarrativeFlow";
@@ -20,13 +21,7 @@ import { isPylonNarrativeStep } from "@/types/gameplay/repairMission";
 import type { RepairMissionTriggerConfig } from "@/types/gameplay/repairMission";
 import type { Vector3Tuple } from "@/types/three/three";
 import { getRepairMissionPosition } from "@/utils/gameplay/repairMissionPosition";
-import {
-  EBIKE_WORLD_POSITION,
-  EBIKE_WORLD_ROTATION_Y,
-  EBIKE_WORLD_SCALE,
-} from "@/data/ebike/ebikeConfig";
-
-const EBIKE_CONFIG_KEY = `${EBIKE_WORLD_POSITION.join(",")}:${EBIKE_WORLD_ROTATION_Y}:${EBIKE_WORLD_SCALE}`;
+import { EBIKE_WORLD_POSITION } from "@/data/ebike/ebikeConfig";
 
 interface StageAnchorProps {
   color: string;
@@ -119,6 +114,7 @@ export function GameStageContent(): React.JSX.Element {
         <RepairMissionTrigger key={config.mission} config={config} />
       ))}
       {mainState === "outro" ? <StageAnchor {...OUTRO_STAGE_ANCHOR} /> : null}
+      <RepairFocusBubble />
     </>
   );
 }

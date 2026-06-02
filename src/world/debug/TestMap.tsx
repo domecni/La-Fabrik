@@ -5,6 +5,7 @@ import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
 import { Line } from "@react-three/drei";
 import { Ebike } from "@/components/ebike/Ebike";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
+import { RepairFocusBubble } from "@/components/three/gameplay/RepairFocusBubble";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { AnimatedModel } from "@/components/three/models/AnimatedModel";
 import { TriggerObject } from "@/components/three/interaction/TriggerObject";
@@ -247,6 +248,8 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
           </group>
         ))}
       </Physics>
+
+      <RepairFocusBubble />
 
       {/* Dynamic Futuristic 3D GPS Dashboard Preview */}
       <group

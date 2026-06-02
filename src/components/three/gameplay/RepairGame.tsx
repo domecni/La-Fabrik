@@ -25,6 +25,7 @@ import type {
   RepairScannedBrokenPart,
 } from "@/types/gameplay/repairMission";
 import { useGameStore } from "@/managers/stores/useGameStore";
+import { useRepairFocusStore } from "@/managers/stores/useRepairFocusStore";
 import type { ModelTransformProps, Vector3Tuple } from "@/types/three/three";
 import { toVector3Scale } from "@/utils/three/scale";
 
@@ -109,6 +110,25 @@ export function RepairGame({
       window.clearTimeout(timeoutId);
     };
   }, [mainState, mission, step]);
+
+  // Drive the global focus bubble: active during the immersive repair
+  // phases so the world dims/hides outside the dark sphere shroud.
+  const focusCenterX = snappedPosition[0];
+  const focusCenterY = snappedPosition[1];
+  const focusCenterZ = snappedPosition[2];
+  useEffect(() => {
+    const inFocusPhase =
+      mainState === mission && shouldFocusBubbleBeActive(step);
+    if (inFocusPhase) {
+      useRepairFocusStore
+        .getState()
+        .setFocus(true, [focusCenterX, focusCenterY, focusCenterZ]);
+      return () => {
+        useRepairFocusStore.getState().setFocus(false);
+      };
+    }
+    return undefined;
+  }, [mainState, mission, step, focusCenterX, focusCenterY, focusCenterZ]);
 
   useEffect(() => {
     if (mainState !== mission) return undefined;
@@ -212,6 +232,15 @@ export function RepairGame({
 
 function shouldKeepRepairRuntimeState(step: MissionStep): boolean {
   return step === "repairing" || step === "reassembling" || step === "done";
+}
+
+function shouldFocusBubbleBeActive(step: MissionStep): boolean {
+  return (
+    step === "fragmented" ||
+    step === "scanning" ||
+    step === "repairing" ||
+    step === "reassembling"
+  );
 }
 
 function getRepairMissionModelPaths(config: RepairMissionConfig): string[] {
