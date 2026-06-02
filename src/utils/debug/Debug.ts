@@ -1,9 +1,11 @@
 import GUI from "lil-gui";
+import type { Controller } from "lil-gui";
 import type { CameraMode, SceneMode } from "@/types/debug/debug";
 import type { HandTrackingSource } from "@/types/handTracking/handTracking";
 import { FOG_CONFIG } from "@/data/world/fogConfig";
 import { EventEmitter } from "@/utils/core/EventEmitter";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
+import { logger } from "@/utils/core/Logger";
 
 const DEBUG_CONTROLS_STORAGE_KEY = "la-fabrik-debug-controls";
 
@@ -77,6 +79,7 @@ export class Debug {
   private readonly events = new EventEmitter<DebugEvents>();
   private readonly folders = new Map<string, GUI>();
   private readonly folderRefCounts = new Map<string, number>();
+  private handTrackingSourceController: Controller | null = null;
   private readonly controls: {
     cameraMode: CameraMode;
     fogEnabled: boolean;
@@ -160,16 +163,22 @@ export class Debug {
           this.emit();
         });
 
-      handTrackingFolder
-        ?.add(this.controls, "handTrackingSource", {
-          "Browser JS": "browser",
-          Backend: "backend",
-        })
-        .name("Source")
-        .onChange((value: HandTrackingSource) => {
-          this.controls.handTrackingSource = value;
-          this.saveAndEmit();
-        });
+      this.handTrackingSourceController =
+        handTrackingFolder
+          ?.add(this.controls, "handTrackingSource", {
+            "Browser JS": "browser",
+            Backend: "backend",
+          })
+          .name("Source")
+          .onChange((value: HandTrackingSource) => {
+            const previousSource = this.controls.handTrackingSource;
+            this.controls.handTrackingSource = value;
+            logger.info("HandTracking", "Debug source changed", {
+              from: previousSource,
+              to: value,
+            });
+            this.saveAndEmit();
+          }) ?? null;
     }
   }
 
@@ -254,7 +263,13 @@ export class Debug {
   }
 
   setHandTrackingSource(value: HandTrackingSource): void {
+    const previousSource = this.controls.handTrackingSource;
     this.controls.handTrackingSource = value;
+    this.handTrackingSourceController?.updateDisplay();
+    logger.info("HandTracking", "Settings source changed", {
+      from: previousSource,
+      to: value,
+    });
     this.saveAndEmit();
   }
 
