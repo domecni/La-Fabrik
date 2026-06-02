@@ -358,6 +358,19 @@ export function Ebike({
         ? "Monter sur le bike"
         : "Descendre du bike";
 
+  // Hide the interact prompt while the player is actively riding the bike
+  // (driving input pressed) so the "Descendre du bike" label doesn't
+  // pollute the view. The prompt comes back the moment the bike comes to
+  // a stop. window.ebikeDriveInputActive is published every frame by
+  // PlayerController based on whether a movement key is currently held.
+  const [isEbikeDriving, setIsEbikeDriving] = useState(false);
+  useFrame(() => {
+    const driving =
+      movementMode === "ebike" && window.ebikeDriveInputActive === true;
+    if (driving !== isEbikeDriving) setIsEbikeDriving(driving);
+  });
+  const showInteractPrompt = !isEbikeDriving;
+
   const handleInteract = useCallback((): void => {
     if (window.ebikeBreakdownActive === true) return;
 
@@ -465,22 +478,24 @@ export function Ebike({
           {/* radius 20 → ~7 unités monde (scale 0.35).
               Sphère omnidirectionnelle pour que le raycast fonctionne
               quelle que soit l'orientation de la caméra (montée ou à pied). */}
-          <InteractableObject
-            kind="trigger"
-            label={interactionLabel}
-            position={parkedPosition}
-            radius={5}
-            onPress={handleInteract}
-          >
-            <mesh>
-              <sphereGeometry args={[8, 15, 12]} />
-              <meshBasicMaterial
-                colorWrite={false}
-                color={"red"}
-                depthWrite={false}
-              />
-            </mesh>
-          </InteractableObject>
+          {showInteractPrompt ? (
+            <InteractableObject
+              kind="trigger"
+              label={interactionLabel}
+              position={parkedPosition}
+              radius={5}
+              onPress={handleInteract}
+            >
+              <mesh>
+                <sphereGeometry args={[8, 15, 12]} />
+                <meshBasicMaterial
+                  colorWrite={false}
+                  color={"red"}
+                  depthWrite={false}
+                />
+              </mesh>
+            </InteractableObject>
+          ) : null}
 
           {/* GPS + Speedmeter – same group so they are perfectly co-localised.
               GPS: full circle (Fresnel mask), renderOrder 10 000
