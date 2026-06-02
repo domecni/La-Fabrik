@@ -11,6 +11,7 @@ import {
   isMapModelVisible,
   useMapPerformanceStore,
 } from "@/managers/stores/useMapPerformanceStore";
+import { useRepairFocusStore } from "@/managers/stores/useRepairFocusStore";
 import { SkyModel } from "@/components/three/world/SkyModel";
 import { CloudSystem } from "@/world/clouds/CloudSystem";
 import { FogSystem } from "@/world/fog/FogSystem";
@@ -24,6 +25,9 @@ export function Environment(): React.JSX.Element {
   const groups = useMapPerformanceStore((state) => state.groups);
   const models = useMapPerformanceStore((state) => state.models);
   const showSky = isMapModelVisible("sky", { groups, models });
+  // Hide vegetation while the repair focus bubble is active so the cocoon
+  // shroud is not pierced by tall trees / bushes around the repair model.
+  const repairFocusActive = useRepairFocusStore((state) => state.active);
 
   if (sceneMode === "physics") {
     return (
@@ -52,7 +56,7 @@ export function Environment(): React.JSX.Element {
       <WaterSystem />
       <CloudSystem />
       <GrassSystem />
-      <VegetationSystem />
+      {repairFocusActive ? null : <VegetationSystem />}
     </>
   );
 }

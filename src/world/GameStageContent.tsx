@@ -16,6 +16,7 @@ import {
   OUTRO_STAGE_ANCHOR,
 } from "@/data/gameplay/gameStageAnchors";
 import { useGameStore } from "@/managers/stores/useGameStore";
+import { useRepairFocusStore } from "@/managers/stores/useRepairFocusStore";
 import { useRepairMissionAnchorStore } from "@/managers/stores/useRepairMissionAnchorStore";
 import { isPylonNarrativeStep } from "@/types/gameplay/repairMission";
 import type { RepairMissionTriggerConfig } from "@/types/gameplay/repairMission";
@@ -86,6 +87,7 @@ export function GameStageContent(): React.JSX.Element {
   const mainState = useGameStore((state) => state.mainState);
   const pylonStep = useGameStore((state) => state.pylon.currentStep);
   const anchors = useRepairMissionAnchorStore((state) => state.anchors);
+  const repairFocusActive = useRepairFocusStore((state) => state.active);
 
   const pylonInNarrative =
     mainState === "pylon" && isPylonNarrativeStep(pylonStep);
@@ -95,7 +97,7 @@ export function GameStageContent(): React.JSX.Element {
       {mainState === "intro" ? <StageAnchor {...INTRO_STAGE_ANCHOR} /> : null}
       <Ebike position={EBIKE_WORLD_POSITION} />
       <PylonDownedPylon />
-      {isDebugEnabled() ? (
+      {isDebugEnabled() && !repairFocusActive ? (
         <>
           <ZoneDebugVisual zone={PYLON_APPROACH_ZONE} active={false} />
           <ZoneDebugVisual zone={PYLON_ARRIVED_ZONE} active={false} />
