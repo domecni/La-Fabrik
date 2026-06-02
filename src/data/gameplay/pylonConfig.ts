@@ -6,11 +6,7 @@ export const PYLON_DOWNED_ROTATION: Vector3Tuple = [0, 0, -0.9];
 
 export const PYLON_UPRIGHT_ROTATION: Vector3Tuple = [0, 0, 0];
 
-export const PYLON_FARMER_NPC_POSITION: Vector3Tuple = [
-  -16.13,
-  3.2,
-  52.46
-];
+export const PYLON_FARMER_NPC_POSITION: Vector3Tuple = [-16.13, 3.2, 52.46];
 
 export const PYLON_FARMER_NPC_AFTER_POSITION: Vector3Tuple = [
   PYLON_WORLD_POSITION[0] + 3,

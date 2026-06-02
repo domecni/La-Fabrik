@@ -4,11 +4,7 @@ import { PYLON_WORLD_POSITION } from "@/data/gameplay/pylonConfig";
 // Zones qui active la coupure de courant
 export const PYLON_APPROACH_ZONE: ZoneConfig = {
   id: "pylon-approach",
-  position: [
-    5, 
-    4,
-    -21.5
-  ],
+  position: [5, 4, -21.5],
   radius: 10,
   height: 18,
   oneShot: true,

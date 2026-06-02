@@ -20,14 +20,17 @@ export function PylonLightingEffect(): null {
   const step = useGameStore((state) => state.pylon.currentStep);
 
   // True from "approaching" until narrator-outro (lighting resets before the outro audio)
-  const isActive = mainState === "pylon" && step !== "locked" && step !== "narrator-outro";
+  const isActive =
+    mainState === "pylon" && step !== "locked" && step !== "narrator-outro";
 
   // Working THREE.Color instances — lerped every frame
   const ambientRef = useRef(new THREE.Color(LIGHTING_STATE.ambientColor));
   const sunRef = useRef(new THREE.Color(LIGHTING_STATE.sunColor));
 
   // Target colours — updated reactively when isActive changes
-  const targetAmbientRef = useRef(new THREE.Color(LIGHTING_DEFAULTS.ambientColor));
+  const targetAmbientRef = useRef(
+    new THREE.Color(LIGHTING_DEFAULTS.ambientColor),
+  );
   const targetSunRef = useRef(new THREE.Color(LIGHTING_DEFAULTS.sunColor));
 
   useEffect(() => {
