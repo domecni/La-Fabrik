@@ -39,7 +39,9 @@ export function PylonDownedPylon(): React.JSX.Element | null {
     if (!group) return;
 
     if (!isStraightening || straightenStartRef.current === null) {
-      group.rotation.set(...(showUpright ? PYLON_UPRIGHT_ROTATION : PYLON_DOWNED_ROTATION));
+      group.rotation.set(
+        ...(showUpright ? PYLON_UPRIGHT_ROTATION : PYLON_DOWNED_ROTATION),
+      );
       return;
     }
 
@@ -117,7 +119,10 @@ export function PylonDownedPylon(): React.JSX.Element | null {
                       void (async () => {
                         const m = await loadDialogueManifest();
                         if (!m) return;
-                        await playDialogueById(m, PYLON_NARRATIVE_DIALOGUES.demandeAide);
+                        await playDialogueById(
+                          m,
+                          PYLON_NARRATIVE_DIALOGUES.demandeAide,
+                        );
                       })();
                     },
                     { once: true },
@@ -127,7 +132,10 @@ export function PylonDownedPylon(): React.JSX.Element | null {
                 void (async () => {
                   const manifest = await loadDialogueManifest();
                   if (!manifest) return;
-                  await playDialogueById(manifest, PYLON_NARRATIVE_DIALOGUES.demandeAide);
+                  await playDialogueById(
+                    manifest,
+                    PYLON_NARRATIVE_DIALOGUES.demandeAide,
+                  );
                 })();
               }
             } else if (step === "npc-return" && !isStraightening) {

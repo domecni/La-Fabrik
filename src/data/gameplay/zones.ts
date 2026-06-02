@@ -5,7 +5,7 @@ export const PYLON_APPROACH_ZONE: ZoneConfig = {
   id: "pylon-approach",
   position: [
     PYLON_WORLD_POSITION[0],
-    PYLON_WORLD_POSITION[1]- 5,
+    PYLON_WORLD_POSITION[1] - 5,
     PYLON_WORLD_POSITION[2],
   ],
   radius: 5,

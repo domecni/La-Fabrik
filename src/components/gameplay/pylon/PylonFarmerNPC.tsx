@@ -24,9 +24,7 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
   const step = useGameStore((state) => state.pylon.currentStep);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
   const groupRef = useRef<THREE.Group>(null);
-  const currentPosRef = useRef(
-    new THREE.Vector3(...PYLON_FARMER_NPC_POSITION),
-  );
+  const currentPosRef = useRef(new THREE.Vector3(...PYLON_FARMER_NPC_POSITION));
 
   // Reset position when entering arrived, set target when entering npc-return
   useEffect(() => {
@@ -44,7 +42,10 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
         ? PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight
         : PYLON_FARMER_NPC_AFTER_POSITION;
       _target.set(...targetPos);
-      currentPosRef.current.lerp(_target, Math.min(PYLON_FARMER_NPC_WALK_SPEED * delta, 1));
+      currentPosRef.current.lerp(
+        _target,
+        Math.min(PYLON_FARMER_NPC_WALK_SPEED * delta, 1),
+      );
       group.position.copy(currentPosRef.current);
       group.rotation.set(...PYLON_FARMER_NPC_AFTER_ROTATION);
       group.scale.setScalar(PYLON_FARMER_NPC_AFTER_SCALE);
@@ -58,7 +59,8 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
   });
 
   if (mainState !== "pylon") return null;
-  if (step !== "arrived" && step !== "npc-return" && step !== "inspected") return null;
+  if (step !== "arrived" && step !== "npc-return" && step !== "inspected")
+    return null;
 
   return (
     <group ref={groupRef} position={PYLON_FARMER_NPC_POSITION}>
