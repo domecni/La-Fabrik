@@ -241,7 +241,7 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
               <RepairPlaygroundZoneMarker color={zone.color} />
             </group>
             {zone.mission === "ebike" ? (
-              <Ebike position={zone.position} />
+              <Ebike position={zone.position} snapToTerrain={false} />
             ) : null}
             <RepairGame mission={zone.mission} position={zone.position} />
           </group>
