@@ -81,6 +81,9 @@ export function RepairRepairingStep({
   const [depositedBrokenPartIds, setDepositedBrokenPartIds] = useState<
     Record<string, boolean>
   >({});
+  const [heldPartByLockGroup, setHeldPartByLockGroup] = useState<
+    Record<string, string>
+  >({});
   const [showBlockedInstallFeedback, setShowBlockedInstallFeedback] =
     useState(false);
   const replacementParts = getReplacementParts(config);
@@ -183,6 +186,24 @@ export function RepairRepairingStep({
     });
   }
 
+  function handleReplacementGrabChange(
+    part: RepairMissionPartConfig,
+    held: boolean,
+  ): void {
+    if (!part.caseLockGroup) return;
+    const group = part.caseLockGroup;
+    setHeldPartByLockGroup((current) => {
+      if (held) {
+        if (current[group] === part.id) return current;
+        return { ...current, [group]: part.id };
+      }
+      if (current[group] !== part.id) return current;
+      const next = { ...current };
+      delete next[group];
+      return next;
+    });
+  }
+
   return (
     <group ref={groupRef}>
       <RepairInstallTarget
@@ -211,6 +232,10 @@ export function RepairRepairingStep({
           config.requiredReplacementPartIds,
           isPlaced,
         );
+        const lockedByOther =
+          part.caseLockGroup !== undefined &&
+          heldPartByLockGroup[part.caseLockGroup] !== undefined &&
+          heldPartByLockGroup[part.caseLockGroup] !== part.id;
 
         return (
           <GrabbableObject
@@ -218,7 +243,11 @@ export function RepairRepairingStep({
             position={placeholderPosition}
             colliders="ball"
             handControlled
+            disabled={lockedByOther}
             label={`Prendre ${part.label}`}
+            onGrabChange={(held) => {
+              handleReplacementGrabChange(part, held);
+            }}
             onPositionChange={(position) => {
               handleReplacementPosition(part.id, position);
             }}
@@ -234,6 +263,7 @@ export function RepairRepairingStep({
                 label={part.label}
                 modelPath={part.modelPath ?? config.modelPath}
                 scale={0.36}
+                ghosted={lockedByOther}
               />
               <RepairPartPlacementFeedback state={feedbackState} />
             </group>

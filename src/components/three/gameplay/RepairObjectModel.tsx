@@ -8,6 +8,7 @@ import { toVector3Scale } from "@/utils/three/scale";
 interface RepairObjectModelProps extends ModelTransformProps {
   label: string;
   modelPath: string;
+  ghosted?: boolean;
 }
 
 interface RepairObjectModelBoundaryProps extends RepairObjectModelProps {
@@ -73,6 +74,7 @@ export function RepairObjectModel({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
+  ghosted = false,
 }: RepairObjectModelProps): React.JSX.Element {
   return (
     <RepairObjectModelBoundary
@@ -87,6 +89,7 @@ export function RepairObjectModel({
         position={position}
         rotation={rotation}
         scale={scale}
+        opacity={ghosted ? 0.35 : 1}
       />
     </RepairObjectModelBoundary>
   );
