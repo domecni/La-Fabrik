@@ -10,7 +10,6 @@ export function PylonNarrativeFlow(): React.JSX.Element | null {
   const mainState = useGameStore((state) => state.mainState);
   const step = useGameStore((state) => state.pylon.currentStep);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
-  const completeMission = useGameStore((state) => state.completeMission);
 
   useDialoguePlayback({
     enabled: mainState === "pylon" && step === "approaching",
@@ -22,11 +21,7 @@ export function PylonNarrativeFlow(): React.JSX.Element | null {
     dialogueId: PYLON_NARRATIVE_DIALOGUES.searchCentral,
   });
 
-  useDialoguePlayback({
-    enabled: mainState === "pylon" && step === "narrator-outro",
-    dialogueId: PYLON_NARRATIVE_DIALOGUES.powerRestored,
-    onComplete: () => completeMission("pylon"),
-  });
+  // narrator-outro audio sequence + completeMission are handled in PylonNarratorOutro
 
   if (mainState !== "pylon") return null;
 

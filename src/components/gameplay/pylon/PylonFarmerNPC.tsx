@@ -1,61 +1,193 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useAnimations } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { SkeletonUtils } from "three-stdlib";
 import { InteractableObject } from "@/components/three/interaction/InteractableObject";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import { playDialogueById } from "@/utils/dialogues/playDialogue";
+import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import {
   PYLON_FARMER_NPC_AFTER_POSITION,
   PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight,
-  PYLON_FARMER_NPC_AFTER_ROTATION,
   PYLON_FARMER_NPC_AFTER_SCALE,
   PYLON_FARMER_NPC_POSITION,
+  PYLON_FARMER_NPC_WALK_LOOK_AT,
   PYLON_FARMER_NPC_WALK_SPEED,
   PYLON_NARRATIVE_DIALOGUES,
   PYLON_NARRATIVE_INTERACT_RADIUS,
+  PYLON_WORLD_POSITION,
 } from "@/data/gameplay/pylonConfig";
 import { pylonStraighteningSignal } from "@/components/gameplay/pylon/pylonSignals";
 
+const ELECTRICIENNE_MODEL_PATH = "/models/electricienne-animated/model.gltf";
+const ANIM_FADE = 0.3;
+const ARRIVE_THRESHOLD = 0.12;
+
+type NPCAnimation = "idle" | "walk" | "push";
+
 const _target = new THREE.Vector3();
+
+/**
+ * Compute the Y rotation (radians) for a model whose default forward
+ * direction is +Z, so that it faces from `from` toward `to`.
+ */
+function faceToward(from: THREE.Vector3, to: readonly [number, number, number]): number {
+  const dx = to[0] - from.x;
+  const dz = to[2] - from.z;
+  return Math.atan2(dx, dz);
+}
 
 export function PylonFarmerNPC(): React.JSX.Element | null {
   const mainState = useGameStore((state) => state.mainState);
   const step = useGameStore((state) => state.pylon.currentStep);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
+  const camera = useThree((state) => state.camera);
+
   const groupRef = useRef<THREE.Group>(null);
   const currentPosRef = useRef(new THREE.Vector3(...PYLON_FARMER_NPC_POSITION));
 
-  // Reset position when entering arrived, set target when entering npc-return
+  // Animation state guard — null forces playAnim to always trigger
+  const currentAnimRef = useRef<NPCAnimation | null>(null);
+
+  // Signal edge tracking
+  const wasStraighteningRef = useRef(false);
+  const wasCompletedRef = useRef(false);
+
+  // Saved Y rotation used whenever the NPC is stationary
+  const savedRotationYRef = useRef<number>(0);
+
+  const { scene, animations } = useLoggedGLTF(ELECTRICIENNE_MODEL_PATH, {
+    scope: "PylonFarmerNPC",
+  });
+  const model = useMemo(() => SkeletonUtils.clone(scene), [scene]);
+
+  // actions is in deps of playAnim: when useAnimations populates it (async useState
+  // inside drei), playAnim recreates → useEffect([step, playAnim]) re-fires → animation plays.
+  const { actions } = useAnimations(animations, model);
+
+  // ─── playAnim ─────────────────────────────────────────────────────────────
+  // NOTE: actions is intentionally in the dep array so this callback is
+  // recreated when drei's internal state populates the actions map.
+  const playAnim = useCallback(
+    (name: NPCAnimation, fade = ANIM_FADE): void => {
+      if (currentAnimRef.current === name) return;
+      currentAnimRef.current = name;
+
+      Object.values(actions).forEach((a) => a?.fadeOut(fade));
+
+      const action = actions[name];
+      if (!action) return;
+
+      if (name === "push") {
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+      }
+      action.reset().fadeIn(fade).play();
+    },
+    [actions],
+  );
+
+  // ─── Async audio after pylon is raised ────────────────────────────────────
+  const playPostRaiseAudioAndAdvance = useCallback(async () => {
+    const manifest = await loadDialogueManifest();
+    if (manifest) {
+      // "N'hésite pas, si tu as besoin d'autre chose !"
+      const audio = await playDialogueById(
+        manifest,
+        PYLON_NARRATIVE_DIALOGUES.electricienneApresMontage,
+      );
+      if (audio) {
+        await new Promise<void>((resolve) => {
+          audio.addEventListener("ended", () => resolve(), { once: true });
+          audio.addEventListener("error", () => resolve(), { once: true });
+        });
+      }
+    }
+    pylonStraighteningSignal.completed = false;
+    setMissionStep("pylon", "inspected");
+  }, [setMissionStep]);
+
+  // ─── Step-driven animation ────────────────────────────────────────────────
+  // Fires when step changes OR when playAnim changes (i.e. when actions load).
   useEffect(() => {
+    currentAnimRef.current = null;
     if (step === "arrived") {
       currentPosRef.current.set(...PYLON_FARMER_NPC_POSITION);
+      wasStraighteningRef.current = false;
+      wasCompletedRef.current = false;
+      savedRotationYRef.current = 0;
+      playAnim("idle");
+    } else if (step === "npc-return") {
+      playAnim("walk");
+    } else if (step === "inspected") {
+      playAnim("idle");
     }
-  }, [step]);
+  }, [step, playAnim]);
 
+  // ─── Per-frame: movement + rotation + signal detection ───────────────────
   useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
 
-    if (step === "npc-return") {
-      const targetPos = pylonStraighteningSignal.started
+    const isStraightening = pylonStraighteningSignal.started;
+    const isCompleted = pylonStraighteningSignal.completed;
+
+    // Rising edge: pylon straightening starts → push
+    if (isStraightening && !wasStraighteningRef.current) {
+      wasStraighteningRef.current = true;
+      currentAnimRef.current = null;
+      playAnim("push");
+    }
+
+    // Rising edge: straightening completed → idle + face player + audio
+    if (isCompleted && !wasCompletedRef.current) {
+      wasCompletedRef.current = true;
+      currentAnimRef.current = null;
+      playAnim("idle");
+      savedRotationYRef.current = faceToward(currentPosRef.current, [
+        camera.position.x,
+        camera.position.y,
+        camera.position.z,
+      ]);
+      void playPostRaiseAudioAndAdvance();
+    }
+
+    // ── Position ──────────────────────────────────────────────────────────
+    if (step === "npc-return" && !isCompleted) {
+      const targetPos = isStraightening
         ? PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight
         : PYLON_FARMER_NPC_AFTER_POSITION;
       _target.set(...targetPos);
-      currentPosRef.current.lerp(
-        _target,
-        Math.min(PYLON_FARMER_NPC_WALK_SPEED * delta, 1),
-      );
+
+      const dist = currentPosRef.current.distanceTo(_target);
+      if (dist > ARRIVE_THRESHOLD) {
+        const t = Math.min((PYLON_FARMER_NPC_WALK_SPEED * delta) / dist, 1);
+        currentPosRef.current.lerp(_target, t);
+      } else if (!isStraightening && currentAnimRef.current === "walk") {
+        playAnim("idle");
+        savedRotationYRef.current = faceToward(currentPosRef.current, PYLON_WORLD_POSITION);
+      }
       group.position.copy(currentPosRef.current);
-      group.rotation.set(...PYLON_FARMER_NPC_AFTER_ROTATION);
-      group.scale.setScalar(PYLON_FARMER_NPC_AFTER_SCALE);
     } else if (step === "inspected") {
       group.position.set(...PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight);
-      group.rotation.set(...PYLON_FARMER_NPC_AFTER_ROTATION);
-      group.scale.setScalar(PYLON_FARMER_NPC_AFTER_SCALE);
+    } else if (isCompleted) {
+      group.position.copy(currentPosRef.current);
     } else {
       group.position.set(...PYLON_FARMER_NPC_POSITION);
     }
+
+    // ── Rotation ──────────────────────────────────────────────────────────
+    if (step === "npc-return" && !isCompleted && currentAnimRef.current === "walk") {
+      const walkRotY = faceToward(currentPosRef.current, PYLON_FARMER_NPC_WALK_LOOK_AT);
+      group.rotation.set(0, walkRotY, 0);
+    } else {
+      group.rotation.set(0, savedRotationYRef.current, 0);
+    }
+
+    group.scale.setScalar(PYLON_FARMER_NPC_AFTER_SCALE);
   });
 
   if (mainState !== "pylon") return null;
@@ -64,19 +196,11 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
 
   return (
     <group ref={groupRef} position={PYLON_FARMER_NPC_POSITION}>
-      <mesh position={[0, 1, 0]}>
-        <capsuleGeometry args={[0.4, 1.2, 6, 12]} />
-        <meshStandardMaterial color="#a16207" />
-      </mesh>
-      <mesh position={[0, 1.95, 0]}>
-        <sphereGeometry args={[0.28, 12, 12]} />
-        <meshStandardMaterial color="#fde68a" />
-      </mesh>
-
+      <primitive object={model} />
       {step === "arrived" ? (
         <InteractableObject
           kind="trigger"
-          label="Parler au fermier"
+          label="Parler à l'électricienne"
           position={PYLON_FARMER_NPC_POSITION}
           radius={PYLON_NARRATIVE_INTERACT_RADIUS}
           onPress={() => {
@@ -88,7 +212,7 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
               }
               const audio = await playDialogueById(
                 manifest,
-                PYLON_NARRATIVE_DIALOGUES.farmerHelp,
+                PYLON_NARRATIVE_DIALOGUES.electricienneWelcome,
               );
               if (!audio) {
                 setMissionStep("pylon", "npc-return");
@@ -111,3 +235,5 @@ export function PylonFarmerNPC(): React.JSX.Element | null {
     </group>
   );
 }
+
+useGLTF.preload(ELECTRICIENNE_MODEL_PATH);

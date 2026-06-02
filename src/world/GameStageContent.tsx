@@ -3,6 +3,7 @@ import { InteractableObject } from "@/components/three/interaction/InteractableO
 import { RepairFocusBubble } from "@/components/three/gameplay/RepairFocusBubble";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import { PylonDownedPylon } from "@/components/gameplay/pylon/PylonDownedPylon";
+import { PylonLightingEffect } from "@/components/gameplay/pylon/PylonLightingEffect";
 import { PylonNarrativeFlow } from "@/components/gameplay/pylon/PylonNarrativeFlow";
 import { ZoneDebugVisual } from "@/components/zone/ZoneDetection";
 import { PYLON_APPROACH_ZONE, PYLON_ARRIVED_ZONE } from "@/data/gameplay/zones";
@@ -96,6 +97,7 @@ export function GameStageContent(): React.JSX.Element {
     <>
       {mainState === "intro" ? <StageAnchor {...INTRO_STAGE_ANCHOR} /> : null}
       <Ebike position={EBIKE_WORLD_POSITION} />
+      <PylonLightingEffect />
       <PylonDownedPylon />
       {isDebugEnabled() && !repairFocusActive ? (
         <>

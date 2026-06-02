@@ -21,15 +21,20 @@ const PYLON_MODEL_PATH = "/models/pylone/model.glb";
 export function PylonDownedPylon(): React.JSX.Element | null {
   const mainState = useGameStore((state) => state.mainState);
   const step = useGameStore((state) => state.pylon.currentStep);
-  const setMissionStep = useGameStore((state) => state.setMissionStep);
   const setCanMove = useGameStore((state) => state.setCanMove);
   const [isStraightening, setIsStraightening] = useState(false);
+  // Keeps the pylon upright after the animation completes while
+  // PylonFarmerNPC plays the post-raise audio sequence.
+  const [isRaised, setIsRaised] = useState(false);
   const groupRef = useRef<THREE.Group>(null);
   const straightenStartRef = useRef<number | null>(null);
   const hasPlayedFirstAudioRef = useRef(false);
 
   useEffect(() => {
-    if (step === "arrived") hasPlayedFirstAudioRef.current = false;
+    if (step === "arrived") {
+      hasPlayedFirstAudioRef.current = false;
+      setIsRaised(false);
+    }
   }, [step]);
 
   const { scene } = useGLTF(PYLON_MODEL_PATH);
@@ -58,6 +63,7 @@ export function PylonDownedPylon(): React.JSX.Element | null {
   });
 
   const showUpright =
+    isRaised ||
     mainState !== "pylon" ||
     step === "waiting" ||
     step === "inspected" ||
@@ -73,6 +79,7 @@ export function PylonDownedPylon(): React.JSX.Element | null {
   const beginStraighten = (): void => {
     setIsStraightening(true);
     pylonStraighteningSignal.started = true;
+    pylonStraighteningSignal.completed = false;
     straightenStartRef.current = performance.now();
     setCanMove(false);
     if (groupRef.current) {
@@ -81,8 +88,11 @@ export function PylonDownedPylon(): React.JSX.Element | null {
     window.setTimeout(() => {
       setIsStraightening(false);
       pylonStraighteningSignal.started = false;
+      // Keep pylon upright while PylonFarmerNPC plays the audio sequence.
+      // PylonFarmerNPC will call setMissionStep("pylon", "inspected") once done.
+      setIsRaised(true);
       setCanMove(true);
-      setMissionStep("pylon", "inspected");
+      pylonStraighteningSignal.completed = true;
     }, PYLON_STRAIGHTEN_ANIMATION_DURATION_MS);
   };
 
