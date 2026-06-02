@@ -12,6 +12,11 @@ import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
 import type { HandTrackingLandmark } from "@/types/handTracking/handTracking";
 import { logModelLoadError } from "@/utils/three/modelLoadLogger";
 
+// Both gloves share the same source mesh (gant_l). The right glove is
+// rendered by mirroring scale.x at the group level — this is more
+// reliable than the historical gant_r GLTF, which embeds multiple
+// skeletons (Hand_l, Hand_l_pad, Hand_r) and was breaking the finger
+// rig.
 const GLOVE_CONFIGS: Record<
   HandTrackingGloveHandedness,
   {
@@ -24,8 +29,8 @@ const GLOVE_CONFIGS: Record<
     rootNodeName: "Armature",
   },
   right: {
-    modelPath: "/models/gant_r/model.gltf",
-    rootNodeName: "Hand_r",
+    modelPath: "/models/gant_l/model.gltf",
+    rootNodeName: "Armature",
   },
 };
 
@@ -226,7 +231,10 @@ function applyFingerPose(
       _boneTargetQuaternion
         .copy(_boneDeltaQuaternion)
         .multiply(pose.restQuaternion);
-      pose.bone.quaternion.slerp(_boneTargetQuaternion, 0.45);
+      // Lower slerp factor = smoother but more latency. MediaPipe at
+      // ~10fps produces noisy landmark frames; smoothing cuts the
+      // jitter the user sees on every finger bone.
+      pose.bone.quaternion.slerp(_boneTargetQuaternion, 0.3);
     }
   }
 }
@@ -334,12 +342,18 @@ function HandTrackingGloveModel({
     _matrix.makeBasis(_xAxis, _yAxis, _zAxis);
     _targetQuaternion.setFromRotationMatrix(_matrix);
 
-    group.position.lerp(_targetPosition, Math.min(1, delta * 18));
-    group.quaternion.slerp(_targetQuaternion, Math.min(1, delta * 18));
+    // Lower factor (was 18) damps the glove jitter caused by noisy
+    // landmarks while keeping a responsive feel.
+    group.position.lerp(_targetPosition, Math.min(1, delta * 12));
+    group.quaternion.slerp(_targetQuaternion, Math.min(1, delta * 12));
 
     const palmLength = _wristPosition.distanceTo(_middlePosition);
     const scale = palmLength * GLOVE_MODEL_SCALE;
-    group.scale.setScalar(scale);
+    // Both gloves use the gant_l mesh; flip X for the right hand so the
+    // thumb ends up on the correct side instead of being a left-glove
+    // clone on the right hand.
+    const mirrorSignX = handedness === "right" ? -1 : 1;
+    group.scale.set(scale * mirrorSignX, scale, scale);
     group.updateMatrixWorld(true);
     applyFingerPose(fingerPoseChains, trackedHand.landmarks, camera);
   });

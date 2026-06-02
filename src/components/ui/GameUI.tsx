@@ -1,6 +1,7 @@
 import { Crosshair } from "@/components/ui/Crosshair";
 import { DebugOverlayLayout } from "@/components/ui/debug/DebugOverlayLayout";
 import { GameSettingsMenu } from "@/components/ui/GameSettingsMenu";
+import { HandTrackingFallback } from "@/components/ui/HandTrackingFallback";
 import { HandTrackingVisualizer } from "@/components/ui/HandTrackingVisualizer";
 import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { RepairMovementLockIndicator } from "@/components/ui/RepairMovementLockIndicator";
@@ -15,6 +16,7 @@ export function GameUI(): React.JSX.Element {
       <RepairMovementLockIndicator />
       <InteractPrompt />
       <HandTrackingVisualizer />
+      <HandTrackingFallback />
       <Subtitles />
       <TalkieDialogueOverlay />
       <GameSettingsMenu />
