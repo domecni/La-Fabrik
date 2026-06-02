@@ -363,7 +363,11 @@ export function PlayerController({
     }
 
     _wishDir.set(0, 0, 0);
-    if (!isEbikeBreakdown) {
+    // Block drive input only when still on the bike during breakdown.
+    // Once auto-dismounted (movementMode === "walk"), the player must
+    // remain free to walk around even though ebikeBreakdownActive is true.
+    const blockDriveInput = isEbikeMounted && isEbikeBreakdown;
+    if (!blockDriveInput) {
       if (keys.current.forward) _wishDir.add(_forward);
       if (keys.current.backward) _wishDir.sub(_forward);
       if (!isEbikeMounted) {
