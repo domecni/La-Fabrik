@@ -83,6 +83,7 @@ export function VegetationSystem({
   const streamingEnabled =
     streaming &&
     CHUNK_CONFIG.enabled &&
+    graphicsPreset.chunkStreamingEnabled &&
     sceneMode === "game" &&
     cameraMode === "player";
 

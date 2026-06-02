@@ -105,6 +105,9 @@ function GraphicsPresetButton({
   const lodLabel = config.forceLodModels
     ? "LOD forcé"
     : `HD ${config.lodHighDetailDistance}m`;
+  const chunkLabel = config.chunkStreamingEnabled
+    ? formatChunkDistance(config.chunkLoadRadius)
+    : "All";
 
   return (
     <button
@@ -115,8 +118,7 @@ function GraphicsPresetButton({
     >
       <span>{config.label}</span>
       <small>
-        {formatChunkDistance(config.chunkLoadRadius)} · {lodLabel} ·{" "}
-        {config.fogEnabled ? "Fog" : "Clear"}
+        {chunkLabel} · {lodLabel} · {config.fogEnabled ? "Fog" : "Clear"}
       </small>
     </button>
   );

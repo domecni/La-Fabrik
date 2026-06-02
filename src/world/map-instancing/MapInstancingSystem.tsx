@@ -149,6 +149,7 @@ export function MapInstancingSystem({
   const streamingEnabled =
     streaming &&
     CHUNK_CONFIG.enabled &&
+    graphicsPresetConfig.chunkStreamingEnabled &&
     sceneMode === "game" &&
     cameraMode === "player";
 
