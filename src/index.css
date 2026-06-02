@@ -1789,6 +1789,26 @@ canvas {
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
 }
 
+.hand-tracking-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.hand-tracking-fallback__icon {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  fill: #67e8f9;
+  stroke: #0c4a6e;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
+}
+
 /* Zustand game state debug UI */
 .game-state-debug-panel {
   display: grid;

@@ -3,10 +3,12 @@ import {
   HAND_TRACKING_FRAME_HEIGHT,
   HAND_TRACKING_FRAME_WIDTH,
   HAND_TRACKING_JPEG_QUALITY,
+  HAND_TRACKING_LANDMARK_SMOOTHING,
   HAND_TRACKING_RESPONSE_TIMEOUT_MS,
   HAND_TRACKING_RUNTIME_START_DELAY_MS,
   HAND_TRACKING_TARGET_FPS,
 } from "@/data/handTrackingConfig";
+import { smoothHands } from "@/lib/handTracking/handSmoothing";
 import { getHandTrackingWsUrl } from "@/utils/handTracking/handTrackingEndpoint";
 import {
   INITIAL_HAND_TRACKING_SNAPSHOT,
@@ -95,6 +97,7 @@ export function useRemoteHandTracking({
   const sendIntervalRef = useRef<number | null>(null);
   const responseTimeoutRef = useRef<number | null>(null);
   const waitingForResponseRef = useRef(false);
+  const previousHandsRef = useRef<HandTrackingHand[]>([]);
 
   useEffect(() => {
     if (!enabled) {
@@ -128,6 +131,7 @@ export function useRemoteHandTracking({
       streamRef.current = null;
       videoRef.current = null;
       canvasRef.current = null;
+      previousHandsRef.current = [];
     };
 
     const markResponseReceived = (): void => {
@@ -259,10 +263,16 @@ export function useRemoteHandTracking({
           }
 
           if (data.type === "hands") {
+            const smoothedHands = smoothHands(
+              previousHandsRef.current,
+              data.hands,
+              HAND_TRACKING_LANDMARK_SMOOTHING,
+            );
+            previousHandsRef.current = smoothedHands;
             setSnapshot((current) => ({
               ...current,
-              hands: data.hands,
-              usageStatus: data.hands.some((hand) => hand.isFist)
+              hands: smoothedHands,
+              usageStatus: smoothedHands.some((hand) => hand.isFist)
                 ? "active"
                 : "available",
               serverStatus: null,
