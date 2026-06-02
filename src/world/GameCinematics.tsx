@@ -118,7 +118,15 @@ function playCinematic(
     onUpdate: () => camera.lookAt(target),
     onComplete: () => {
       timelineRef.current = null;
-      useGameStore.getState().setCinematicPlaying(false);
+      // During the outro the camera is intentionally left at its final
+      // position — don't release cinematic lock so the player camera system
+      // can't snap it back to the player's eye position.
+      const { mainState } = useGameStore.getState();
+      if (mainState === "outro") {
+        window.dispatchEvent(new CustomEvent("outro-cinematic-complete"));
+      } else {
+        useGameStore.getState().setCinematicPlaying(false);
+      }
     },
   });
 

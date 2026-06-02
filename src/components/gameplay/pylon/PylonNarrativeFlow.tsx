@@ -82,6 +82,19 @@ export function PylonNarrativeFlow(): React.JSX.Element | null {
     dialogueId: PYLON_NARRATIVE_DIALOGUES.searchCentral,
   });
 
+  // ── inspected (demo skip) : jump straight to done after 5 s ─────────────
+  useEffect(() => {
+    if (mainState !== "pylon" || step !== "inspected") return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setMissionStep("pylon", "done");
+    }, 5_000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [mainState, step, setMissionStep]);
+
   // ── done : powerup sfx + lighting revert → auto-transition to narrator-outro
   useEffect(() => {
     if (mainState !== "pylon" || step !== "done") return undefined;

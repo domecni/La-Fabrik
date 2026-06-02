@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 import { AudioManager } from "@/managers/AudioManager";
 
-
 const HISTOIRE_AUDIO_PATH = "/sounds/dialogue/narrateur_histoireelectricienne.mp3";
+const OUTRO_DELAY_MS = 5_000; // delay after audio ends before transitioning to outro
 
 /**
  * Text blocks for the electricienne history narration (max 5 lines each).
@@ -39,8 +39,18 @@ function buildBlockTimings(
  * dynamically-computed block boundaries.
  * Movement is intentionally NOT blocked so the player can explore while
  * listening to the narration.
+ * `onAudioEnded` fires once when the audio element emits "ended".
  */
-function useHistoireSubtitlePlayback(enabled: boolean): void {
+function useHistoireSubtitlePlayback(
+  enabled: boolean,
+  onAudioEnded?: () => void,
+): void {
+  // Keep callback in a ref so the effect doesn't need it as a dependency.
+  const onAudioEndedRef = useRef(onAudioEnded);
+  useEffect(() => {
+    onAudioEndedRef.current = onAudioEnded;
+  });
+
   useEffect(() => {
     if (!enabled) return undefined;
 
@@ -75,8 +85,13 @@ function useHistoireSubtitlePlayback(enabled: boolean): void {
         }
       }
 
+      function onEnded(): void {
+        clearActiveSubtitle();
+        onAudioEndedRef.current?.();
+      }
+
       audio.addEventListener("timeupdate", onTimeUpdate);
-      audio.addEventListener("ended", clearActiveSubtitle, { once: true });
+      audio.addEventListener("ended", onEnded, { once: true });
     }
 
     // If duration is already known (cached audio), start immediately.
@@ -97,11 +112,13 @@ function useHistoireSubtitlePlayback(enabled: boolean): void {
 /**
  * Handles the farm mission narrative intro:
  *   locked → (auto) → electricienne_history → plays audio with block subtitles
+ *                   → 5 s after audio ends → completeMission("farm") → outro
  */
 export function FarmNarrativeFlow(): null {
   const mainState = useGameStore((state) => state.mainState);
   const step = useGameStore((state) => state.farm.currentStep);
   const setMissionStep = useGameStore((state) => state.setMissionStep);
+  const completeMission = useGameStore((state) => state.completeMission);
 
   // locked is purely a gate — transition immediately to electricienne_history.
   useEffect(() => {
@@ -117,8 +134,31 @@ export function FarmNarrativeFlow(): null {
     setCanMove(true);
   }, [mainState, step, setCanMove]);
 
+  // After the audio finishes, wait 5 s then transition to outro.
+  // The timeout ID is kept in a ref so we can cancel on unmount.
+  const outroTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (outroTimeoutRef.current !== null) {
+        window.clearTimeout(outroTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleAudioEnded = (): void => {
+    if (outroTimeoutRef.current !== null) {
+      window.clearTimeout(outroTimeoutRef.current);
+    }
+    outroTimeoutRef.current = window.setTimeout(() => {
+      outroTimeoutRef.current = null;
+      completeMission("farm");
+    }, OUTRO_DELAY_MS);
+  };
+
   useHistoireSubtitlePlayback(
     mainState === "farm" && step === "electricienne_history",
+    handleAudioEnded,
   );
 
   return null;
