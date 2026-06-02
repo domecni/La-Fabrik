@@ -3,6 +3,7 @@ import { Component, useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { Physics, RigidBody, CuboidCollider } from "@react-three/rapier";
 import { Line } from "@react-three/drei";
+import { Ebike } from "@/components/ebike/Ebike";
 import { RepairGame } from "@/components/three/gameplay/RepairGame";
 import { GrabbableObject } from "@/components/three/interaction/GrabbableObject";
 import { AnimatedModel } from "@/components/three/models/AnimatedModel";
@@ -239,6 +240,9 @@ export function TestMap({ onOctreeReady }: TestMapProps): React.JSX.Element {
             <group position={zone.position}>
               <RepairPlaygroundZoneMarker color={zone.color} />
             </group>
+            {zone.mission === "ebike" ? (
+              <Ebike position={zone.position} />
+            ) : null}
             <RepairGame mission={zone.mission} position={zone.position} />
           </group>
         ))}
