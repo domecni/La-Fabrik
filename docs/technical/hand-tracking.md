@@ -20,9 +20,11 @@ Both sources funnel into the same `HandTrackingContext` so all consumers see one
 1. The active source captures or receives landmarks.
 2. The hook applies an EMA smoothing pass on the landmarks before publishing the snapshot.
 3. `HandTrackingProvider` exposes that snapshot through React context.
-4. `GrabbableObject` reads the snapshot each frame and uses the fist state plus raycasting to grab objects.
-5. `HandTrackingGlove` reads the same snapshot and places a rigged glove on each detected hand.
-6. `HandTrackingVisualizer` paints an SVG wireframe overlay on top of the canvas.
+4. `GrabbableObject` reads the snapshot each frame and uses `hand.isFist` plus raycasting to grab objects.
+5. `HandTrackingVisualizer` paints the SVG hand silhouette overlay on top of the canvas — the primary visualization.
+6. `HandTrackingGlove` (opt-in, see UI And Debug) places a rigged 3D glove on each detected hand when enabled via the debug toggle.
+
+All consumers — fist detection, grab raycasting, SVG silhouette, optional 3D glove — read the **same** landmarks from the snapshot. None of them depend on the others.
 
 ## Activation Rules
 
@@ -108,6 +110,17 @@ interface HandTrackingHand {
 
 `x` and `y` are normalized camera coordinates. `z` is a relative depth value from MediaPipe, not an absolute world-space distance.
 
+## Fist Detection
+
+`isFist` is computed in `src/lib/handTracking/browserHandTracking.ts` (`isFist()` function) from landmarks alone — no model, no glove. The check is:
+
+1. Palm center = mean of landmarks `[0, 5, 9, 13, 17]` (wrist + 4 MCPs).
+2. Palm size = distance from wrist (landmark 0) to middle MCP (landmark 9).
+3. For each of the four fingertip landmarks `[8, 12, 16, 20]`, check whether its distance to the palm center is less than `1.05 × palmSize`.
+4. `isFist === true` iff all four fingertips pass the check.
+
+The flag is attached to each hand on the snapshot at the publish step (`isFist: isFist(normalizedLandmarks)`) and read directly by `GrabbableObject.tsx` — the SVG visualizer and the 3D glove never participate in the gesture decision.
+
 ## Grab Targeting
 
 The hand grab logic lives in `src/components/three/interaction/GrabbableObject.tsx`.
@@ -142,17 +155,39 @@ This is less expressive than true depth-aware hand movement, but it is more stab
 The current debug UI includes:
 
 - `HandTrackingDebugPanel` inside `DebugOverlayLayout` for status, usage, loaded glove model, server state, hand count, and fist state
-- `HandTrackingVisualizer` for the SVG landmark overlay
-- `HandTrackingFallback` for the last-resort hand silhouette overlay
-- `HandTrackingGlove` for the per-hand rigged glove models in the R3F scene
+- `HandTrackingVisualizer` for the SVG hand silhouette overlay (always on when tracking is active)
+- `HandTrackingFallback` for the last-resort hand silhouette overlay (legacy, see below)
+- `HandTrackingGlove` for the per-hand rigged glove models in the R3F scene, opt-in via the **Show Model** toggle
 - `r3f-perf` for render performance
 - `lil-gui` for scene, camera, lighting, interaction, and grab controls
 
-The SVG visualizer uses a "blueish hand" style: white connection lines between landmarks, cyan circles with a dark blue outline. The outline gets thicker when the hand is detected as a fist, so the user gets a visual confirmation of the grab gesture without having to look at the debug panel.
+### SVG Visualizer
 
-The fallback overlay (`HandTrackingFallback`) draws a simple open-hand or fist silhouette positioned on the detected wrist landmark. It only renders for a hand whose matching glove is in the `"error"` state in `useHandTrackingGloveStatus`. This guarantees the user always sees something on their hand even when the 3D glove model fails to load.
+`HandTrackingVisualizer` is the primary hand visualization. It draws a light-blue hand silhouette with a crisp dark-blue outline by:
+
+1. Filling a palm polygon (landmarks `[1, 5, 9, 13, 17]` plus two synthetic wrist corners) and five finger tubes (thick rounded `stroke` along each finger's joint chain).
+2. Wrapping the whole thing in an SVG `<filter>` that uses `feMorphology` to dilate the merged alpha by 2 px and subtract the original, producing a single continuous outline around the union — no internal seams where the palm and finger tubes overlap.
+3. Shrinking every landmark toward the hand centroid by `RENDER_SCALE = 0.65` so the silhouette stays compact and doesn't dominate the screen.
+4. Overlaying the 21 raw landmarks and 21 bones as faint translucent lines and dots, so the user can still see the MediaPipe data feeding the silhouette.
+
+The SVG only displays when MediaPipe is active and the debug **Show Model** toggle is off (default). When the toggle is on, the SVG hides and `HandTrackingGlove` takes over.
+
+### Show Model Toggle
+
+The `Hand Tracking` debug folder exposes a single visualization switch:
+
+- `showHandTrackingModel = false` (default): SVG visualizer renders, 3D glove is not mounted at all.
+- `showHandTrackingModel = true`: SVG visualizer hides, 3D glove gets mounted for the detected hand(s).
+
+The 3D glove is treated as opt-in legacy because it had bugs (WebGL context loss, finger rig artefacts) and its hit/grab role was never load-bearing — grab has always read landmarks directly.
+
+### Fallback Overlay (legacy)
+
+`HandTrackingFallback` draws a simple open-hand or fist silhouette positioned on the detected wrist landmark. It renders for any hand whose glove is in the `"error"` state in `useHandTrackingGloveStatus`. Now that the glove is opt-in and rarely mounted, the fallback effectively only fires in the rare case where the user enables `showHandTrackingModel` and the glove fails to load. It is kept on disk for that edge case but is not part of the default visual path.
 
 ## Glove Models
+
+The 3D glove is **opt-in** via the `Show Model` debug toggle (see UI And Debug). It is not mounted by default; the SVG visualizer is the primary hand UI. The information below applies only when the toggle is enabled.
 
 `HandTrackingGlove` loads `public/models/gant_l/model.gltf` for both hands. The right hand applies `scale.x = -1` at the group level to mirror the mesh, so the thumb ends up on the correct side. Both hands therefore share the same rig and the same material.
 
@@ -172,6 +207,8 @@ They are intended for future swap-by-state usage but are **not yet rigged**. The
 - Production usage is currently limited to repair mission steps that explicitly need hands.
 - MediaPipe depth is relative and currently not used for stable object depth control.
 - The virtual hit zone is an approximation based on multiple raycasts, not a real 3D collider.
+- The 3D glove is opt-in only (see `Show Model` toggle). Default visual is the SVG silhouette.
+- `HandTrackingFallback` is legacy and effectively unused unless the glove toggle is enabled and the glove fails to load.
 - The right glove is a mirrored copy of `gant_l` rather than its own mesh; in the future a dedicated right-hand model would give a better visual.
 - The `_pad` glove variants are not rigged yet, so swap-by-state (normal ↔ pad) is not wired in.
 - Finger bone animation is an approximate landmark-to-bone mapping; it still needs calibration for per-model twist, offsets, and smoothing.

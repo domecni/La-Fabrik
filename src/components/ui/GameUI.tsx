@@ -7,6 +7,8 @@ import { InteractPrompt } from "@/components/ui/InteractPrompt";
 import { OutroVideoOverlay } from "@/components/ui/OutroVideoOverlay";
 import { Subtitles } from "@/components/ui/Subtitles";
 import { TalkieDialogueOverlay } from "@/components/ui/TalkieDialogueOverlay";
+import { HandTrackingTutorial } from "@/components/ui/tutorial/HandTrackingTutorial";
+import { MovementTutorial } from "@/components/ui/tutorial/MovementTutorial";
 
 export function GameUI(): React.JSX.Element {
   return (
@@ -16,6 +18,8 @@ export function GameUI(): React.JSX.Element {
       <InteractPrompt />
       <HandTrackingVisualizer />
       <HandTrackingFallback />
+      <MovementTutorial />
+      <HandTrackingTutorial />
       <Subtitles />
       <TalkieDialogueOverlay />
       <GameSettingsMenu />

@@ -334,7 +334,7 @@ export function Ebike({
 
   const interactionLabel =
     mainState === "ebike"
-      ? "Lancer le repair game"
+      ? "Lancer le Repair Game"
       : movementMode === "walk"
         ? "Monter sur le bike"
         : "Descendre du bike";
@@ -344,13 +344,19 @@ export function Ebike({
   // pollute the view. The prompt comes back the moment the bike comes to
   // a stop. window.ebikeDriveInputActive is published every frame by
   // PlayerController based on whether a movement key is currently held.
+  // Also hide entirely while the breakdown sequence is active — the bike
+  // must read as inert and non-interactive while the panne dialogue plays
+  // and during the auto-dismount that follows.
   const [isEbikeDriving, setIsEbikeDriving] = useState(false);
+  const [isEbikeBreakdown, setIsEbikeBreakdown] = useState(false);
   useFrame(() => {
     const driving =
       movementMode === "ebike" && window.ebikeDriveInputActive === true;
     if (driving !== isEbikeDriving) setIsEbikeDriving(driving);
+    const breakdown = window.ebikeBreakdownActive === true;
+    if (breakdown !== isEbikeBreakdown) setIsEbikeBreakdown(breakdown);
   });
-  const showInteractPrompt = !isEbikeDriving;
+  const showInteractPrompt = !isEbikeDriving && !isEbikeBreakdown;
 
   const handleInteract = useCallback((): void => {
     if (window.ebikeBreakdownActive === true) return;

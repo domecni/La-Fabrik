@@ -1799,7 +1799,8 @@ canvas {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
+  opacity: 0.8;
+  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.3));
 }
 
 .hand-tracking-fallback {
@@ -1811,14 +1812,82 @@ canvas {
   pointer-events: none;
 }
 
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(96, 165, 250, 0.55);
+  pointer-events: none;
+}
+
+.tutorial-overlay__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  padding: 56px 72px;
+  max-width: 640px;
+  background: transparent;
+  border: 2px solid #1e3a8a;
+  border-radius: 24px;
+  color: #1e3a8a;
+}
+
+.tutorial-overlay__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-overlay__text {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  margin: 0;
+}
+
+.tutorial-overlay__keyboard {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  gap: 8px;
+  font-family: var(--font-primary);
+}
+
+.tutorial-overlay__keycap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: #e0f2fe;
+  border: 2px solid #1e3a8a;
+  border-radius: 10px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.tutorial-overlay__hands {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  color: #1e3a8a;
+}
+
 .hand-tracking-fallback__icon {
   position: absolute;
-  width: 96px;
+  width: 80px;
   height: 96px;
   fill: #67e8f9;
   stroke: #0c4a6e;
-  stroke-width: 2;
+  stroke-width: 3;
   stroke-linejoin: round;
+  stroke-linecap: round;
   filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.55));
 }
 

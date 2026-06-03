@@ -4,29 +4,70 @@ import {
   type HandTrackingGloveHandedness,
 } from "@/hooks/handTracking/useHandTrackingGloveStatus";
 
-// Simple schematic silhouettes used as a last-resort fallback when the
-// rigged glove model has failed to load. Both icons share the same
-// 48x48 viewBox and the same stroke/fill rules from the .css.
+// Hand silhouettes used as a last-resort fallback when the rigged glove
+// model has failed to load. Both icons share a 100x120 viewBox so finger
+// lengths and the thumb angle stay anatomically readable.
 
 const OpenHandShape = (): React.JSX.Element => (
-  <>
-    <ellipse cx="9" cy="30" rx="3" ry="6" transform="rotate(-25 9 30)" />
-    <rect x="14" y="8" width="4" height="22" rx="2" />
-    <rect x="20" y="4" width="4" height="26" rx="2" />
-    <rect x="26" y="6" width="4" height="24" rx="2" />
-    <rect x="32" y="10" width="4" height="20" rx="2" />
-    <rect x="10" y="26" width="28" height="18" rx="6" />
-  </>
+  <path
+    d="M 28 116
+       Q 22 100 22 80
+       Q 22 65 28 58
+       Q 22 52 14 46
+       Q 6 40 8 28
+       Q 12 18 22 20
+       Q 30 24 30 36
+       Q 32 46 36 50
+       Q 36 38 36 28
+       Q 36 18 42 18
+       Q 48 18 48 28
+       Q 48 40 50 50
+       Q 50 32 50 14
+       Q 50 6 56 6
+       Q 62 6 62 14
+       Q 62 32 62 50
+       Q 64 38 64 20
+       Q 64 12 70 12
+       Q 76 12 76 20
+       Q 76 38 78 50
+       Q 78 40 78 32
+       Q 78 24 84 24
+       Q 90 24 90 32
+       Q 90 44 92 56
+       Q 96 80 92 100
+       Q 86 116 82 116
+       Z"
+  />
 );
 
 const FistShape = (): React.JSX.Element => (
   <>
-    <ellipse cx="8" cy="26" rx="3" ry="5" />
-    <rect x="10" y="14" width="28" height="30" rx="10" />
-    <circle cx="15" cy="14" r="3" />
-    <circle cx="21" cy="13" r="3" />
-    <circle cx="27" cy="13" r="3" />
-    <circle cx="33" cy="14" r="3" />
+    <path
+      d="M 18 70
+         Q 14 50 24 38
+         Q 28 30 36 34
+         Q 40 26 48 30
+         Q 54 22 60 28
+         Q 68 24 74 32
+         Q 84 32 88 46
+         Q 92 64 88 82
+         Q 82 104 64 112
+         Q 42 116 26 108
+         Q 14 96 18 70
+         Z"
+    />
+    <path
+      d="M 18 70
+         Q 6 66 8 80
+         Q 8 94 18 96
+         Q 28 94 26 84
+         Q 22 76 18 70
+         Z"
+    />
+    <path d="M 32 38 Q 30 50 34 60" fill="none" strokeLinecap="round" />
+    <path d="M 46 32 Q 44 46 48 58" fill="none" strokeLinecap="round" />
+    <path d="M 60 32 Q 58 46 62 58" fill="none" strokeLinecap="round" />
+    <path d="M 74 36 Q 72 50 76 60" fill="none" strokeLinecap="round" />
   </>
 );
 
@@ -66,7 +107,7 @@ export function HandTrackingFallback(): React.JSX.Element | null {
           <svg
             key={`${handedness}-${index}`}
             className="hand-tracking-fallback__icon"
-            viewBox="0 0 48 48"
+            viewBox="0 0 100 120"
             style={{
               left: `${leftPercent}%`,
               top: `${topPercent}%`,
