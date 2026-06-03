@@ -4,6 +4,7 @@ import type {
   RepairMissionId,
 } from "@/types/gameplay/repairMission";
 import {
+  EBIKE_DIAGNOSTIC_DIALOGUE_ID,
   EBIKE_WORLD_ROTATION_Y,
   EBIKE_WORLD_SCALE,
 } from "@/data/ebike/ebikeConfig";
@@ -39,6 +40,9 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         nodeName: "refroidisseur",
         targetNodeName: "refroidisseur",
         caseSlotName: "placeholder_1",
+        // Plays during the scan landing on the refroidisseur node;
+        // the scan sequence advances on this audio's `ended` event.
+        voiceLineId: EBIKE_DIAGNOSTIC_DIALOGUE_ID,
       },
     ],
     replacementParts: [

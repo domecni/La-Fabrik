@@ -12,6 +12,9 @@ import type {
 } from "@/types/gameplay/repairMission";
 import { logger } from "@/utils/core/Logger";
 import type { ExplodedPart } from "@/utils/three/ExplodedModel";
+import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
+import { playDialogueById } from "@/utils/dialogues/playDialogue";
+import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 
 interface RepairScanSequenceProps {
   config: RepairMissionConfig;
@@ -41,6 +44,81 @@ export function RepairScanSequence({
   useEffect(() => {
     if (parts.length === 0) return undefined;
 
+    // Look up which (if any) broken-part config corresponds to the
+    // currently active scan part. When the active part has a
+    // `voiceLineId`, gate the advance on the audio's `ended` event so
+    // the diagnostic line plays in full (with its red broken-part
+    // highlight already on screen) before transitioning to the next
+    // scan part — and ultimately to the repairing step.
+    const activeBrokenMatch = brokenPartMatches.find(
+      (match) => match.partIndex === activePartIndex,
+    );
+    const activeVoiceLineId = activeBrokenMatch?.config.voiceLineId;
+
+    if (activeVoiceLineId) {
+      let cancelled = false;
+      let activeAudio: HTMLAudioElement | null = null;
+      let fallbackTimeoutId: number | null = null;
+
+      const advance = (): void => {
+        if (cancelled) return;
+        cancelled = true;
+        setActivePartIndex((currentIndex) => {
+          const nextIndex = currentIndex + 1;
+          if (nextIndex >= parts.length) {
+            onComplete(getScannedBrokenParts(parts, config));
+            return currentIndex;
+          }
+          return nextIndex;
+        });
+      };
+
+      void (async () => {
+        const manifest = await loadDialogueManifest();
+        if (cancelled) return;
+        const audio = manifest
+          ? await playDialogueById(manifest, activeVoiceLineId)
+          : null;
+        if (cancelled) {
+          if (audio && !audio.paused) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+          useSubtitleStore.getState().clearActiveSubtitle();
+          return;
+        }
+        activeAudio = audio;
+        if (audio) {
+          audio.addEventListener("ended", advance, { once: true });
+          // Fallback: if the audio errors or never fires `ended`, still
+          // advance after a generous ceiling so the flow can't stall.
+          fallbackTimeoutId = window.setTimeout(advance, 15000);
+        } else {
+          // No audio (manifest missing) — advance after the default
+          // per-part dwell so we don't get stuck on this part.
+          fallbackTimeoutId = window.setTimeout(
+            advance,
+            scanPartSeconds * 1000,
+          );
+        }
+      })();
+
+      return () => {
+        cancelled = true;
+        if (activeAudio) {
+          activeAudio.removeEventListener("ended", advance);
+          if (!activeAudio.paused) {
+            activeAudio.pause();
+            activeAudio.currentTime = 0;
+          }
+        }
+        if (fallbackTimeoutId !== null) {
+          window.clearTimeout(fallbackTimeoutId);
+        }
+        useSubtitleStore.getState().clearActiveSubtitle();
+      };
+    }
+
     const timeoutId = window.setTimeout(() => {
       setActivePartIndex((currentIndex) => {
         const nextIndex = currentIndex + 1;
@@ -56,7 +134,14 @@ export function RepairScanSequence({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [activePartIndex, config, onComplete, parts, scanPartSeconds]);
+  }, [
+    activePartIndex,
+    brokenPartMatches,
+    config,
+    onComplete,
+    parts,
+    scanPartSeconds,
+  ]);
 
   return (
     <group>

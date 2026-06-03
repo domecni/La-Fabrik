@@ -48,6 +48,15 @@ export interface RepairMissionPartConfig {
    */
   caseLockGroup?: string;
   modelPath?: string;
+  /**
+   * Optional dialogue id to play when the scan sequence lands on this
+   * part. The scan sequence will pause on this part for the duration
+   * of the audio (instead of the default `scanPartSeconds` timer) and
+   * advance to the next part on the audio's `ended` event. Use this to
+   * deliver a node-specific diagnostic line (e.g. ebike refroidisseur
+   * -> "narrateur_refroidisseur_diagnostic").
+   */
+  voiceLineId?: string;
 }
 
 export interface RepairScannedBrokenPart {
