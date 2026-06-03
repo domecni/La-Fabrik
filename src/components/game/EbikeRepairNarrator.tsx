@@ -17,8 +17,8 @@ import { playDialogueById } from "@/utils/dialogues/playDialogue";
  * - `done`        -> "Eeeet voilà! Il fonctionne comme une horloge!..."
  *
  * Each cue is one-shot per mission run; the played-set resets when the
- * mission state rolls back to `locked`/`waiting` so debug-panel replays
- * still trigger the narration.
+ * mission state rolls back to `waiting` so debug-panel replays still
+ * trigger the narration.
  *
  * Audio AND subtitles are strictly scoped to `mainState === "ebike"`. If
  * the player leaves the ebike main state mid-line (debug panel jump,
@@ -46,7 +46,7 @@ export function EbikeRepairNarrator(): null {
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (ebikeStep === "locked" || ebikeStep === "waiting") {
+    if (ebikeStep === "waiting") {
       playedRef.current.clear();
     }
   }, [ebikeStep]);

@@ -131,7 +131,7 @@ function completeIntroState(state: GameState): GameStateUpdate {
     },
     ebike: {
       ...state.ebike,
-      currentStep: "locked",
+      currentStep: "waiting",
     },
   };
 }
@@ -265,7 +265,7 @@ function createInitialGameState(): GameState {
       isEbikeUnlocked: false,
     },
     ebike: {
-      currentStep: "locked",
+      currentStep: "waiting",
       dialogueAudio: null,
       isRepaired: false,
     },

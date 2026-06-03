@@ -74,13 +74,13 @@ export function RepairGame({
     readonly RepairScannedBrokenPart[]
   >([]);
   // For the ebike mission, use the bike's live parked world position once
-  // the repair flow leaves the waiting/locked phase so the repair happens
+  // the repair flow leaves the waiting phase so the repair happens
   // wherever the player parked the bike, not at the static zone anchor.
   // window.ebikeParkedPosition is set by Ebike when the player drops the
   // bike and stays stable through the rest of the repair flow.
   const livePosition = useMemo<Vector3Tuple>(() => {
     if (mission !== "ebike" || mainState !== mission) return position;
-    if (step === "locked" || step === "waiting") return position;
+    if (step === "waiting") return position;
     const parked = window.ebikeParkedPosition;
     if (!parked) return position;
     return [parked[0], parked[1], parked[2]];

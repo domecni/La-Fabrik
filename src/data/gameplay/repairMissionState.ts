@@ -105,7 +105,12 @@ export function getPreviousMissionStep(
     case "npc-return":
       return "arrived";
     case "waiting":
-      return mission === "pylon" ? "npc-return" : "locked";
+      // Ebike no longer has a "locked" entry state — its mission starts
+      // directly at "waiting". Pylon rewinds to its NPC return loop, farm
+      // rewinds to its narrative-driven locked kickoff.
+      if (mission === "pylon") return "npc-return";
+      if (mission === "farm") return "locked";
+      return "waiting";
     case "inspected":
       return "waiting";
     case "fragmented":

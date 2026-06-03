@@ -323,9 +323,11 @@ function MapNodeInstance({
 }): React.JSX.Element | null {
   const isGeneratedModel = isGeneratedMapModelName(node.name);
   const mainState = useGameStore((state) => state.mainState);
-  const ebikeStep = useGameStore((state) => state.ebike.currentStep);
-  const hideEbikeMapModel =
-    node.name === "ebike" && mainState === "ebike" && ebikeStep !== "locked";
+  // The static-map ebike node is replaced by the live `Ebike` component
+  // (rendered from GameStageContent) as soon as the ebike mission begins,
+  // so hide the static one to avoid a dual-render at the same world
+  // position.
+  const hideEbikeMapModel = node.name === "ebike" && mainState === "ebike";
 
   useEffect(() => {
     if (modelUrl !== null || isGeneratedModel) return;

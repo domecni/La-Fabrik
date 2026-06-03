@@ -20,13 +20,14 @@ const REPAIR_MISSION_POSITIONS = {
   farm: [-24, 0, 42],
 } as const satisfies Record<RepairMissionId, Vector3Tuple>;
 
-export const REPAIR_MISSION_TRIGGERS = [
-  {
-    mission: "ebike",
-    label: "Réparer l'e-bike",
-    radius: 4,
-  },
-] as const satisfies readonly RepairMissionTriggerConfig[];
+// Currently empty: the ebike mission entry point is handled directly by
+// `Ebike.tsx`'s own InteractableObject ("Lancer le Repair Game"), and the
+// pylon/farm missions transition through their narrative flows
+// (PylonNarrativeFlow / FarmNarrativeFlow). Keep the array typed so we
+// can re-introduce a generic anchor trigger in the future without
+// touching the consumer in `GameStageContent.tsx`.
+export const REPAIR_MISSION_TRIGGERS: readonly RepairMissionTriggerConfig[] =
+  [];
 
 export const REPAIR_MISSION_POSITION_ENTRIES = Object.entries(
   REPAIR_MISSION_POSITIONS,

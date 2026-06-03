@@ -73,7 +73,6 @@ export function Ebike({
   const updateEbikeSounds = useEbikeSounds();
   const repairGameOwnsEbikeModel =
     mainState === "ebike" &&
-    ebikeStep !== "locked" &&
     ebikeStep !== "waiting" &&
     ebikeStep !== "inspected";
 
@@ -362,10 +361,7 @@ export function Ebike({
     if (window.ebikeBreakdownActive === true) return;
 
     if (movementMode === "walk") {
-      if (
-        mainState === "ebike" &&
-        (ebikeStep === "locked" || ebikeStep === "waiting")
-      ) {
+      if (mainState === "ebike" && ebikeStep === "waiting") {
         setMissionStep("ebike", "inspected");
         return;
       }
