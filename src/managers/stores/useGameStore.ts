@@ -146,7 +146,7 @@ function completeEbikeState(state: GameState): GameStateUpdate {
     },
     pylon: {
       ...state.pylon,
-      currentStep: "approaching",
+      currentStep: "tampon",
     },
   };
 }
