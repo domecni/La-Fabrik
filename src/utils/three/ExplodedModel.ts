@@ -9,6 +9,13 @@ export interface ExplodedPart {
 interface ExplodedModelOptions {
   distance?: number;
   speed?: number;
+  /**
+   * Fired exactly once each time the lerp converges on a target value
+   * (1 = fully exploded, 0 = fully reassembled). Useful for chaining
+   * the next mission step on actual animation completion rather than a
+   * blind timer.
+   */
+  onSettled?: (settledAt: 0 | 1) => void;
 }
 
 const _center = new THREE.Vector3();
@@ -18,17 +25,24 @@ export class ExplodedModel {
   private readonly parts: ExplodedPart[] = [];
   private readonly distance: number;
   private readonly speed: number;
+  private readonly onSettled?: (settledAt: 0 | 1) => void;
   private progress = 0;
   private targetProgress = 0;
+  private settledAtTarget = true;
 
   constructor(model: THREE.Object3D, options: ExplodedModelOptions = {}) {
     this.distance = options.distance ?? 1.2;
     this.speed = options.speed ?? 6;
+    if (options.onSettled) this.onSettled = options.onSettled;
     this.parts = this.createParts(model);
   }
 
   setSplit(split: boolean): void {
-    this.targetProgress = split ? 1 : 0;
+    const next = split ? 1 : 0;
+    if (next !== this.targetProgress) {
+      this.targetProgress = next;
+      this.settledAtTarget = false;
+    }
   }
 
   getParts(): readonly ExplodedPart[] {
@@ -39,6 +53,10 @@ export class ExplodedModel {
     const diff = this.targetProgress - this.progress;
     if (Math.abs(diff) < 0.001) {
       this.progress = this.targetProgress;
+      if (!this.settledAtTarget) {
+        this.settledAtTarget = true;
+        this.onSettled?.(this.targetProgress === 1 ? 1 : 0);
+      }
     } else {
       this.progress += diff * Math.min(delta * this.speed, 1);
     }

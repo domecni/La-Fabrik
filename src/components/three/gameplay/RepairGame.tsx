@@ -149,14 +149,25 @@ export function RepairGame({
     };
   }, [mainState, mission, setMissionStep, step]);
 
+  // fragmented -> scanning is now driven by `onSplitSettled` from the
+  // ExplodableModel below (fires once the lerp actually converges on
+  // progress=1). The legacy REPAIR_FRAGMENTATION_SEQUENCE_SECONDS timer
+  // is kept as a safety-net fallback in case the model fails to load
+  // (no part anchors -> no settled event) so the flow can never get
+  // stuck on the fragmented step.
   useEffect(() => {
     if (mainState !== mission) return undefined;
 
     if (step !== "fragmented") return undefined;
 
-    const timeoutId = window.setTimeout(() => {
-      setMissionStep(mission, "scanning");
-    }, REPAIR_FRAGMENTATION_SEQUENCE_SECONDS * 1000);
+    const timeoutId = window.setTimeout(
+      () => {
+        setMissionStep(mission, "scanning");
+      },
+      // Generous fallback: actual anim usually finishes in <1s, so this
+      // only fires if something went wrong.
+      (REPAIR_FRAGMENTATION_SEQUENCE_SECONDS + 2) * 1000,
+    );
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -185,6 +196,9 @@ export function RepairGame({
             rotation={config.modelRotation ?? [0, 0, 0]}
             scale={config.modelScale ?? 1}
             split
+            onSplitSettled={(settledAt) => {
+              if (settledAt === 1) setMissionStep(mission, "scanning");
+            }}
           />
         ) : null}
         {step === "scanning" ? (

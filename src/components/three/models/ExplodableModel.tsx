@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Component, useEffect, useMemo, useRef } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useLoggedGLTF } from "@/hooks/three/useLoggedGLTF";
@@ -72,6 +72,12 @@ interface ExplodableModelInnerProps extends ModelTransformProps {
   split: boolean;
   splitDistance?: number;
   onPartsReady?: (parts: readonly ExplodedPart[]) => void;
+  /**
+   * Fired once each time the explode/reassemble lerp converges on its
+   * target. `settledAt` is 1 when the parts have fully separated, 0
+   * when they have fully snapped back to their original positions.
+   */
+  onSplitSettled?: (settledAt: 0 | 1) => void;
   hideNodeNames?: readonly string[];
   nodeAnchorNames?: readonly string[];
   onNodeAnchorsChange?: (anchors: ExplodedNodeAnchors) => void;
@@ -101,6 +107,7 @@ function ExplodableModelInner({
   scale = 1,
   splitDistance = 1.2,
   onPartsReady,
+  onSplitSettled,
   hideNodeNames,
   nodeAnchorNames,
   onNodeAnchorsChange,
@@ -112,9 +119,28 @@ function ExplodableModelInner({
     scale,
   });
   const model = useClonedObject(scene);
+  // Keep the latest callback in a ref so the ExplodedModel instance can
+  // be created once per `model` and still call the most recent prop
+  // when the lerp settles. Reading `.current` happens only inside the
+  // settled-callback (invoked from update(), never during render).
+  const onSplitSettledRef = useRef(onSplitSettled);
+  useEffect(() => {
+    onSplitSettledRef.current = onSplitSettled;
+  }, [onSplitSettled]);
+  const handleSettled = useCallback((settledAt: 0 | 1) => {
+    onSplitSettledRef.current?.(settledAt);
+  }, []);
+
   const explodedModel = useMemo(
-    () => new ExplodedModel(model, { distance: splitDistance }),
-    [model, splitDistance],
+    () =>
+      // The `handleSettled` callback only reads `onSplitSettledRef.current`
+      // when invoked from `update()` (useFrame), never during render.
+      // eslint-disable-next-line react-hooks/refs
+      new ExplodedModel(model, {
+        distance: splitDistance,
+        onSettled: handleSettled,
+      }),
+    [model, splitDistance, handleSettled],
   );
   const parsedScale = toVector3Scale(scale);
   const anchorSignatureRef = useRef("");
