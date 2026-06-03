@@ -14,7 +14,8 @@ import {
   stopCurrentDialogue,
 } from "@/utils/dialogues/playDialogue";
 
-const TYPEWRITER_CHAR_DELAY_MS = 70;
+const TYPEWRITER_CHAR_DELAY_MS = 150;
+const TYPEWRITER_START_DELAY_MS = 12000;
 // Fallback in case nothing else triggers the typewriter (audio failed to
 // load, no subtitles, "ended" never fires). Long enough not to fire
 // before the narration on a slow load.
