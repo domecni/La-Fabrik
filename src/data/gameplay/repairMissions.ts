@@ -37,7 +37,7 @@ export const REPAIR_MISSIONS: Record<RepairMissionId, RepairMissionConfig> = {
         id: "ebike-cooling-core",
         label: "Cooling core",
         modelPath: "/models/refroidisseur/model.gltf",
-        nodeName: "refroidisseur",
+        nodeName: "Radiateur",
         targetNodeName: "refroidisseur",
         caseSlotName: "placeholder_1",
         // Plays during the scan landing on the refroidisseur node;

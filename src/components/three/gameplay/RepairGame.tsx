@@ -102,12 +102,25 @@ export function RepairGame({
   const [explodedParts, setExplodedParts] = useState<readonly ExplodedPart[]>(
     [],
   );
-  // Position of the repair flow is the static zone position. Ebike
-  // movement is disabled during the mission so we don't need to track
-  // window.ebikeParkedPosition: the bike, the case and the exploded
-  // model all sit at the zone's anchor.
+  const reassemblyDoneTimeoutRef = useRef<number | null>(null);
+  // Ebike-specific: once the repair starts, keep the entire repair flow
+  // exactly where the bike currently is. `Ebike` owns the live parked
+  // position while inspected is showing; RepairGame takes over the model
+  // from fragmented onward and must reuse that same world transform.
+  const livePosition = useMemo<Vector3Tuple>(() => {
+    if (mission !== "ebike" || step === "waiting") return position;
+
+    const parked = window.ebikeParkedPosition;
+    if (!parked) return position;
+
+    return [parked[0], parked[1], parked[2]];
+  }, [mission, position, step]);
+  const usesLiveEbikePosition = mission === "ebike" && step !== "waiting";
   const parsedScale = toVector3Scale(scale);
-  const snappedPosition = useTerrainSnappedPosition(position);
+  const terrainSnappedPosition = useTerrainSnappedPosition(livePosition);
+  const snappedPosition = usesLiveEbikePosition
+    ? livePosition
+    : terrainSnappedPosition;
   const readyForFragmentation = step === "inspected";
   const brokenNodeNames = useMemo(() => getBrokenNodeNames(config), [config]);
   const isRepairPhase = (REPAIR_PHASES as readonly MissionStep[]).includes(
@@ -196,6 +209,19 @@ export function RepairGame({
     };
   }, [mainState, mission, setMissionStep, step]);
 
+  useEffect(() => {
+    if (mainState !== mission) return undefined;
+    if (step !== "reassembling") return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setMissionStep(mission, "done");
+    }, REPAIR_REASSEMBLY_HOLD_MS + 4000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [mainState, mission, setMissionStep, step]);
+
   // Ebike-only: at `done`, play the success narrator line and complete
   // the mission when the audio ends (handing off to pylon). A fallback
   // timer guarantees the transition even if the audio fails.
@@ -278,12 +304,26 @@ export function RepairGame({
       if (settledAt === 1 && currentStep === "fragmented") {
         setMissionStep(mission, "scanning");
       }
-      // settledAt === 0 happens when the model finishes the inverse
-      // explosion at reassembling. The reassembly step's particle hold
-      // takes care of advancing to `done`.
+      if (settledAt === 0 && currentStep === "reassembling") {
+        if (reassemblyDoneTimeoutRef.current !== null) {
+          window.clearTimeout(reassemblyDoneTimeoutRef.current);
+        }
+        reassemblyDoneTimeoutRef.current = window.setTimeout(() => {
+          reassemblyDoneTimeoutRef.current = null;
+          setMissionStep(mission, "done");
+        }, REPAIR_REASSEMBLY_HOLD_MS);
+      }
     },
     [mission, setMissionStep],
   );
+
+  useEffect(() => {
+    return () => {
+      if (reassemblyDoneTimeoutRef.current !== null) {
+        window.clearTimeout(reassemblyDoneTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (mainState !== mission) return null;
   if (step === "locked") return null;
@@ -351,12 +391,7 @@ export function RepairGame({
             onRepair={() => setMissionStep(mission, "reassembling")}
           />
         ) : null}
-        {step === "reassembling" ? (
-          <RepairReassemblyStep
-            delayMs={REPAIR_REASSEMBLY_HOLD_MS}
-            onSettled={() => setMissionStep(mission, "done")}
-          />
-        ) : null}
+        {step === "reassembling" ? <RepairReassemblyStep /> : null}
         {step === "done" && mission !== "pylon" && mission !== "ebike" ? (
           <RepairCompletionStep
             config={config}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RepairBrokenPartHighlight } from "@/components/three/gameplay/RepairBrokenPartHighlight";
 import { RepairBrokenPartPrompt } from "@/components/three/gameplay/RepairBrokenPartPrompt";
@@ -43,10 +43,18 @@ export function RepairScanSequence({
   const [activePartIndex, setActivePartIndex] = useState(0);
   const activePart = parts[activePartIndex];
   const scanPartSeconds = config.scanPartSeconds ?? REPAIR_SCAN_PART_SECONDS;
-  const brokenPartMatches = getBrokenPartMatches(parts, config);
+  const brokenPartMatches = useMemo(
+    () => getBrokenPartMatches(parts, config),
+    [parts, config],
+  );
   const visibleBrokenPartMatches = brokenPartMatches.filter(
     (match) => match.partIndex <= activePartIndex,
   );
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
     if (parts.length === 0) return undefined;
@@ -73,7 +81,9 @@ export function RepairScanSequence({
         setActivePartIndex((currentIndex) => {
           const nextIndex = currentIndex + 1;
           if (nextIndex >= parts.length) {
-            onComplete(getScannedBrokenParts(parts, config));
+            window.setTimeout(() => {
+              onCompleteRef.current(getScannedBrokenParts(parts, config));
+            }, 0);
             return currentIndex;
           }
           return nextIndex;
@@ -130,7 +140,9 @@ export function RepairScanSequence({
       setActivePartIndex((currentIndex) => {
         const nextIndex = currentIndex + 1;
         if (nextIndex >= parts.length) {
-          onComplete(getScannedBrokenParts(parts, config));
+          window.setTimeout(() => {
+            onCompleteRef.current(getScannedBrokenParts(parts, config));
+          }, 0);
           return currentIndex;
         }
 
@@ -141,14 +153,7 @@ export function RepairScanSequence({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [
-    activePartIndex,
-    brokenPartMatches,
-    config,
-    onComplete,
-    parts,
-    scanPartSeconds,
-  ]);
+  }, [activePartIndex, brokenPartMatches, config, parts, scanPartSeconds]);
 
   return (
     <group>
@@ -235,11 +240,20 @@ function objectContainsNodeName(
   object: THREE.Object3D,
   nodeName: string,
 ): boolean {
-  if (object.name === nodeName) return true;
+  const normalizedNodeName = nodeName.toLowerCase();
+  const objectName = object.name.toLowerCase();
+  if (objectName === normalizedNodeName) return true;
+  if (objectName.includes(normalizedNodeName)) return true;
+  if (normalizedNodeName.includes(objectName)) return true;
 
   let found = false;
   object.traverse((child) => {
-    if (child.name === nodeName) {
+    const childName = child.name.toLowerCase();
+    if (
+      childName === normalizedNodeName ||
+      childName.includes(normalizedNodeName) ||
+      normalizedNodeName.includes(childName)
+    ) {
       found = true;
     }
   });
