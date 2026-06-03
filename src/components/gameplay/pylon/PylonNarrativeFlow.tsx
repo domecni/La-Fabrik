@@ -28,11 +28,9 @@ export function PylonNarrativeFlow(): React.JSX.Element | null {
 
     void (async () => {
       // 1. Play the generator powerdown sound effect
-      const sfx = AudioManager.getInstance().playSound(
-        PYLON_POWERDOWN_SFX,
-        1,
-        { category: "sfx" },
-      );
+      const sfx = AudioManager.getInstance().playSound(PYLON_POWERDOWN_SFX, 1, {
+        category: "sfx",
+      });
 
       // 2. Wait for it to finish (or skip if it can't load)
       if (sfx) {

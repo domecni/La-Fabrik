@@ -33,7 +33,9 @@ export function PylonDownedPylon(): React.JSX.Element | null {
   );
   // Snap to terrain so the downed/upright model sits flush on the ground,
   // matching the Y adjustment that InstancedMapAsset applies to the same node.
-  const position = useTerrainSnappedPosition(pylonAnchor ?? PYLON_WORLD_POSITION);
+  const position = useTerrainSnappedPosition(
+    pylonAnchor ?? PYLON_WORLD_POSITION,
+  );
   const [isStraightening, setIsStraightening] = useState(false);
   // Keeps the pylon upright after the animation completes while
   // PylonFarmerNPC plays the post-raise audio sequence.
@@ -63,7 +65,9 @@ export function PylonDownedPylon(): React.JSX.Element | null {
     if (!group) return;
 
     if (!isStraightening || straightenStartRef.current === null) {
-      group.rotation.set(...(isRaised ? PYLON_UPRIGHT_ROTATION : PYLON_DOWNED_ROTATION));
+      group.rotation.set(
+        ...(isRaised ? PYLON_UPRIGHT_ROTATION : PYLON_DOWNED_ROTATION),
+      );
       return;
     }
 
@@ -104,11 +108,7 @@ export function PylonDownedPylon(): React.JSX.Element | null {
   if (!shouldRender) return null;
 
   return (
-    <group
-      ref={groupRef}
-      position={position}
-      rotation={PYLON_DOWNED_ROTATION}
-    >
+    <group ref={groupRef} position={position} rotation={PYLON_DOWNED_ROTATION}>
       <primitive object={scene.clone(true)} />
       {isPylonInteractive ? (
         <InteractableObject

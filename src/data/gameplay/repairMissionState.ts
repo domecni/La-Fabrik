@@ -10,6 +10,7 @@ const REPAIR_MISSION_ID_VALUES: ReadonlySet<string> = new Set(
 
 export const MISSION_STEPS = [
   "locked",
+  "electricienne_history",
   "approaching",
   "arrived",
   "npc-return",
@@ -30,12 +31,20 @@ const PYLON_ONLY_MISSION_STEPS = new Set<MissionStep>([
   "npc-return",
   "narrator-outro",
 ]);
+const FARM_ONLY_MISSION_STEPS = new Set<MissionStep>(["electricienne_history"]);
 
 export function getMissionStepsFor(
   mission: RepairMissionId,
 ): readonly MissionStep[] {
-  if (mission === "pylon") return MISSION_STEPS;
-  return MISSION_STEPS.filter((step) => !PYLON_ONLY_MISSION_STEPS.has(step));
+  return MISSION_STEPS.filter((step) => {
+    if (mission !== "pylon" && PYLON_ONLY_MISSION_STEPS.has(step)) {
+      return false;
+    }
+    if (mission !== "farm" && FARM_ONLY_MISSION_STEPS.has(step)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function isRepairMissionId(value: string): value is RepairMissionId {
@@ -53,6 +62,8 @@ export function getNextMissionStep(
   switch (step) {
     case "locked":
       return mission === "pylon" ? "approaching" : "waiting";
+    case "electricienne_history":
+      return "done";
     case "approaching":
       return "arrived";
     case "arrived":
@@ -84,6 +95,8 @@ export function getPreviousMissionStep(
 ): MissionStep {
   switch (step) {
     case "locked":
+      return "locked";
+    case "electricienne_history":
       return "locked";
     case "approaching":
       return "locked";

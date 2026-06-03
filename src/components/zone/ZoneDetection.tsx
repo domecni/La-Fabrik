@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
@@ -50,11 +50,10 @@ export function ZoneDetection({
   zone,
   onEnter,
   height,
-}: ZoneDetectionProps): React.JSX.Element {
+}: ZoneDetectionProps): React.JSX.Element | null {
   const camera = useThree((state) => state.camera);
   const hasTriggeredRef = useRef(false);
   const onEnterRef = useRef(onEnter);
-  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
     onEnterRef.current = onEnter;
@@ -75,9 +74,8 @@ export function ZoneDetection({
     if (_cameraPos.y > zone.position[1] + zoneHeight / 2) return;
 
     hasTriggeredRef.current = true;
-    setIsActive(true);
     onEnterRef.current();
   });
 
-  return <ZoneDebugVisual zone={zone} active={isActive} />;
+  return null;
 }

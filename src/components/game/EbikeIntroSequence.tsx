@@ -146,16 +146,6 @@ export function EbikeIntroSequence(): React.JSX.Element | null {
     return null;
   }
 
-  if (mainState == "pylon") {
-    if (pylonStep === "approaching") {
-      return <MissionNotification mission="pylon" visible />;
-    }
-    if (pylonStep === "narrator-outro") {
-      return <MissionNotification mission="farm" visible />;
-    }
-    return null;
-  }
-
   if (
     introStep !== "reveal" &&
     introStep !== "await-ebike-mount" &&

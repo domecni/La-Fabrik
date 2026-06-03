@@ -159,7 +159,9 @@ function PylonFarmerNPCContent(): React.JSX.Element {
     } else if (step === "done") {
       // NPC reappears at repair completion — position at the post-raise spot,
       // facing the pylon, playing idle.
-      currentPosRef.current.set(...PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight);
+      currentPosRef.current.set(
+        ...PYLON_FARMER_NPC_AFTER_POSITION_pylone_straight,
+      );
       savedRotationYRef.current = faceToward(
         currentPosRef.current,
         PYLON_WORLD_POSITION,

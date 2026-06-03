@@ -16,7 +16,10 @@ export function OutroVideoOverlay(): React.JSX.Element | null {
       setVisible(true);
     }
 
-    window.addEventListener("outro-cinematic-complete", handleCinematicComplete);
+    window.addEventListener(
+      "outro-cinematic-complete",
+      handleCinematicComplete,
+    );
     return () => {
       window.removeEventListener(
         "outro-cinematic-complete",

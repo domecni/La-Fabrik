@@ -3,7 +3,8 @@ import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 import { AudioManager } from "@/managers/AudioManager";
 
-const HISTOIRE_AUDIO_PATH = "/sounds/dialogue/narrateur_histoireelectricienne.mp3";
+const HISTOIRE_AUDIO_PATH =
+  "/sounds/dialogue/narrateur_histoireelectricienne.mp3";
 const OUTRO_DELAY_MS = 5_000; // delay after audio ends before transitioning to outro
 
 /**
@@ -78,9 +79,12 @@ function useHistoireSubtitlePlayback(
           ({ start, end }) => t >= start && t < end,
         );
         if (idx >= 0) {
+          const text = HISTOIRE_BLOCKS[idx];
+          if (text === undefined) return;
+
           setActiveSubtitle({
             speaker: "Narrateur",
-            text: HISTOIRE_BLOCKS[idx],
+            text,
           });
         }
       }
@@ -136,7 +140,9 @@ export function FarmNarrativeFlow(): null {
 
   // After the audio finishes, wait 5 s then transition to outro.
   // The timeout ID is kept in a ref so we can cancel on unmount.
-  const outroTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const outroTimeoutRef = useRef<ReturnType<typeof window.setTimeout> | null>(
+    null,
+  );
 
   useEffect(() => {
     return () => {

@@ -6,9 +6,6 @@ import { FarmNarrativeFlow } from "@/components/gameplay/farm/FarmNarrativeFlow"
 import { PylonDownedPylon } from "@/components/gameplay/pylon/PylonDownedPylon";
 import { PylonLightingEffect } from "@/components/gameplay/pylon/PylonLightingEffect";
 import { PylonNarrativeFlow } from "@/components/gameplay/pylon/PylonNarrativeFlow";
-import { ZoneDebugVisual } from "@/components/zone/ZoneDetection";
-import { PYLON_APPROACH_ZONE, PYLON_ARRIVED_ZONE } from "@/data/gameplay/zones";
-import { isDebugEnabled } from "@/utils/debug/isDebugEnabled";
 import {
   REPAIR_MISSION_POSITION_ENTRIES,
   REPAIR_MISSION_TRIGGERS,
@@ -18,7 +15,6 @@ import {
   OUTRO_STAGE_ANCHOR,
 } from "@/data/gameplay/gameStageAnchors";
 import { useGameStore } from "@/managers/stores/useGameStore";
-import { useRepairFocusStore } from "@/managers/stores/useRepairFocusStore";
 import { useRepairMissionAnchorStore } from "@/managers/stores/useRepairMissionAnchorStore";
 import {
   isFarmNarrativeStep,
@@ -92,14 +88,12 @@ export function GameStageContent(): React.JSX.Element {
   const mainState = useGameStore((state) => state.mainState);
   const pylonStep = useGameStore((state) => state.pylon.currentStep);
   const anchors = useRepairMissionAnchorStore((state) => state.anchors);
-  const repairFocusActive = useRepairFocusStore((state) => state.active);
 
   const farmStep = useGameStore((state) => state.farm.currentStep);
 
   const pylonInNarrative =
     mainState === "pylon" && isPylonNarrativeStep(pylonStep);
-  const farmInNarrative =
-    mainState === "farm" && isFarmNarrativeStep(farmStep);
+  const farmInNarrative = mainState === "farm" && isFarmNarrativeStep(farmStep);
 
   return (
     <>
@@ -107,12 +101,6 @@ export function GameStageContent(): React.JSX.Element {
       <Ebike position={EBIKE_WORLD_POSITION} />
       <PylonLightingEffect />
       <PylonDownedPylon />
-      {isDebugEnabled() && !repairFocusActive ? (
-        <>
-          <ZoneDebugVisual zone={PYLON_APPROACH_ZONE} active={false} />
-          <ZoneDebugVisual zone={PYLON_ARRIVED_ZONE} active={false} />
-        </>
-      ) : null}
       {mainState === "pylon" ? <PylonNarrativeFlow /> : null}
       {mainState === "farm" ? <FarmNarrativeFlow /> : null}
       {REPAIR_MISSION_POSITION_ENTRIES.map(({ mission }) => {

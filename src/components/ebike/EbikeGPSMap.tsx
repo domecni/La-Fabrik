@@ -181,9 +181,12 @@ export const EbikeGPSMap: React.FC<EbikeGPSMapProps> = ({
 
   // Sync texture into uniform when it changes (canvas resize)
   useEffect(() => {
+    const mapUniform = shaderMat.uniforms.map;
+    if (!mapUniform) return;
+
     // External Three.js material uniform sync — intentional side effect.
     // eslint-disable-next-line react-hooks/immutability
-    shaderMat.uniforms.map.value = texture;
+    mapUniform.value = texture;
   }, [shaderMat, texture]);
 
   // Cleanup on unmount
