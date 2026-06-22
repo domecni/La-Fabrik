@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { AudioManager } from "@/managers/AudioManager";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import type { MissionStep } from "@/types/gameplay/repairMission";
+import { assetUrl } from "@/utils/assetUrl";
 
-const GAME_MUSIC_PATH = "/sounds/musique/musique-jeu.mp3";
-const REPAIR_MUSIC_PATH = "/sounds/musique/musique-reparation.mp3";
+const GAME_MUSIC_PATH = assetUrl("/sounds/musique/musique-jeu.mp3");
+const REPAIR_MUSIC_PATH = assetUrl("/sounds/musique/musique-reparation.mp3");
 const MUSIC_VOLUME = 0.33;
 
 // Steps during which the repair mini-game owns the experience.

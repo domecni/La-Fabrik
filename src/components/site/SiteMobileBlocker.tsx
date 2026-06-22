@@ -1,4 +1,5 @@
 import { SITE_BACKGROUND_STYLE } from "@/data/site/siteConfig";
+import { assetUrl } from "@/utils/assetUrl";
 
 const MOBILE_TEXT =
   "Ce site a été conçu pour être utilisé sur ordinateur. Veuillez réessayer sur votre ordinateur pour une expérience optimale.";
@@ -20,7 +21,7 @@ export function SiteMobileBlocker(): React.JSX.Element {
       }}
     >
       <img
-        src="/assets/logo.png"
+        src={assetUrl("/assets/logo.png")}
         alt="Logo Altera"
         style={{ width: 120, height: "auto" }}
       />

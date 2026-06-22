@@ -1,4 +1,5 @@
 import type { Vector3Tuple } from "@/types/three/three";
+import { assetUrl } from "@/utils/assetUrl";
 
 export interface CameraTransform {
   position: Vector3Tuple;
@@ -26,10 +27,10 @@ export const EBIKE_ACCELERATION_DURATION_MS = 2000;
 export const EBIKE_DECELERATION_DURATION_MS = 2000;
 
 export const EBIKE_SOUNDS = {
-  depart: "/sounds/effect/ebike-depart.mp3",
-  roule: "/sounds/effect/ebike-roule.mp3",
-  ralenti: "/sounds/effect/ebike-ralenti.mp3",
-  panne: "/sounds/effect/ebike-panne.mp3",
+  depart: assetUrl("/sounds/effect/ebike-depart.mp3"),
+  roule: assetUrl("/sounds/effect/ebike-roule.mp3"),
+  ralenti: assetUrl("/sounds/effect/ebike-ralenti.mp3"),
+  panne: assetUrl("/sounds/effect/ebike-panne.mp3"),
 } as const;
 
 export const EBIKE_BREAKDOWN_DIALOGUE_ID = "narrateur_ebikecasse";

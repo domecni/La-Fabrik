@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { AudioCategory } from "@/data/audioConfig";
 import { AudioManager } from "@/managers/AudioManager";
+import { assetUrl } from "@/utils/assetUrl";
 
-const OUTRO_VIDEO_SRC = "/cinematics/outro.mp4";
+const OUTRO_VIDEO_SRC = assetUrl("/cinematics/outro.mp4");
 const TRANSITION_FADE_MS = 600;
 const TRANSITION_HOLD_MS = 2000;
 const TRANSITION_TEXT_FADE_MS = 500;

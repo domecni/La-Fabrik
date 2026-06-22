@@ -12,9 +12,10 @@ import {
 import { AudioManager } from "@/managers/AudioManager";
 import { loadDialogueManifest } from "@/utils/dialogues/loadDialogueManifest";
 import { playDialogueById } from "@/utils/dialogues/playDialogue";
+import { assetUrl } from "@/utils/assetUrl";
 
-const PYLON_POWERDOWN_SFX = "/sounds/effect/generateur-powerdown.mp3";
-const PYLON_POWERUP_SFX = "/sounds/effect/generateur-powerup.mp3";
+const PYLON_POWERDOWN_SFX = assetUrl("/sounds/effect/generateur-powerdown.mp3");
+const PYLON_POWERUP_SFX = assetUrl("/sounds/effect/generateur-powerup.mp3");
 
 export function PylonNarrativeFlow(): React.JSX.Element | null {
   const mainState = useGameStore((state) => state.mainState);

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Play, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
+import { assetUrl } from "@/utils/assetUrl";
 import type {
   DialogueDefinition,
   DialogueManifest,
@@ -27,7 +28,7 @@ function createDialogue(
   return {
     id: `new_dialogue_${index}`,
     voice,
-    audio: `/sounds/dialogue/new_dialogue_${index}.mp3`,
+    audio: assetUrl(`/sounds/dialogue/new_dialogue_${index}.mp3`),
     subtitleCueIndex: getNextCueIndex(manifest, voice),
   };
 }
@@ -53,7 +54,7 @@ function getVoiceSpeaker(
 }
 
 function getFrenchSrtPath(voice: DialogueVoiceId): string {
-  return `/sounds/dialogue/subtitles/fr/${voice}.srt`;
+  return assetUrl(`/sounds/dialogue/subtitles/fr/${voice}.srt`);
 }
 
 function createSrtCueBlock(cueIndex: number, speaker: DialogueSpeaker): string {

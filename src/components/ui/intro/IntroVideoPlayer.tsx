@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGameStore } from "@/managers/stores/useGameStore";
+import { assetUrl } from "@/utils/assetUrl";
 
-const INTRO_VIDEO_PATH = "/cinematics/intro.mp4";
+const INTRO_VIDEO_PATH = assetUrl("/cinematics/intro.mp4");
 const SKIP_KEYS = new Set(["Enter", " "]);
 const SKIP_HINT_HIDE_DELAY_MS = 1000;
 

@@ -22,6 +22,7 @@ import {
 } from "@/data/ebike/ebikeConfig";
 import type { Vector3Tuple } from "@/types/three/three";
 import "@/types/ebike/ebikeWindow";
+import { assetUrl } from "@/utils/assetUrl";
 
 const EBIKE_MODEL_PATH = "/models/ebike/model.gltf";
 
@@ -513,7 +514,7 @@ export function Ebike({
               height={1}
               startPos={gpsStartPos}
               destPos={destPos}
-              mapImageUrl="/assets/world/gps/map_background.png"
+              mapImageUrl={assetUrl("/assets/world/gps/map_background.png")}
               worldBounds={{
                 minX: -166,
                 maxX: 163,

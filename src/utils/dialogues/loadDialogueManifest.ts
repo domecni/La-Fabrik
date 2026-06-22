@@ -8,8 +8,9 @@ import type { SubtitleLanguage } from "@/types/settings/settings";
 import { parseDialogueManifest } from "@/utils/dialogues/dialogueManifestValidation";
 import { parseSrt } from "@/utils/subtitles/parseSrt";
 import type { SubtitleCue } from "@/utils/subtitles/parseSrt";
+import { assetUrl } from "@/utils/assetUrl";
 
-const DIALOGUE_MANIFEST_PATH = "/sounds/dialogue/dialogues.json";
+const DIALOGUE_MANIFEST_PATH = assetUrl("/sounds/dialogue/dialogues.json");
 const DEFAULT_SUBTITLE_LANGUAGE: SubtitleLanguage = "fr";
 
 let manifestCache: DialogueManifest | null = null;

@@ -1,5 +1,6 @@
 import type { Vector3Tuple } from "@/types/three/three";
 import type { RepairMissionId } from "@/types/gameplay/repairMission";
+import { assetUrl } from "@/utils/assetUrl";
 
 const DEG_TO_RAD = Math.PI / 180;
 
@@ -16,7 +17,7 @@ export const TEST_SCENE_GRABBABLE_ROUGHNESS = 0.6;
 export const TEST_SCENE_GRABBABLE_METALNESS = 0.1;
 
 export const TEST_SCENE_TRIGGER_POSITION: Vector3Tuple = [3, 2, -3];
-export const TEST_SCENE_TRIGGER_SOUND_PATH = "/sounds/effect/fa.mp3";
+export const TEST_SCENE_TRIGGER_SOUND_PATH = assetUrl("/sounds/effect/fa.mp3");
 export const TEST_SCENE_TRIGGER_RADIUS = 0.4;
 export const TEST_SCENE_TRIGGER_SEGMENTS = 32;
 export const TEST_SCENE_TRIGGER_COLOR = "#3b82f6";

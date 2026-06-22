@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw, Save } from "lucide-react";
+import { assetUrl } from "@/utils/assetUrl";
 import type { SubtitleLanguage } from "@/types/settings/settings";
 import type {
   DialogueDefinition,
@@ -62,7 +63,7 @@ function getSrtPath(
   voice: DialogueVoiceId,
   language: SubtitleLanguage,
 ): string {
-  return `/sounds/dialogue/subtitles/${language}/${voice}.srt`;
+  return assetUrl(`/sounds/dialogue/subtitles/${language}/${voice}.srt`);
 }
 
 function createSrtTemplate(

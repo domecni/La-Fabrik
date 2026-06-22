@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { AppLoadingIndicator } from "@/components/ui/AppLoadingIndicator";
 import type { SceneLoadingState } from "@/types/world/sceneLoading";
+import { assetUrl } from "@/utils/assetUrl";
 
-const LOADING_BACKGROUND_PATH = "/assets/bg-site.webp";
+const LOADING_BACKGROUND_PATH = assetUrl("/assets/bg-site.webp");
 const LOADING_FRAME_RATE = 12;
 const LOADING_FRAME_INTERVAL_MS = 1000 / LOADING_FRAME_RATE;
 const LOADING_LOGO_FRAMES = [
-  "/assets/loader/Loader-1.png",
-  "/assets/loader/Loader-2.png",
-  "/assets/loader/Loader-3.png",
-  "/assets/loader/Loader-4.png",
+  assetUrl("/assets/loader/Loader-1.png"),
+  assetUrl("/assets/loader/Loader-2.png"),
+  assetUrl("/assets/loader/Loader-3.png"),
+  assetUrl("/assets/loader/Loader-4.png"),
 ] as const;
 
 for (const path of [LOADING_BACKGROUND_PATH, ...LOADING_LOGO_FRAMES]) {

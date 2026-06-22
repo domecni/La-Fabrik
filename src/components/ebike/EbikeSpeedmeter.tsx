@@ -4,9 +4,10 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import type { Vector3Tuple } from "@/types/three/three";
 import "@/types/ebike/ebikeWindow";
+import { assetUrl } from "@/utils/assetUrl";
 
-const SPEEDOMETER_DIAL_TEXTURE = "/assets/world/gps/cadran.png";
-const SPEEDOMETER_NEEDLE_TEXTURE = "/assets/world/gps/fleche.png";
+const SPEEDOMETER_DIAL_TEXTURE = assetUrl("/assets/world/gps/cadran.png");
+const SPEEDOMETER_NEEDLE_TEXTURE = assetUrl("/assets/world/gps/fleche.png");
 
 export interface EbikeSpeedmeterProps {
   width?: number;

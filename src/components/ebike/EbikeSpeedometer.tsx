@@ -2,9 +2,10 @@ import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
+import { assetUrl } from "@/utils/assetUrl";
 
-const SPEEDOMETER_DIAL_TEXTURE = "/assets/world/gps/cadran.png";
-const SPEEDOMETER_NEEDLE_TEXTURE = "/assets/world/gps/fleche.png";
+const SPEEDOMETER_DIAL_TEXTURE = assetUrl("/assets/world/gps/cadran.png");
+const SPEEDOMETER_NEEDLE_TEXTURE = assetUrl("/assets/world/gps/fleche.png");
 const SPEEDOMETER_MIN_ANGLE = Math.PI / 2;
 const SPEEDOMETER_MAX_ANGLE = -Math.PI / 2;
 const SPEEDOMETER_RENDER_ORDER = 10_000;

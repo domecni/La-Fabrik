@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
+import { assetUrl } from "@/utils/assetUrl";
 
-const BACKGROUND_IMAGE = "/assets/bg-site.webp";
+const BACKGROUND_IMAGE = assetUrl("/assets/bg-site.webp");
 
 export const SITE_CONFIG = {
   backgroundImage: BACKGROUND_IMAGE,

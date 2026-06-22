@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTexture } from "@react-three/drei";
+import { assetUrl } from "@/utils/assetUrl";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useWind } from "@/hooks/world/useWind";
@@ -196,8 +197,8 @@ export function GrassPatch({
   const camera = useThree((state) => state.camera);
   const wind = useWind();
   const [noiseTexture, grassTexture] = useTexture([
-    "/textures/grass/noise.png",
-    "/textures/grass/grass.jpg",
+    assetUrl("/textures/grass/noise.png"),
+    assetUrl("/textures/grass/grass.jpg"),
   ]) as [THREE.Texture, THREE.Texture];
   const grassTextures = useMemo(() => {
     const noise = noiseTexture.clone();

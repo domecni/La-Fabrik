@@ -2,9 +2,11 @@ import { useEffect, useRef } from "react";
 import { useGameStore } from "@/managers/stores/useGameStore";
 import { useSubtitleStore } from "@/managers/stores/useSubtitleStore";
 import { AudioManager } from "@/managers/AudioManager";
+import { assetUrl } from "@/utils/assetUrl";
 
-const HISTOIRE_AUDIO_PATH =
-  "/sounds/dialogue/narrateur_histoireelectricienne.mp3";
+const HISTOIRE_AUDIO_PATH = assetUrl(
+  "/sounds/dialogue/narrateur_histoireelectricienne.mp3",
+);
 const OUTRO_DELAY_MS = 5_000; // delay after audio ends before transitioning to outro
 
 /**
