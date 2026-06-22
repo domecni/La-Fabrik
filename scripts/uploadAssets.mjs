@@ -32,10 +32,14 @@ function walkDir(dir) {
 
 async function uploadFile(localPath) {
   const key = relative(PUBLIC_DIR, localPath).replace(/\\/g, '/')
-  const body = readFileSync(localPath)
-  const contentType = lookup(localPath) || 'application/octet-stream'
-  await client.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: key, Body: body, ContentType: contentType }))
-  console.log(`✓ ${key}`)
+  try {
+    const body = readFileSync(localPath)
+    const contentType = lookup(localPath) || 'application/octet-stream'
+    await client.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: key, Body: body, ContentType: contentType }))
+    console.log(`✓ ${key}`)
+  } catch (err) {
+    console.error(`✗ ${key} — ${err.message}`)
+  }
 }
 
 async function main() {
