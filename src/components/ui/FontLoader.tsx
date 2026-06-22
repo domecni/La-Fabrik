@@ -6,7 +6,7 @@ export function FontLoader() {
     const style = document.createElement('style')
     style.textContent = `
       @font-face {
-        font-family: 'NersansOne';
+        font-family: 'Nersans One';
         src: url('${assetUrl('/fonts/NersansOne.woff2')}') format('woff2'),
              url('${assetUrl('/fonts/NersansOne.woff')}') format('woff');
         font-weight: normal;
