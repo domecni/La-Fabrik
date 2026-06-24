@@ -7,7 +7,6 @@ import { config } from "dotenv";
 import { mkdirSync, createWriteStream, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { Readable } from "stream";
 import { pipeline } from "stream/promises";
 
 config({ path: ".env.upload" });
@@ -50,7 +49,7 @@ async function downloadFile(key) {
     const res = await client.send(
       new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }),
     );
-    await pipeline(Readable.fromWeb(res.Body), createWriteStream(localPath));
+    await pipeline(res.Body, createWriteStream(localPath));
     console.log(`✓ ${key}`);
   } catch (err) {
     console.error(`✗ ${key} — ${err.message}`);
